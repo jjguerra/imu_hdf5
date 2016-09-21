@@ -15,18 +15,32 @@ from utils.matlabMover import move_matlab_files
 # define the function blocks
 def run_hmm():
     print "Running HMM Program"
-    imu_hmm()
+    dataset_location = raw_input('Dataset location: ')
+    if dataset_location == "":
+        temp_path = os.path.dirname(sys.argv[0])
+        dataset_location = os.path.join(temp_path, 'Dataset')
+    imu_hmm(dataset_directory=dataset_location)
 
 
 def check_matlab():
     print "Checking matlab files"
     checking_location = raw_input('Matlab file location: ')
-    matlab_labels_data(action='check', matlab_directory=checking_location)
+    matlab_labels_data(action='check', matlab_directory=checking_location, s_property='')
 
 
 def process_matlab():
+    side = raw_input('arm side: ')
+    side = side.upper()
+    if side == 'L' or side == 'LEFT':
+        specific_side = '_l_'
+    elif side == 'R' or side == 'RIGHT':
+        specific_side = '_r_'
+    else:
+        print 'No side specified. Please specified a side.'
+        return
+
     print "Converting matlab files"
-    matlab_labels_data(action='extract', matlab_directory='')
+    matlab_labels_data(action='extract', matlab_directory='', s_property=specific_side)
 
 
 def move_matlab():

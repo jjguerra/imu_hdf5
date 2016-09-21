@@ -65,7 +65,6 @@ def data_collection(file_properties, debugging, extract):
             else:
                 print '\ttree structure exists...'
 
-            print 'world'
             # total number of steps recorded by tree structure
             total_number_timesteps = \
                 matlab_content['tree']['subject'][0][0]['frames'][0][0]['frame'][0][0]['index'][0][-1][0][0]
@@ -148,6 +147,7 @@ def data_collection(file_properties, debugging, extract):
                 # loop through each row in the markerExtract file
                 for current_row_number, data in enumerate(data_array):
 
+                    print total_number_timesteps
                     if total_number_timesteps < current_row_number:
                         error_msg = 'mismatch between number of time steps of tree and markerExtract'
                         error_message_func(line=current_row_number, error_message=error_msg, debugging=debugging,
@@ -199,7 +199,7 @@ def data_collection(file_properties, debugging, extract):
                         current_label = str(current_label).replace(" ", "")
 
                     if not (right_left_paretic_nonparetic_hand_expectation in current_label) and \
-                            not ('IGNORE' in current_label):
+                            not ('IGNORE_B' in current_label) and not ('IGNORE_E' in current_label):
                         error_msg = 'Expecting label to start with \'' + \
                                     right_left_paretic_nonparetic_hand_expectation + '\''
                         error_message_func(line=current_row_number, label=current_label, error_message=error_msg,
@@ -207,6 +207,11 @@ def data_collection(file_properties, debugging, extract):
                         tmp_label = list(current_label)
                         tmp_label[0:2] = right_left_paretic_nonparetic_hand_expectation
                         current_label = ("".join(tmp_label)).upper()
+
+                    if right_left_paretic_nonparetic_hand_expectation in current_label:
+                        tmp_label = list(current_label)
+                        # removes 'R, L, N or P' in the label in order to find the label in the label class
+                        current_label = "".join(tmp_label[1:])
 
                     # check timestep are increasing
                     if last_timestep > current_timestep and not first_pass:
@@ -337,7 +342,7 @@ def data_collection(file_properties, debugging, extract):
                                            logger=temp_log_file_content)
 
                     # check for ignored labels/timesteps
-                    if 'IGNORE_B' in current_label or 'IGNORE_E' in current_label:
+                    if 'IGNORE_E' in current_label:
                         ignore_index_list.append([last_timestep, current_timestep])
 
                     last_timestep = current_timestep
@@ -451,7 +456,7 @@ def extract_data_and_save_to_file(labels, ignored_indices, dataset, motion_class
     except ValueError:
         print 'size of data: {0}'.format(np.shape(data))
         print 'size of labels: {0}'.format(np.shape(labels))
-        print '\a'
+        print '\n'
         exit(1)
 
     if len(ignored_indices) != 0:
@@ -467,7 +472,7 @@ def extract_data_and_save_to_file(labels, ignored_indices, dataset, motion_class
     np.save(current_out_path, data_labels)
 
 
-def extract_information(doc, matlab_directory, action):
+def extract_information(doc, matlab_directory, action, property):
     """
     Extracts the relevant information about the directories of the matlab files being considered
     updates two variables:
@@ -512,10 +517,16 @@ def extract_information(doc, matlab_directory, action):
             for matlab_file in matlab_file_list:
                 # check if matlab files
                 if '.mat' in matlab_file:
-                    # full matlab path
-                    matlab_path_list.append(os.path.join(subject_path, matlab_file))
-                    matlab_files_list.append(matlab_file)
-                    doc.count += 1
+                    if property == "":
+                        # full matlab path
+                        matlab_path_list.append(os.path.join(subject_path, matlab_file))
+                        matlab_files_list.append(matlab_file)
+                        doc.count += 1
+                    elif property in matlab_file:
+                        # full matlab path
+                        matlab_path_list.append(os.path.join(subject_path, matlab_file))
+                        matlab_files_list.append(matlab_file)
+                        doc.count += 1
 
         # add the respective matlab files to their specific activities
         doc.matlab_files_path_dict[activity] = matlab_path_list
