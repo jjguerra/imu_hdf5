@@ -4,7 +4,8 @@ import re
 
 def move_matlab_files(initial_path, forwarding_path):
     """
-    move of the file name to their corresponding folder
+    move matlab files from a directory to another folder with the
+    activity, user, file name structure
     :return: 1 if files where moved correctly, 0 otherwise
     """
 

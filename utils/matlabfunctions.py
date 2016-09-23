@@ -472,7 +472,7 @@ def extract_data_and_save_to_file(labels, ignored_indices, dataset, motion_class
     np.save(current_out_path, data_labels)
 
 
-def extract_information(doc, matlab_directory, action, property):
+def extract_information(doc, matlab_directory, action, matlab_filter, forward_folder):
     """
     Extracts the relevant information about the directories of the matlab files being considered
     updates two variables:
@@ -495,8 +495,12 @@ def extract_information(doc, matlab_directory, action, property):
         exit(1)
 
     if action == 'extract':
-        # location to store csv files
-        doc.dataset_path = os.path.join(working_path, 'Dataset')
+        if forward_folder == "":
+            # location to store csv files
+            doc.dataset_path = os.path.join(working_path, 'Dataset')
+        else:
+            doc.dataset_path = os.path.join(working_path, forward_folder)
+
         if not os.path.exists(doc.dataset_path):
             os.makedirs(doc.dataset_path)
 
@@ -517,12 +521,12 @@ def extract_information(doc, matlab_directory, action, property):
             for matlab_file in matlab_file_list:
                 # check if matlab files
                 if '.mat' in matlab_file:
-                    if property == "":
+                    if matlab_filter == "":
                         # full matlab path
                         matlab_path_list.append(os.path.join(subject_path, matlab_file))
                         matlab_files_list.append(matlab_file)
                         doc.count += 1
-                    elif property in matlab_file:
+                    elif matlab_filter in matlab_file:
                         # full matlab path
                         matlab_path_list.append(os.path.join(subject_path, matlab_file))
                         matlab_files_list.append(matlab_file)
