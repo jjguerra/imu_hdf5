@@ -2,7 +2,7 @@ import os
 import sys
 import numpy as np
 import scipy.io as sio
-from utils.matlabLabels import MatlabLabels
+from imu.utils.matlablabels import MatlabLabels
 
 
 def error_message_func(line, label, error_message, debugging, logger):

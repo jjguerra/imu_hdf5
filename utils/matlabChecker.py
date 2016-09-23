@@ -1,5 +1,5 @@
-from utils.matlabFunctions import extract_information, data_collection
-from utils.logfileproperties import Document
+from imu.utils.matlabfunctions import extract_information, data_collection
+from imu.utils.logfileproperties import Document
 
 
 def matlab_labels_data(action, matlab_directory, s_property):

@@ -8,17 +8,22 @@ import os
 import sys
 
 from hmm import imu_hmm
-from utils.matlabChecker import matlab_labels_data
-from utils.matlabMover import move_matlab_files
+from utils.matlabchecker import matlab_labels_data
+from utils.matlabmover import move_matlab_files
 
 
 # define the function blocks
 def run_hmm():
+
     print "Running HMM Program"
     dataset_location = raw_input('Dataset location: ')
+
     if dataset_location == "":
+        # get location of program
         temp_path = os.path.dirname(sys.argv[0])
         dataset_location = os.path.join(temp_path, 'Dataset')
+    print 'dataset directory: '.format(dataset_location)
+
     imu_hmm(dataset_directory=dataset_location)
 
 
@@ -49,6 +54,7 @@ def move_matlab():
     forwarding_path = raw_input('Matlab destination: ')
 
     if forwarding_path == "":
+        # get location of program
         temp_path = os.path.dirname(sys.argv[0])
         forwarding_path = os.path.join(temp_path, 'SensorData')
 
