@@ -49,11 +49,15 @@ class MatlabLabels(object):
 
         self.jointUsed = ['']
 
-        self.segmentUsed = ['Pelvis', 'T8', 'Head', 'RightShoulder', 'RightUpperArm', 'RightForeArm', 'RightHand',
-                            'LeftShoulder', 'LeftUpperArm', 'LeftForeArm', 'LeftHand']
+        self.segmentUsed = ['RightShoulder', 'RightUpperArm', 'RightForeArm', 'RightHand']
 
-        self.vectorsUsed = ['orientation', 'position', 'velocity', 'acceleration', 'angularVelocity',
-                            'angularAcceleration']
+        self.vectorsUsed = ['velocity', 'acceleration']
+
+        # self.segmentUsed = ['Pelvis', 'T8', 'Head', 'RightShoulder', 'RightUpperArm', 'RightForeArm', 'RightHand',
+        #                     'LeftShoulder', 'LeftUpperArm', 'LeftForeArm', 'LeftHand']
+
+        # self.vectorsUsed = ['orientation', 'position', 'velocity', 'acceleration', 'angularVelocity',
+        #                     'angularAcceleration']
 
         #     vectorsUsed = ['orientation', 'position', 'velocity', 'acceleration', 'angularVelocity',        \
         #                    'angularAcceleration', 'sensorAcceleration', 'sensorAngularVelocity',            \

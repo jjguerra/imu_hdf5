@@ -7,7 +7,7 @@ Created on Jun 13, 2016
 import os
 import sys
 
-from hmm import imu_hmm
+from model.hmm import imu_hmm
 from utils.matlabchecker import matlab_labels_data
 from utils.matlabmover import move_matlab_files
 
@@ -17,10 +17,14 @@ def run_hmm():
 
     dataset_location = raw_input('Dataset location: ')
 
+    temp_path = os.path.dirname(sys.argv[0])
+
+    # get location of program
     if dataset_location == "":
-        # get location of program
-        temp_path = os.path.dirname(sys.argv[0])
         dataset_location = os.path.join(temp_path, 'Dataset')
+    else:
+        dataset_location = os.path.join(temp_path, dataset_location)
+
     print 'dataset directory: '.format(dataset_location)
 
     print "Running HMM Program"

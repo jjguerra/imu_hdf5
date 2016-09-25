@@ -2,7 +2,7 @@ import os
 import sys
 import numpy as np
 import scipy.io as sio
-from imu.utils.matlablabels import MatlabLabels
+from utils.matlablabels import MatlabLabels
 
 
 def error_message_func(line, label, error_message, debugging, logger):
@@ -374,12 +374,17 @@ def data_collection(file_properties, debugging, extract):
 
                 file_properties.output_file_object.write('\n')
 
-                if len(new_label_list) != 0:
-                    file_properties.output_file_object.write('\tSet of new labels: \n\n')
-                    for new_labels in new_label_list:
-                        file_properties.output_file_object.write('\t' + new_labels + '\n')
+                try:
+                    if len(new_label_list) != 0:
+                        file_properties.output_file_object.write('\tSet of new labels: \n\n')
+                        for new_labels in new_label_list:
+                            file_properties.output_file_object.write('\t' + new_labels + '\n')
 
-                    file_properties.output_file_object.write('\n')
+                        file_properties.output_file_object.write('\n')
+
+                # new_label_list was not defined
+                except NameError:
+                    continue
 
     file_properties.output_file_object.write('Done checking matlab files\n')
     print 'Done checking matlab files.'

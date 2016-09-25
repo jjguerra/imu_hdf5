@@ -2,3 +2,11 @@ SensorData/
 Dataset/
 .idea/
 .DS_Store
+Dataset_All/
+Error_File
+Error_File_Q435Reconvert
+Error_File_healthycontrolcorrections
+model/__init__.pyc
+model/datafunctions.pyc
+model/hmm.pyc
+utils/output.pyc
