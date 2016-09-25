@@ -3,7 +3,7 @@ Created on Jun 13, 2016
 
 @author: jjguerra
 """
-
+from utils.output import printout
 import os
 import sys
 
@@ -25,14 +25,16 @@ def run_hmm():
     else:
         dataset_location = os.path.join(temp_path, dataset_location)
 
-    print 'dataset directory: '.format(dataset_location)
+    printout(message='dataset directory:{0}'.format(dataset_location), verbose=True)
+    printout(message="Running HMM Program", verbose=True)
 
-    print "Running HMM Program"
     imu_hmm(dataset_directory=dataset_location)
 
 
 def check_matlab():
-    print "Checking matlab files"
+
+    printout(message='Checking matlab files', verbose=True)
+
     checking_location = raw_input('Matlab file location: ')
     matlab_labels_data(action='check', matlab_directory=checking_location, s_property='', folder_name='')
 
@@ -45,17 +47,19 @@ def process_matlab():
     elif side == 'R' or side == 'RIGHT':
         specific_side = '_r_'
     else:
-        print 'No side specified. Please specified a side.'
+        printout(message='No side specified. Please specified a side.', verbose=True)
         return
 
     dataset_folder_name = raw_input('Created folder\' name: ')
 
-    print "Converting matlab files"
+    printout(message='Converting matlab files', verbose=True)
     matlab_labels_data(action='extract', matlab_directory='', s_property=specific_side, folder_name=dataset_folder_name)
 
 
 def move_matlab():
-    print "In order to move matlab files"
+
+    printout(message='In order to move matlab files', verbose=True)
+
     initial_path = raw_input('Matlab directory: ')
     forwarding_path = raw_input('Matlab destination: ')
 
@@ -68,8 +72,8 @@ def move_matlab():
 
 
 def exit_program():
-    print 'Program terminated.'
-    print ''
+
+    printout(message='Program terminated.\n', verbose=True)
     exit(0)
 
 
@@ -102,9 +106,9 @@ if __name__ == '__main__':
             elif selected_option == 5:
                 exit_program()
             else:
-                print 'Wrong option selected.'
+                printout(message='Wrong option selected.', verbose=True)
 
         except ValueError:
-            print("Invalid number")
+            printout(message='Invalid number.', verbose=True)
 
 

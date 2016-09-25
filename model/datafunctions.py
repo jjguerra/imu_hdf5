@@ -42,34 +42,51 @@ def hmm_preprocessing_data(dataset):
         step = 1
         chunks = sliding_window(dataset, window_size, step)
 
-        statistical_descriptors = pd.DataFrame()
-        label_series = pd.Series()
+        label_list = list()
+
+        # mean, variance and label lists
+        mean_list = list()
+        variance_list = list()
+        min_list = list()
+        max_list = list()
+        # root mean square
+        rms_list = list()
 
         for segmented_data in chunks:
             # obtain labels
             labels = segmented_data.ix[:, len(segmented_data.columns) - 1]
             # get the most common label
-            label = pd.Series(data=[labels.value_counts().idxmax()])
+            label_list.append(labels.value_counts().idxmax())
             # separate the labels from the dataset
-            n_dataset = segmented_data.drop(segmented_data.columns[len(segmented_data.columns) - 1], axis=1)
+            n_dataset = segmented_data.drop(segmented_data.columns[len(segmented_data.columns) - 1], axis=1).values
 
             # calculate statistical descriptors
-            mean = n_dataset.mean().values
-            mn = n_dataset.min().values
-            mx = n_dataset.max().values
-            var = n_dataset.var().values
-            # magnitude
-            rms = np.sqrt(np.mean(np.square(n_dataset))).values
-            tmp_df = pd.DataFrame(data=[np.r_[mean, mn, mx, var, rms]])
-            # add to the dataframe
-            statistical_descriptors = statistical_descriptors.append(tmp_df)
-            label_series = label_series.append(label)
+            mean = np.mean(a=n_dataset, axis=0)
+            var = np.var(a=n_dataset, axis=0)
+            mn = np.min(a=n_dataset, axis=0)
+            mx = np.max(a=n_dataset, axis=0)
+            rms = np.sqrt(np.mean(np.square(n_dataset), axis=0))
 
+            mean_list.append(mean)
+            variance_list.append(var)
+            min_list.append(mn)
+            max_list.append(mx)
+            rms_list.append(rms)
+
+        # list converted to numpy arrays for future processing
+        mean_points = np.array(mean_list)
+        var_points = np.array(variance_list)
+        min_points = np.array(min_list)
+        max_points = np.array(max_list)
+        rms_points = np.array(rms_list)
+
+        statistical_descriptors = np.c_[mean_points, min_points, max_points, var_points, rms_points]
         # standardization : transfer data to have zero mean and unit variance
-        n_statistical_descriptors = (
-                                    statistical_descriptors - statistical_descriptors.mean()) / statistical_descriptors.std()
+        sd_mean = np.mean(a=statistical_descriptors, axis=0)
+        sd_std = np.std(a=statistical_descriptors, axis=0)
+        n_statistical_descriptors = (statistical_descriptors - sd_mean) / sd_std
 
-        return n_statistical_descriptors, label_series
+        return n_statistical_descriptors, label_list
 
 
 def file_information(python_file):
@@ -132,7 +149,7 @@ def load_data(data_dir):
 
 def preprocessing_logistic_regression(predictions, labels):
 
-    dataset = predictions.copy()
+    dataset = pd.DataFrame(data=predictions)
     dataset['labels'] = labels
     window_size = 150
     step = 30
@@ -143,15 +160,15 @@ def preprocessing_logistic_regression(predictions, labels):
 
     for segmented_data in chunks:
         # obtain labels
-        labels = segmented_data.ix[:, len(segmented_data.columns) - 1]
+        labels = segmented_data['labels']
         # get the most common label
         label = pd.Series(data=[labels.value_counts().idxmax()])
         # separate the labels from the dataset
-        n_dataset = segmented_data.drop(segmented_data.columns[len(segmented_data.columns) - 1], axis=1).copy()
+        n_dataset = segmented_data.drop(segmented_data.columns[len(segmented_data.columns) - 1], axis=1)
         average_of_probabilities = n_dataset.mean()
 
         # add values and labels to dataframes
-        new_dataset.append(average_of_probabilities)
-        new_labels.append(label)
+        new_dataset = new_dataset.append(average_of_probabilities, ignore_index=True)
+        new_labels = new_labels.append(label, ignore_index=True)
 
     return new_dataset, new_labels

@@ -1,34 +1,23 @@
 from datafunctions import load_data, hmm_preprocessing_data, preprocessing_logistic_regression
 from utils.output import printout
-import threading
-from datetime import datetime
 from hmmlearn import hmm
 from sklearn.linear_model import LogisticRegression
+from multiprocessing.dummy import Pool as ThreadPool
+import numpy as np
 
 
-class IMUThread(threading.Thread):
+def hmm_preprocessing(list_args):
 
-    def __init__(self, name, dataset):
+    name = list_args[0]
+    dataset = list_args[1]
 
-        threading.Thread.__init__(self)
-        self.name = name
-        self.dataset = dataset
-        self.dataset_normalized = ''
-        self.labels = ''
-        self.thread_done = False
+    msg = 'Pre-processing {0}.'.format(name)
+    printout(message=msg, verbose=True, time=True)
+    dataset_normalized, labels = hmm_preprocessing_data(dataset=dataset)
+    msg = 'Finished pre-processing {0}.'.format(name)
+    printout(message=msg, verbose=True, time=True)
 
-    def run(self):
-        printout(message='Pre-processing {0}. Data:{1}'.format(self.name, datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
-                 verbose=True)
-        self.dataset_normalized, self.labels = hmm_preprocessing_data(dataset=self.dataset)
-        printout(message='Finished pre-processing {0}. Data:{1}'.format(self.name,
-                                                                        datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
-                 verbose=True)
-
-        self.thread_done = True
-
-    def check_thread_finished(self):
-        self.thread_done
+    return dataset_normalized, labels
 
 
 def imu_hmm(dataset_directory):
@@ -40,34 +29,39 @@ def imu_hmm(dataset_directory):
         testing_data = dataset_dataframe[user_info.start_index:user_info.end_index]
         training_data = dataset_dataframe.copy()
 
-        # remove training data
+        # remove testing data from the training dataframe
         training_data.drop(training_data.index[user_info.start_index: user_info.end_index], inplace=True)
 
-        # creating threads
-        testing_thread = IMUThread(name='testing data. User={0}'.format(user_info.user), dataset=testing_data)
-        training_thread = IMUThread(name='training data', dataset=training_data)
+        arg_list = [['testing dataset. User={0}'.format(user_info.user), testing_data],
+                    ['training dataset', training_data]]
 
-        # staring threads
-        testing_thread.start()
-        training_thread.start()
+        # multiprocessing
+        pool = ThreadPool()
 
-        # wait for the threads to finish
-        testing_thread.join()
-        training_thread.join()
+        # run hmm_preprocessing their own threads and return the results
+        # results = list
+        #   results[0] = testing dataset, results[1] = training dataset
+        results = pool.map(hmm_preprocessing, arg_list)
+        # close the pool and wait for the work to finish
+        pool.close()
+        pool.join()
 
         # fetch training and testing data from the objects
-        train_dataset = training_thread.dataset_normalized
-        train_labels = training_thread.labels
+        test_dataset = results[0][0]
+        test_labels = results[0][1]
 
-        test_dataset = testing_thread.dataset_normalized
-        test_labels = testing_thread.labels
+        train_dataset = results[1][0]
+        train_labels = results[1][1]
 
-        printout(message='training data size: {}'.format(train_dataset.shape), verbose=True)
-        printout(message='testing data size: {}'.format(test_dataset.shape), verbose=True)
+        printout(message='training data size:{0}'.format(np.shape(train_dataset)), verbose=True)
+        printout(message='training label size:{0}'.format(np.shape(train_labels)), verbose=True)
+        printout(message='testing data size:{0}'.format(np.shape(test_dataset)), verbose=True)
+        printout(message='testing label size:{0}'.format(np.shape(test_labels)), verbose=True)
 
-        printout(message='Training Hidden Markov Model ...', verbose=True)
+        printout(message='Training Hidden Markov Model.', time=True, verbose=True)
         hmm_model = hmm.GaussianHMM(n_components=8, covariance_type='full', n_iter=10, verbose=True)
         hmm_model.fit(X=train_dataset)
+        printout(message='Finished training Hidden Markov Model.', time=True, verbose=True)
 
         printout(message='calculating Predictions', verbose=True)
         train_predictions = hmm_model.predict_proba(train_dataset)
@@ -83,7 +77,7 @@ def imu_hmm(dataset_directory):
         logistic_regression_model = LogisticRegression()
 
         print 'training logistic regression mapper'
-        logistic_regression_model.fit(logreg_train_data, logreg_train_labels)
+        logistic_regression_model.fit(logreg_train_data, logreg_train_labels.values.ravel())
         train_score = logistic_regression_model.score(logreg_train_data, logreg_train_labels)
         test_score = logistic_regression_model.score(logreg_test_data, logreg_test_labels)
 
