@@ -24,18 +24,20 @@ def select_dataset_quickrun(algorithm=''):
     else:
         dataset_location = os.path.join(temp_path, dataset_location)
 
-    printout(message='dataset directory:{0}'.format(dataset_location), verbose=True)
-    msg = 'Running {0} Program'.format(algorithm)
-    printout(message=msg, verbose=True)
+    printout(message='dataset directory:\'{0}\''.format(dataset_location), verbose=True)
 
     quickrun_selection = raw_input('Quickrun: ')
 
-    while quickrun_selection is not True or quickrun_selection is not False or quickrun_selection != '':
+    quickrun = ''
+    while quickrun == '':
         # get location of program
         if quickrun_selection == "":
             quickrun = True
         else:
             quickrun = quickrun_selection
+
+    msg = 'Running {0} Models'.format(algorithm)
+    printout(message=msg, verbose=True)
 
     return dataset_location, quickrun
 
@@ -57,8 +59,18 @@ def check_matlab():
 
 
 def process_matlab():
-    side = raw_input('arm side: ')
-    side = side.upper()
+
+    dataset_location = raw_input('Dataset location: ')
+
+    temp_path = os.path.dirname(sys.argv[0])
+
+    # get location of program
+    if dataset_location == "":
+        dataset_location = os.path.join(temp_path, 'SensorData')
+    else:
+        dataset_location = os.path.join(temp_path, dataset_location)
+
+    side = raw_input('arm side: ').upper()
     if side == 'L' or side == 'LEFT':
         specific_side = '_l_'
     elif side == 'R' or side == 'RIGHT':
@@ -70,7 +82,8 @@ def process_matlab():
     dataset_folder_name = raw_input('Created folder\' name: ')
 
     printout(message='Converting matlab files', verbose=True)
-    matlab_labels_data(action='extract', matlab_directory='', s_property=specific_side, folder_name=dataset_folder_name)
+    matlab_labels_data(action='extract', matlab_directory=dataset_location, s_property=specific_side,
+                       folder_name=dataset_folder_name)
 
 
 def move_matlab():

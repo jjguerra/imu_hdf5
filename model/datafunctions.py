@@ -3,6 +3,8 @@ import os
 import pandas as pd
 import re
 from utils.output import printout
+from collections import Counter
+import random
 
 
 class UserInfo:
@@ -35,6 +37,21 @@ def sliding_window(sequence, window_size, step=1):
         yield sequence[i: i + window_size]
 
 
+def most_common(lst):
+    m_frequent = Counter(lst).most_common(2)
+    # if out of the two most frequent labels, the first one is
+    # larger than the second one i.e. different, return the first one (largest frequency)
+    if len(m_frequent) > 1:
+        if m_frequent[0][1] != m_frequent[1][1]:
+            return m_frequent[0][0]
+        # if there are two equally frequent labels, randomly return one
+        else:
+            rv = random.randint(0, 1)
+            return m_frequent[rv][0]
+    else:
+        return m_frequent[0][0]
+
+
 def preprocessing_data(dataset):
 
         # sliding window properties
@@ -54,11 +71,11 @@ def preprocessing_data(dataset):
 
         for segmented_data in chunks:
             # obtain labels
-            labels = segmented_data.ix[:, len(segmented_data.columns) - 1]
+            labels = segmented_data[:, np.shape(segmented_data)[1] - 1]
             # get the most common label
-            label_list.append(labels.value_counts().idxmax())
+            label_list.append(most_common(labels))
             # separate the labels from the dataset
-            n_dataset = segmented_data.drop(segmented_data.columns[len(segmented_data.columns) - 1], axis=1).values
+            n_dataset = segmented_data[:, :np.shape(segmented_data)[1] - 1]
 
             # calculate statistical descriptors
             mean = np.mean(a=n_dataset, axis=0)
@@ -113,7 +130,7 @@ def load_data(data_dir):
     dataset_files = os.listdir(data_dir)
 
     # sensordata variable
-    sensordata_dataframe = pd.DataFrame()
+    sensordata_array = np.empty(shape=(0, 0))
 
     # dataset user information
     dataset_user_information = list()
@@ -124,51 +141,54 @@ def load_data(data_dir):
         print 'reading file: {0}'.format(python_file)
         # getting file information
         user, activity = file_information(python_file)
-        start_index = sensordata_dataframe.shape[0]
+        start_index = np.shape(sensordata_array)[0]
 
         # read data from file
         raw_data = np.load(python_file_path)
-        # convert the array to dataframe
-        df_data = pd.DataFrame(raw_data)
-        # append does not happen in place so its stored back in data_dataframe
-        sensordata_dataframe = sensordata_dataframe.append(df_data)
-        end_index = sensordata_dataframe.shape[0]
+
+        # adding the info to the sensordata list
+        if start_index == 0:
+            # remove label column
+            sensordata_array = raw_data
+        else:
+            sensordata_array = np.append(arr=sensordata_array, values=raw_data, axis=0)
+        # get the max length of the added dataset
+        end_index = np.shape(sensordata_array)[0]
 
         user_prop = UserInfo(user=user, activity=activity, start_index=start_index, end_index=end_index)
 
         dataset_user_information.append(user_prop)
 
-        print '\tuser={0} activity={1}, start/end index={2}'.format(user, activity, (start_index, end_index))
+        print '\tuser={0} activity={1}, start/end index={2}, size={3}'.format(user, activity, (start_index, end_index),
+                                                                              np.shape(raw_data)[0])
 
         printout(message='\tdata stored in dataframe\n', verbose=True)
 
-    sensordata_dataframe.index = range(0, sensordata_dataframe.shape[0])
-    sensordata_dataframe.columns = range(0, sensordata_dataframe.shape[1])
-    return sensordata_dataframe, dataset_user_information
+    return sensordata_array, dataset_user_information
 
 
 def preprocessing_logistic_regression(predictions, labels):
 
-    dataset = pd.DataFrame(data=predictions)
-    dataset['labels'] = labels
+    dataset = np.zeros([np.shape(predictions)[0], np.shape(predictions)[1] + 1])
+    dataset[:, 0:np.shape(predictions)[1]] += predictions
+    dataset[:, -1] += labels
     window_size = 150
     step = 30
     chunks = sliding_window(sequence=dataset, window_size=window_size, step=step)
 
-    new_dataset = pd.DataFrame()
-    new_labels = pd.DataFrame()
+    new_dataset = list()
+    new_labels = list()
 
     for segmented_data in chunks:
         # obtain labels
-        labels = segmented_data['labels']
+        segmented_labels = list(segmented_data[:, -1])
         # get the most common label
-        label = pd.Series(data=[labels.value_counts().idxmax()])
+        new_labels.append(most_common(segmented_labels))
         # separate the labels from the dataset
-        n_dataset = segmented_data.drop(segmented_data.columns[len(segmented_data.columns) - 1], axis=1)
-        average_of_probabilities = n_dataset.mean()
+        n_dataset = segmented_data[:, :np.shape(segmented_data)[1] - 1]
+        average_of_probabilities = np.mean(n_dataset, axis=0)
 
         # add values and labels to dataframes
-        new_dataset = new_dataset.append(average_of_probabilities, ignore_index=True)
-        new_labels = new_labels.append(label, ignore_index=True)
+        new_dataset.append(average_of_probabilities)
 
-    return new_dataset, new_labels
+    return np.array(new_dataset), np.array(new_labels)

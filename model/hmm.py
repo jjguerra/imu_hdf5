@@ -2,6 +2,9 @@ from datafunctions import preprocessing_logistic_regression
 from utils.output import printout
 from hmmlearn import hmm
 from sklearn.linear_model import LogisticRegression
+import numpy as np
+
+np.random.seed(0)
 
 
 def results(hmm_model='', trainingdataset='', traininglabels='', testingdataset='', testinglabels=''):
@@ -20,7 +23,7 @@ def results(hmm_model='', trainingdataset='', traininglabels='', testingdataset=
     logistic_regression_model = LogisticRegression()
 
     print 'training logistic regression mapper'
-    logistic_regression_model.fit(logreg_train_data, logreg_train_labels.values.ravel())
+    logistic_regression_model.fit(logreg_train_data, logreg_train_labels)
     train_score = logistic_regression_model.score(logreg_train_data, logreg_train_labels)
     test_score = logistic_regression_model.score(logreg_test_data, logreg_test_labels)
 
@@ -32,7 +35,7 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
 
         if quickrun:
             printout(message='Training Hidden Markov Model.', time=True, verbose=True)
-            hmm_model = hmm.GaussianHMM(n_components=8, covariance_type='full', n_iter=10, verbose=True)
+            hmm_model = hmm.GaussianHMM(n_components=8, covariance_type='diag', n_iter=10, verbose=True)
             hmm_model.fit(X=trainingdataset)
             printout(message='Finished training Hidden Markov Model.', time=True, verbose=True)
 

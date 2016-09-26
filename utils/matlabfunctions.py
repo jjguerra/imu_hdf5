@@ -3,6 +3,7 @@ import sys
 import numpy as np
 import scipy.io as sio
 from utils.matlablabels import MatlabLabels
+from utils.output import printout
 
 
 def error_message_func(line, label, error_message, debugging, logger):
@@ -23,8 +24,6 @@ def data_collection(file_properties, debugging, extract):
 
     # set of motions and labels
     motion_class = MatlabLabels()
-
-    ignore_index_list = list()  # ignored list indices
 
     # flags used for headers in the log file
     first_pass_ever = True
@@ -63,11 +62,7 @@ def data_collection(file_properties, debugging, extract):
                 if not debugging:
                     exit(1)
             else:
-                print '\ttree structure exists...'
-
-            # total number of steps recorded by tree structure
-            total_number_timesteps = \
-                matlab_content['tree']['subject'][0][0]['frames'][0][0]['frame'][0][0]['index'][0][-1][0][0]
+                print '\ttree structure exists'
 
             # this is temporary because if the specific file has no errors then no information
             # about the file will be written
@@ -83,7 +78,7 @@ def data_collection(file_properties, debugging, extract):
                 if not debugging:
                     exit(1)
             else:
-                print '\ttree2 structure exists...'
+                print '\ttree2 structure exists'
 
             # markerExtract contains the label data
             marker_extract = True
@@ -96,8 +91,9 @@ def data_collection(file_properties, debugging, extract):
                 if not debugging:
                     exit(1)
             else:
-                print '\tMarkerExtract structure exists...'
+                print '\tMarkerExtract structure exists'
 
+            # structure where the labels are store
             if marker_extract:
 
                 if 'paretic' in matlab_file_name:
@@ -119,7 +115,7 @@ def data_collection(file_properties, debugging, extract):
                         exit(1)
 
                 # get label data
-                print '\tAccessing MarkerExtract data ...'
+                print '\tAccessing MarkerExtract data'
                 # row_data[0][0] = label
                 # row_data[1][0][0] = time step
                 data_array = matlab_content['markerExtract']
@@ -143,11 +139,20 @@ def data_collection(file_properties, debugging, extract):
                 # variable to store labels
                 label_list = list()
 
+                # ignored list indices
+                ignore_index_list = list()
+
+                # total number of steps recorded by tree structure
+                total_number_timesteps = \
+                    matlab_content['tree']['subject'][0][0]['frames'][0][0]['frame'][0][0]['index'][0][-1][0][0]
+
+                msg = 'Non-processed file size:{0}'.format(total_number_timesteps)
+                printout(message=msg, verbose=True)
+
                 print '\tTraversing data array ...'
                 # loop through each row in the markerExtract file
                 for current_row_number, data in enumerate(data_array):
 
-                    print total_number_timesteps
                     if total_number_timesteps < current_row_number:
                         error_msg = 'mismatch between number of time steps of tree and markerExtract'
                         error_message_func(line=current_row_number, error_message=error_msg, debugging=debugging,
@@ -349,7 +354,7 @@ def data_collection(file_properties, debugging, extract):
 
                 if not debugging and extract and tree2:
 
-                    label_array = np.array(np.array(label_list))
+                    label_array = np.array(label_list)
                     # fetching sensors' data
                     extract_data_and_save_to_file(label_array, ignore_index_list, matlab_content['tree2'], motion_class,
                                                   file_properties, activity, index_matlab_file)
@@ -413,6 +418,7 @@ def extract_data_and_save_to_file(labels, ignored_indices, dataset, motion_class
     data = np.empty((1, 1))
 
     for vector in motion_class.vectorsUsed:
+
         v_data = dataset[vector]
         if 'joint' == vector:
             for joints in motion_class.jointUsed:

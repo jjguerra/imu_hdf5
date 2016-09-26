@@ -22,16 +22,15 @@ def preprocessing(list_args):
 
 def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
 
-    dataset_dataframe, dataset_info = load_data(data_dir=dataset_directory)
+    dataset_array, dataset_info = load_data(data_dir=dataset_directory)
 
     for user_info in dataset_info:
 
-        testing_data = dataset_dataframe[user_info.start_index:user_info.end_index]
-        training_data = dataset_dataframe.copy()
+        testing_data = dataset_array[user_info.start_index:user_info.end_index]
+        # create a new array without the testing sensor data
+        training_data = np.delete(dataset_array, np.s_[user_info.start_index:user_info.end_index], axis=0)
 
-        # remove testing data from the training dataframe
-        training_data.drop(training_data.index[user_info.start_index: user_info.end_index], inplace=True)
-
+        # list of name of the dataset and its dataset used for multiprocessing
         arg_list = [['testing dataset. User={0}'.format(user_info.user), testing_data],
                     ['training dataset', training_data]]
 
@@ -58,7 +57,7 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
         printout(message='testing data size:{0}'.format(np.shape(test_dataset)), verbose=True)
         printout(message='testing label size:{0}'.format(np.shape(test_labels)), verbose=True)
 
-        if algorithm == 'hmm':
+        if algorithm == 'HMM':
             hmm_algo(trainingdataset=train_dataset, traininglabels=train_labels, testingdataset=test_dataset,
                      testinglabels=test_labels, quickrun=quickrun)
 

@@ -134,3 +134,97 @@ class IMUThread(threading.Thread):
 
     def check_thread_finished(self):
         self.thread_done
+
+def load_data(data_dir):
+
+    # data file are store within the project dataset folder
+    dataset_files = os.listdir(data_dir)
+
+    # sensordata variable
+    sensordata_dataframe = pd.DataFrame()
+
+    # dataset user information
+    dataset_user_information = list()
+
+    # loop through every file
+    for python_file in dataset_files:
+        python_file_path = os.path.join(data_dir, python_file)
+        msg = 'reading file: {0}'.format(python_file)
+        printout(message=msg, verbose=True)
+        # getting file information
+        user, activity = file_information(python_file)
+        start_index = sensordata_dataframe.shape[0]
+
+        # read data from file
+        raw_data = np.load(python_file_path)
+        # convert the array to dataframe
+        df_data = pd.DataFrame(raw_data)
+        # append does not happen in place so its stored back in data_dataframe
+        sensordata_dataframe = sensordata_dataframe.append(df_data)
+        end_index = sensordata_dataframe.shape[0]
+
+        user_prop = UserInfo(user=user, activity=activity, start_index=start_index, end_index=end_index)
+
+        dataset_user_information.append(user_prop)
+
+        print '\tuser={0} activity={1}, start/end index={2}'.format(user, activity, (start_index, end_index))
+
+        printout(message='\tdata stored in dataframe\n', verbose=True)
+
+    sensordata_dataframe.index = range(0, sensordata_dataframe.shape[0])
+    sensordata_dataframe.columns = range(0, sensordata_dataframe.shape[1])
+
+    return sensordata_dataframe, dataset_user_information
+
+
+def preprocessing_data(dataset):
+    # sliding window properties
+    window_size = 60
+    step = 1
+    chunks = sliding_window(dataset, window_size, step)
+
+    label_list = list()
+
+    # mean, variance and label lists
+    mean_list = list()
+    variance_list = list()
+    min_list = list()
+    max_list = list()
+    # root mean square
+    rms_list = list()
+
+    for segmented_data in chunks:
+        # obtain labels
+        labels = segmented_data.ix[:, len(segmented_data.columns) - 1]
+        # get the most common label
+        label_list.append(labels.value_counts().idxmax())
+        # separate the labels from the dataset
+        n_dataset = segmented_data.drop(segmented_data.columns[len(segmented_data.columns) - 1], axis=1).values
+
+        # calculate statistical descriptors
+        mean = np.mean(a=n_dataset, axis=0)
+        var = np.var(a=n_dataset, axis=0)
+        mn = np.min(a=n_dataset, axis=0)
+        mx = np.max(a=n_dataset, axis=0)
+        rms = np.sqrt(np.mean(np.square(n_dataset), axis=0))
+
+        mean_list.append(mean)
+        variance_list.append(var)
+        min_list.append(mn)
+        max_list.append(mx)
+        rms_list.append(rms)
+
+    # list converted to numpy arrays for future processing
+    mean_points = np.array(mean_list)
+    var_points = np.array(variance_list)
+    min_points = np.array(min_list)
+    max_points = np.array(max_list)
+    rms_points = np.array(rms_list)
+
+    statistical_descriptors = np.c_[mean_points, min_points, max_points, var_points, rms_points]
+    # standardization : transfer data to have zero mean and unit variance
+    sd_mean = np.mean(a=statistical_descriptors, axis=0)
+    sd_std = np.std(a=statistical_descriptors, axis=0)
+    n_statistical_descriptors = (statistical_descriptors - sd_mean) / sd_std
+
+    return n_statistical_descriptors, label_list
