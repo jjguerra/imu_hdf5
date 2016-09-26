@@ -12,7 +12,7 @@ from utils.matlabchecker import matlab_labels_data
 from utils.matlabmover import move_matlab_files
 
 
-def select_dataset(algorithm=''):
+def select_dataset_quickrun(algorithm=''):
 
     dataset_location = raw_input('Dataset location: ')
 
@@ -28,15 +28,24 @@ def select_dataset(algorithm=''):
     msg = 'Running {0} Program'.format(algorithm)
     printout(message=msg, verbose=True)
 
-    return dataset_location
+    quickrun_selection = raw_input('Quickrun: ')
+
+    while quickrun_selection is not True or quickrun_selection is not False or quickrun_selection != '':
+        # get location of program
+        if quickrun_selection == "":
+            quickrun = True
+        else:
+            quickrun = quickrun_selection
+
+    return dataset_location, quickrun
 
 
 # run model
 def ml_algorithm(algorithm=''):
 
     # get dataset directory
-    dataset_location = select_dataset(algorithm)
-    imu_algorithm(dataset_directory=dataset_location, algorithm=algorithm)
+    dataset_location, quickrun = select_dataset_quickrun(algorithm)
+    imu_algorithm(dataset_directory=dataset_location, algorithm=algorithm, quickrun=quickrun)
 
 
 def check_matlab():

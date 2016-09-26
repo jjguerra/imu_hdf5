@@ -20,7 +20,7 @@ def preprocessing(list_args):
     return dataset_normalized, labels
 
 
-def imu_algorithm(dataset_directory='', algorithm=''):
+def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
 
     dataset_dataframe, dataset_info = load_data(data_dir=dataset_directory)
 
@@ -60,11 +60,11 @@ def imu_algorithm(dataset_directory='', algorithm=''):
 
         if algorithm == 'hmm':
             hmm_algo(trainingdataset=train_dataset, traininglabels=train_labels, testingdataset=test_dataset,
-                     testinglabels=test_labels)
+                     testinglabels=test_labels, quickrun=quickrun)
 
         elif algorithm == 'Logistic Regression':
             logreg_algo(trainingdataset=train_dataset, traininglabels=train_labels, testingdataset=test_dataset,
-                        testinglabels=test_labels)
+                        testinglabels=test_labels, quickrun=quickrun)
 
         else:
             printout(message='Wrong algorithm provided.', verbose=True)
