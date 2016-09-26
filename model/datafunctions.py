@@ -35,7 +35,7 @@ def sliding_window(sequence, window_size, step=1):
         yield sequence[i: i + window_size]
 
 
-def hmm_preprocessing_data(dataset):
+def preprocessing_data(dataset):
 
         # sliding window properties
         window_size = 60

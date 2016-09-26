@@ -7,13 +7,12 @@ from utils.output import printout
 import os
 import sys
 
-from model.hmm import imu_hmm
+from model.workflow import imu_algorithm
 from utils.matlabchecker import matlab_labels_data
 from utils.matlabmover import move_matlab_files
 
 
-# define the function blocks
-def run_hmm():
+def select_dataset(algorithm=''):
 
     dataset_location = raw_input('Dataset location: ')
 
@@ -26,9 +25,18 @@ def run_hmm():
         dataset_location = os.path.join(temp_path, dataset_location)
 
     printout(message='dataset directory:{0}'.format(dataset_location), verbose=True)
-    printout(message="Running HMM Program", verbose=True)
+    msg = 'Running {0} Program'.format(algorithm)
+    printout(message=msg, verbose=True)
 
-    imu_hmm(dataset_directory=dataset_location)
+    return dataset_location
+
+
+# run model
+def ml_algorithm(algorithm=''):
+
+    # get dataset directory
+    dataset_location = select_dataset(algorithm)
+    imu_algorithm(dataset_directory=dataset_location, algorithm=algorithm)
 
 
 def check_matlab():
@@ -88,7 +96,8 @@ if __name__ == '__main__':
         print '2: Check Matlab files'
         print '3: Convert Matlab files to HMM format file'
         print '4: Move Matlab files from Dropbox to Working Directory'
-        print '5: Exit'
+        print '5: Perform Logistic Regression'
+        print '6: Exit'
 
         print ''
 
@@ -96,7 +105,7 @@ if __name__ == '__main__':
             selected_option = int(raw_input('Select an option: '))
 
             if selected_option == 1:
-                run_hmm()
+                ml_algorithm('HMM')
             elif selected_option == 2:
                 check_matlab()
             elif selected_option == 3:
@@ -104,6 +113,8 @@ if __name__ == '__main__':
             elif selected_option == 4:
                 move_matlab()
             elif selected_option == 5:
+                ml_algorithm('Logistic Regression')
+            elif selected_option == 6:
                 exit_program()
             else:
                 printout(message='Wrong option selected.', verbose=True)
