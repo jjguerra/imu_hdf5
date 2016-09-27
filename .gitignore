@@ -11,3 +11,5 @@ model/hmm.pyc
 utils/output.pyc
 matlab*
 Matlab*
+logfile
+strokedataset

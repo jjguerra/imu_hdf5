@@ -84,13 +84,30 @@ def process_matlab():
         specific_side = '_l_'
     elif side == 'R' or side == 'RIGHT':
         specific_side = '_r_'
+
     elif side == 'P' or side == 'PARETIC':
-        specific_side = '_paretic_'
+        more_specific_side = 'paretic'
+
     elif side == 'N' or side == 'NONPARETIC':
-        specific_side = '_nonparetic_'
+        more_specific_side = 'nonparetic'
+
     else:
         printout(message='No side specified. Please specified a side.', verbose=True)
         return
+
+    if more_specific_side == 'paretic':
+        activenonactive = raw_input('active or non-active: ').upper()
+        if activenonactive == 'A' or activenonactive == 'ACTIVE':
+            specific_side = '_paretic_active_'
+        elif activenonactive == 'N' or activenonactive == 'NONACTIVE':
+            specific_side = '_paretic_nonactive_'
+
+    elif more_specific_side == 'nonparetic':
+        activenonactive = raw_input('active or non-active: ').upper()
+        if activenonactive == 'A' or activenonactive == 'ACTIVE':
+            specific_side = '_nonparetic_active_'
+        elif activenonactive == 'N' or activenonactive == 'NONACTIVE':
+            specific_side = '_nonparetic_nonactive_'
 
     dataset_folder_name = raw_input('Output folder\' name: ')
 
