@@ -11,8 +11,10 @@ def error_message_func(line='', label='', error_message='', debugging='', logger
 
     if label:
         str_error = 'Line={0}  Label={1} Error={2}'.format(line + 1, label, error_message)
-    else:
+    elif line:
         str_error = 'Line={0}  Error={1}'.format(line + 1, error_message)
+    else:
+        str_error = 'Error={0}'.format(error_message)
 
     print '\t\t' + str_error
     logger.append('\t' + str_error + '\n')
@@ -51,336 +53,345 @@ def data_collection(file_properties, debugging, extract):
                 if not debugging:
                     exit(1)
 
-            # load matlab file content
-            print '\tMatlab content has been loaded'
-            matlab_content = sio.loadmat(matlab_file)
-
             # keep track of error within specific files
             temp_log_file_content = list()
 
-            if not ('tree' in matlab_content):
-                error_msg = 'Fatal error. tree structure does not exists.'
-                print '\t' + error_msg
-                temp_log_file_content.append('\t' + error_msg + '\n')
-                if not debugging:
-                    exit(1)
-            else:
-                print '\ttree structure exists'
+            # variable to know whether matlab was access correctly
+            matlab_access = True
 
-            # this is temporary because if the specific file has no errors then no information
-            # about the file will be written
-            temp_log_file_content = list()
-
-            # tree2 contains the sensor data
-            tree2 = True
-            if not ('tree2' in matlab_content):
-                error_msg = 'Fatal error. tree2 structure does not exists.'
+            # load matlab file content
+            try:
+                matlab_content = sio.loadmat(matlab_file)
+            except ValueError:
+                error_msg = ' File {0} cannot be accessed'.format(matlab_file_name)
                 printout(message='\t' + error_msg, verbose=True)
-                temp_log_file_content.append('\t' + error_msg + '\n')
-                tree2 = False
-                if not debugging:
-                    exit(1)
-            else:
-                printout(message='\ttree2 structure exists', verbose=True)
+                error_message_func(error_message=error_msg, debugging=debugging, logger=temp_log_file_content)
+                matlab_access = False
 
-            # markerExtract contains the label data
-            marker_extract = True
-            # check for marketExtract
-            if not ('markerExtract' in matlab_content):
-                error_msg = 'Fatal error. MarkerExtract structure does not exists.'
-                printout(message='\t' + error_msg, verbose=True)
-                temp_log_file_content.append('\t' + error_msg + '\n')
-                marker_extract = False
-                if not debugging:
-                    exit(1)
-            else:
-                printout(message='\tMarkerExtract structure exists', verbose=True)
+            if matlab_access:
+                printout(message='\tMatlab content has been loaded', verbose=True)
 
-            # structure where the labels are store
-            if marker_extract:
-
-                if 'paretic' in matlab_file_name:
-                    if '_paretic_' in matlab_file_name:
-                        right_left_paretic_nonparetic_hand_expectation = 'P_'
-                    elif '_nonparetic_' in matlab_file_name:
-                        right_left_paretic_nonparetic_hand_expectation = 'N_'
-                    else:
-                        print 'Failed to distinguished between paretic or nonparetic patient.'
-                        exit(1)
+                if not ('tree' in matlab_content):
+                    error_msg = 'Fatal error. tree structure does not exists.'
+                    printout(message='\t' + error_msg, verbose=True)
+                    error_message_func(error_message=error_msg, debugging=debugging, logger=temp_log_file_content)
 
                 else:
-                    if '_r_' in matlab_file_name:
-                        right_left_paretic_nonparetic_hand_expectation = 'R_'
-                    elif '_l_' in matlab_file_name:
-                        right_left_paretic_nonparetic_hand_expectation = 'L_'
-                    else:
-                        print 'Failed to distinguished between right or left hand patient.'
+                    print '\ttree structure exists'
+
+                # this is temporary because if the specific file has no errors then no information
+                # about the file will be written
+                temp_log_file_content = list()
+
+                # tree2 contains the sensor data
+                tree2 = True
+                if not ('tree2' in matlab_content):
+                    error_msg = 'Fatal error. tree2 structure does not exists.'
+                    printout(message='\t' + error_msg, verbose=True)
+                    error_message_func(error_message=error_msg, debugging=debugging, logger=temp_log_file_content)
+                    tree2 = False
+
+                else:
+                    printout(message='\ttree2 structure exists', verbose=True)
+
+                # markerExtract contains the label data
+                marker_extract = True
+                # check for marketExtract
+                if not ('markerExtract' in matlab_content):
+                    error_msg = 'Fatal error. MarkerExtract structure does not exists.'
+                    printout(message='\t' + error_msg, verbose=True)
+                    temp_log_file_content.append('\t' + error_msg + '\n')
+                    marker_extract = False
+                    if not debugging:
                         exit(1)
+                else:
+                    printout(message='\tMarkerExtract structure exists', verbose=True)
 
-                # get label data
-                printout(message='\tAccessing MarkerExtract data', verbose=True)
-                # row_data[0][0] = label
-                # row_data[1][0][0] = time step
-                data_array = matlab_content['markerExtract']
+                # structure where the labels are store
+                if marker_extract:
 
-                # use for checking incoming labels
-                start_flag = True
-                end_flag = False
-                wrong_begin_end_label = False
-                previous_label = ''
-                expected_label = ''
+                    if 'paretic' in matlab_file_name:
+                        if '_paretic_' in matlab_file_name:
+                            right_left_paretic_nonparetic_hand_expectation = 'P_'
+                        elif '_nonparetic_' in matlab_file_name:
+                            right_left_paretic_nonparetic_hand_expectation = 'N_'
+                        else:
+                            print 'Failed to distinguished between paretic or nonparetic patient.'
+                            exit(1)
 
-                # used to overcome index roadblocks
-                first_pass = True
+                    else:
+                        if '_r_' in matlab_file_name:
+                            right_left_paretic_nonparetic_hand_expectation = 'R_'
+                        elif '_l_' in matlab_file_name:
+                            right_left_paretic_nonparetic_hand_expectation = 'L_'
+                        else:
+                            print 'Failed to distinguished between right or left hand patient.'
+                            exit(1)
 
-                # keep track of new labels
-                new_label_list = list()
+                    # get label data
+                    printout(message='\tAccessing MarkerExtract data', verbose=True)
+                    # row_data[0][0] = label
+                    # row_data[1][0][0] = time step
+                    data_array = matlab_content['markerExtract']
 
-                # values corresponding labels
-                last_timestep = -1
+                    # use for checking incoming labels
+                    start_flag = True
+                    end_flag = False
+                    wrong_begin_end_label = False
+                    previous_label = ''
+                    expected_label = ''
 
-                # variable to store labels
-                label_list = list()
+                    # used to overcome index roadblocks
+                    first_pass = True
 
-                # ignored list indices
-                ignore_index_list = list()
+                    # keep track of new labels
+                    new_label_list = list()
 
-                # total number of steps recorded by tree structure
-                total_number_timesteps = \
-                    matlab_content['tree']['subject'][0][0]['frames'][0][0]['frame'][0][0]['index'][0][-1][0][0]
+                    # values corresponding labels
+                    last_timestep = -1
 
-                msg = 'Non-processed file size:{0}'.format(total_number_timesteps)
-                printout(message=msg, verbose=True)
+                    # variable to store labels
+                    label_list = list()
 
-                printout(message='traversing data array', verbose=True)
+                    # ignored list indices
+                    ignore_index_list = list()
 
-                # READING FILE
-                # loop through each row in the markerExtract file
-                for current_row_number, data in enumerate(data_array):
+                    # total number of steps recorded by tree structure
+                    total_number_timesteps = \
+                        matlab_content['tree']['subject'][0][0]['frames'][0][0]['frame'][0][0]['index'][0][-1][0][0]
 
-                    if total_number_timesteps < current_row_number:
-                        error_msg = 'mismatch between number of time steps of tree and markerExtract'
-                        error_message_func(line=current_row_number, error_message=error_msg, debugging=debugging,
-                                           logger=temp_log_file_content, label='')
-
-                    # check for label
-                    try:
-                        # read label and convert it upper case
-                        current_label = str(data[0][0]).upper()
-
-                    # if empty row_value
-                    except ValueError:
-                        error_message_func(line=current_row_number, error_message='missing label', debugging=debugging,
-                                           logger=temp_log_file_content, label='')
-                    except IndexError:
-                        error_msg = 'Failed to get label. Probably empty cell []'
-                        error_message_func(line=current_row_number, error_message=error_msg, debugging=debugging,
-                                           logger=temp_log_file_content, label='')
-                        # switch flags
-                        start_flag = not start_flag
-                        end_flag = not end_flag
-                        continue
-
-                    # check for time step
-                    try:
-                        # read the time step
-                        current_timestep = data[1][0][0].astype(int)
-
-                    # if empty row_value
-                    except ValueError:
-                        error_message_func(line=current_row_number, error_message='missing time step', label='',
-                                           debugging=debugging, logger=temp_log_file_content)
-
-                        # switch flags
-                        start_flag = not start_flag
-                        end_flag = not end_flag
-                        continue
-
-                    msg = '\t\tdata cell information: row={0} label={1} timestep={2}'.format(current_row_number + 1,
-                                                                                             current_label,
-                                                                                             current_timestep)
+                    msg = 'Non-processed file size:{0}'.format(total_number_timesteps)
                     printout(message=msg, verbose=True)
 
-                    # remove space in the label
-                    if ' ' in current_label:
-                        error_message_func(line=current_row_number, error_message='extra space', debugging=debugging,
-                                           logger=temp_log_file_content, label=current_label)
+                    printout(message='traversing data array', verbose=True)
 
-                        # removed space in label
-                        current_label = str(current_label).replace(" ", "")
+                    # READING FILE
+                    # loop through each row in the markerExtract file
+                    for current_row_number, data in enumerate(data_array):
 
-                    if not (right_left_paretic_nonparetic_hand_expectation in current_label) and \
-                            not ('IGNORE_B' in current_label) and not ('IGNORE_E' in current_label):
-                        error_msg = 'Expecting label to start with \'' + \
-                                    right_left_paretic_nonparetic_hand_expectation + '\''
-                        error_message_func(line=current_row_number, label=current_label, error_message=error_msg,
-                                           debugging=debugging, logger=temp_log_file_content)
-                        tmp_label = list(current_label)
-                        tmp_label[0:2] = right_left_paretic_nonparetic_hand_expectation
-                        current_label = ("".join(tmp_label)).upper()
+                        if total_number_timesteps < current_row_number:
+                            error_msg = 'mismatch between number of time steps of tree and markerExtract'
+                            error_message_func(line=current_row_number, error_message=error_msg, debugging=debugging,
+                                               logger=temp_log_file_content)
 
-                    if right_left_paretic_nonparetic_hand_expectation in current_label:
-                        tmp_label = list(current_label)
-                        # removes 'R, L, N or P' in the label in order to find the label in the label class
-                        current_label = "".join(tmp_label[1:])
+                        # check for label
+                        try:
+                            # read label and convert it upper case
+                            current_label = str(data[0][0]).upper()
 
-                    # check timestep are increasing
-                    if last_timestep > current_timestep and not first_pass:
-                        error_msg = 'timestep=' + str(current_timestep + 3) + ' Expected timestep > ' + \
-                                    str(last_timestep + 3)
-                        error_message_func(line=current_row_number, label=current_label,
-                                           error_message=error_msg, debugging=debugging,
-                                           logger=temp_log_file_content)
-
-                    # check if wrong '_B' or '_E' label was previously encountered
-                    # if wrong label was seeing, then forget expected label and start again
-                    if wrong_begin_end_label:
-                        if '_B' in current_label:
+                        # if empty row_value
+                        except ValueError:
+                            error_message_func(line=current_row_number, error_message='missing label', debugging=debugging,
+                                               logger=temp_log_file_content, label='')
+                        except IndexError:
+                            error_msg = 'Failed to get label. Probably empty cell []'
+                            error_message_func(line=current_row_number, error_message=error_msg, debugging=debugging,
+                                               logger=temp_log_file_content, label='')
                             # switch flags
-                            start_flag = True
-                            end_flag = False
-                        elif '_E' in current_label:
+                            start_flag = not start_flag
+                            end_flag = not end_flag
+                            continue
+
+                        # check for time step
+                        try:
+                            # read the time step
+                            current_timestep = data[1][0][0].astype(int)
+
+                        # if empty row_value
+                        except ValueError:
+                            error_message_func(line=current_row_number, error_message='missing time step', label='',
+                                               debugging=debugging, logger=temp_log_file_content)
+
                             # switch flags
-                            start_flag = False
-                            end_flag = True
-                        else:
-                            error_msg = 'Wrong label suffix'
+                            start_flag = not start_flag
+                            end_flag = not end_flag
+                            continue
+
+                        msg = '\t\tdata cell information: row={0} label={1} timestep={2}'.format(current_row_number + 1,
+                                                                                                 current_label,
+                                                                                                 current_timestep)
+                        printout(message=msg, verbose=True)
+
+                        # remove space in the label
+                        if ' ' in current_label:
+                            error_message_func(line=current_row_number, error_message='extra space', debugging=debugging,
+                                               logger=temp_log_file_content, label=current_label)
+
+                            # removed space in label
+                            current_label = str(current_label).replace(" ", "")
+
+                        if not (right_left_paretic_nonparetic_hand_expectation in current_label) and \
+                                not ('IGNORE_B' in current_label) and not ('IGNORE_E' in current_label):
+                            error_msg = 'Expecting label to start with \'' + \
+                                        right_left_paretic_nonparetic_hand_expectation + '\''
                             error_message_func(line=current_row_number, label=current_label, error_message=error_msg,
                                                debugging=debugging, logger=temp_log_file_content)
+                            tmp_label = list(current_label)
+                            tmp_label[0:2] = right_left_paretic_nonparetic_hand_expectation
+                            current_label = ("".join(tmp_label)).upper()
 
-                        wrong_begin_end_label = False
+                        if right_left_paretic_nonparetic_hand_expectation in current_label:
+                            tmp_label = list(current_label)
+                            # removes 'R, L, N or P' in the label in order to find the label in the label class
+                            current_label = "".join(tmp_label[1:])
 
-                    # start of activity
-                    if start_flag:
-                        # make sure the 'Begging' label exists
-                        if not ('_B' in current_label):
-                            if previous_label:
-                                error_msg = 'Expecting label ending in \'_B\' since the last label was \'' + \
-                                            previous_label + '\''
-                            else:
-                                error_msg = 'Expecting label ending in \'_B\''
-                            error_message_func(line=current_row_number, label=current_label, error_message=error_msg,
-                                               debugging=debugging, logger=temp_log_file_content)
-                            wrong_begin_end_label = True
-
-                        else:
-
-                            # reduce the starting position by 3 (model's specifications)
-                            current_timestep -= 3
-
-                            # For a '_B' label, the timestep or value of the label has to increase by one from the
-                            # previous timestep/value's label. For the error message, we increase it by 2 because
-                            # of the requirements of the matlab file (project specific)
-                            if last_timestep != current_timestep and not first_pass:
-                                error_msg = 'timestep=' + str(current_timestep + 3) + ' Expected timestep >= ' + \
-                                            str(last_timestep + 3)
-                                error_message_func(line=current_row_number, label=current_label,
-                                                   error_message=error_msg, debugging=debugging,
-                                                   logger=temp_log_file_content)
-
-                            # error check
-                            # create a new label in order to compare it to the next label
-                            temporary_variable = list(current_label)
-                            temporary_variable[-1] = 'E'
-                            # store label for future comparison
-                            expected_label = ("".join(temporary_variable)).upper()
-
-                    # '_E' label
-                    elif end_flag:
-
-                        # reduce the starting position by 2 (model's specifications) and in order to account
-                        # for python not including the last index
-                        current_timestep -= 2
-
-                        # make sure the 'Ending' label exists
-                        # compare current label to the expected (obtained from changing the previous/start label
-                        if not ('_E' in current_label) or current_label != expected_label:
-                            if previous_label:
-                                error_msg = 'Expecting label ending in \'_E\' since the last label was \'' + \
-                                            previous_label + '\''
-                            else:
-                                error_msg = 'Expecting label ending in \'_E\''
-                            error_message_func(line=current_row_number, label=current_label, error_message=error_msg,
-                                               debugging=debugging, logger=temp_log_file_content)
-
-                            wrong_begin_end_label = True
-
-                        # need to get the label index based on the '_B' label in the motion_class.label list
-                        tmp_var = list(current_label)
-                        tmp_var[-1] = 'B'
-                        new_label = ("".join(tmp_var)).upper()
-                        # check if the motion exists
-                        if not (new_label in motion_class.labels):
-                            error_msg = 'Unknown label'
+                        # check timestep are increasing
+                        if last_timestep > current_timestep and not first_pass:
+                            error_msg = 'timestep=' + str(current_timestep + 3) + ' Expected timestep > ' + \
+                                        str(last_timestep + 3)
                             error_message_func(line=current_row_number, label=current_label,
                                                error_message=error_msg, debugging=debugging,
                                                logger=temp_log_file_content)
 
-                            # keep record of new labels
-                            new_label_list.append(current_label)
-
-                            # print 'Finishing program. Unknown label.'
-                            # always finish the program
-                            # exit(1)
-
-                        if not debugging:
-                            if 'IGNORE' in current_label:
-                                current_class_label_index = motion_class.labels.index(current_label)
+                        # check if wrong '_B' or '_E' label was previously encountered
+                        # if wrong label was seeing, then forget expected label and start again
+                        if wrong_begin_end_label:
+                            if '_B' in current_label:
+                                # switch flags
+                                start_flag = True
+                                end_flag = False
+                            elif '_E' in current_label:
+                                # switch flags
+                                start_flag = False
+                                end_flag = True
                             else:
-                                try:
-                                    # instead of threating _T_A0A1_E and _T_B2B1_E different, treat them as _T_E i.e.
-                                    # as a compact label
-                                    splitted_label = current_label.split("_")[1]
-                                    # check if * or non-characters in the label
-                                    remove_non_characters = re.compile('[^a-zA-Z]')
-                                    splitted_label = remove_non_characters.sub('', splitted_label)
-                                    # get index of compact label
-                                    current_class_label_index = motion_class.compact_list.index(splitted_label)
+                                error_msg = 'Wrong label suffix'
+                                error_message_func(line=current_row_number, label=current_label, error_message=error_msg,
+                                                   debugging=debugging, logger=temp_log_file_content)
 
-                                except ValueError:
-                                    msg = 'Error: label was not found in the compact label list'.format(current_label)
-                                    error_message_func(line=current_row_number, error_message=msg, debugging=debugging,
-                                                       label=current_label, logger=temp_log_file_content)
+                            wrong_begin_end_label = False
 
-                            # provide the same labels to multiple time steps for hmm algorithm
-                            label_range = current_timestep - last_timestep
-                            label_list.extend([current_class_label_index] * label_range)
+                        # start of activity
+                        if start_flag:
+                            # make sure the 'Begging' label exists
+                            if not ('_B' in current_label):
+                                if previous_label:
+                                    error_msg = 'Expecting label ending in \'_B\' since the last label was \'' + \
+                                                previous_label + '\''
+                                else:
+                                    error_msg = 'Expecting label ending in \'_B\''
+                                error_message_func(line=current_row_number, label=current_label, error_message=error_msg,
+                                                   debugging=debugging, logger=temp_log_file_content)
+                                wrong_begin_end_label = True
 
-                    else:
-                        error_msg = 'Error while changing start and end checks'
-                        error_message_func(line=current_row_number, error_message=error_msg,
-                                           debugging=debugging, label='', logger=temp_log_file_content)
+                            else:
 
-                    # store label for future comparison
-                    previous_label = current_label
+                                # reduce the starting position by 3 (model's specifications)
+                                current_timestep -= 3
 
-                    # switch flags
-                    start_flag = not start_flag
-                    end_flag = not end_flag
-                    first_pass = False
+                                # For a '_B' label, the timestep or value of the label has to increase by one from the
+                                # previous timestep/value's label. For the error message, we increase it by 2 because
+                                # of the requirements of the matlab file (project specific)
+                                if last_timestep != current_timestep and not first_pass:
+                                    error_msg = 'timestep=' + str(current_timestep + 3) + ' Expected timestep >= ' + \
+                                                str(last_timestep + 3)
+                                    error_message_func(line=current_row_number, label=current_label,
+                                                       error_message=error_msg, debugging=debugging,
+                                                       logger=temp_log_file_content)
 
-                    # check for multiple motions per label
-                    label_used = [current_label for pMotions in motion_class.possible_motions
-                                  if (pMotions in current_label)]
-                    if len(label_used) > 1:
-                        error_msg = 'Error: More than one motion in the same label'
-                        error_message_func(line=current_row_number, label=current_label,
-                                           error_message=error_msg, debugging=debugging,
-                                           logger=temp_log_file_content)
+                                # error check
+                                # create a new label in order to compare it to the next label
+                                temporary_variable = list(current_label)
+                                temporary_variable[-1] = 'E'
+                                # store label for future comparison
+                                expected_label = ("".join(temporary_variable)).upper()
 
-                    # check for ignored labels/timesteps
-                    if 'IGNORE_E' in current_label:
-                        ignore_index_list.append([last_timestep, current_timestep])
+                        # '_E' label
+                        elif end_flag:
 
-                    last_timestep = current_timestep
+                            # reduce the starting position by 2 (model's specifications) and in order to account
+                            # for python not including the last index
+                            current_timestep -= 2
 
-                if not debugging and extract and tree2:
+                            # make sure the 'Ending' label exists
+                            # compare current label to the expected (obtained from changing the previous/start label
+                            if not ('_E' in current_label) or current_label != expected_label:
+                                if previous_label:
+                                    error_msg = 'Expecting label ending in \'_E\' since the last label was \'' + \
+                                                previous_label + '\''
+                                else:
+                                    error_msg = 'Expecting label ending in \'_E\''
+                                error_message_func(line=current_row_number, label=current_label, error_message=error_msg,
+                                                   debugging=debugging, logger=temp_log_file_content)
 
-                    label_array = np.array(label_list)
+                                wrong_begin_end_label = True
 
-                    # fetching sensors' data
-                    extract_data_and_save_to_file(label_array, ignore_index_list, matlab_content['tree2'], motion_class,
-                                                  file_properties, activity, index_matlab_file)
+                            # need to get the label index based on the '_B' label in the motion_class.label list
+                            tmp_var = list(current_label)
+                            tmp_var[-1] = 'B'
+                            new_label = ("".join(tmp_var)).upper()
+                            # check if the motion exists
+                            if not (new_label in motion_class.labels):
+                                error_msg = 'Unknown label'
+                                error_message_func(line=current_row_number, label=current_label,
+                                                   error_message=error_msg, debugging=debugging,
+                                                   logger=temp_log_file_content)
+
+                                # keep record of new labels
+                                new_label_list.append(current_label)
+
+                                # print 'Finishing program. Unknown label.'
+                                # always finish the program
+                                # exit(1)
+
+                            if not debugging:
+                                if 'IGNORE' in current_label:
+                                    current_class_label_index = motion_class.labels.index(current_label)
+                                else:
+                                    try:
+                                        # instead of threating _T_A0A1_E and _T_B2B1_E different, treat them as _T_E
+                                        # i.e. as a compact label
+                                        splitted_label = current_label.split("_")[1]
+                                        # check if * or non-characters in the label
+                                        remove_non_characters = re.compile('[^a-zA-Z]')
+                                        splitted_label = remove_non_characters.sub('', splitted_label)
+                                        # get index of compact label
+                                        current_class_label_index = motion_class.compact_list.index(splitted_label)
+
+                                    except ValueError:
+                                        msg = 'Error: label was not found in the compact label list'.format(current_label)
+                                        error_message_func(line=current_row_number, error_message=msg, debugging=debugging,
+                                                           label=current_label, logger=temp_log_file_content)
+
+                                # provide the same labels to multiple time steps for hmm algorithm
+                                label_range = current_timestep - last_timestep
+                                label_list.extend([current_class_label_index] * label_range)
+
+                        else:
+                            error_msg = 'Error while changing start and end checks'
+                            error_message_func(line=current_row_number, error_message=error_msg,
+                                               debugging=debugging, label='', logger=temp_log_file_content)
+
+                        # store label for future comparison
+                        previous_label = current_label
+
+                        # switch flags
+                        start_flag = not start_flag
+                        end_flag = not end_flag
+                        first_pass = False
+
+                        # check for multiple motions per label
+                        label_used = [current_label for pMotions in motion_class.possible_motions
+                                      if (pMotions in current_label)]
+                        if len(label_used) > 1:
+                            error_msg = 'Error: More than one motion in the same label'
+                            error_message_func(line=current_row_number, label=current_label,
+                                               error_message=error_msg, debugging=debugging,
+                                               logger=temp_log_file_content)
+
+                        # check for ignored labels/timesteps
+                        if 'IGNORE_E' in current_label:
+                            ignore_index_list.append([last_timestep, current_timestep])
+
+                        last_timestep = current_timestep
+
+                    if not debugging and extract and tree2:
+
+                        label_array = np.array(label_list)
+
+                        # fetching sensors' data
+                        extract_data_and_save_to_file(label_array, ignore_index_list, matlab_content['tree2'], motion_class,
+                                                      file_properties, activity, index_matlab_file)
 
             if len(temp_log_file_content) != 0:
 
@@ -415,8 +426,7 @@ def data_collection(file_properties, debugging, extract):
                     continue
 
     file_properties.output_file_object.write('Done checking matlab files\n')
-    print 'Done checking matlab files.'
-    print ''
+    printout(message='Done checking matlab files.\n\n', verbose=True)
 
 
 def remove_ignores(tmp_arr, ignored_index_list):
@@ -506,7 +516,7 @@ def extract_data_and_save_to_file(labels, ignored_indices, dataset, motion_class
     np.save(current_out_path, data_labels)
 
 
-def extract_information(doc, matlab_directory, action, matlab_filter, forward_folder):
+def extract_information(doc, matlab_directory, action, matlab_filter, forward_folder, error_file_name):
     """
     Extracts the relevant information about the directories of the matlab files being considered
     updates two variables:
@@ -538,7 +548,7 @@ def extract_information(doc, matlab_directory, action, matlab_filter, forward_fo
         if not os.path.exists(doc.dataset_path):
             os.makedirs(doc.dataset_path)
 
-    doc.log_file = os.path.join(working_path, 'Error_File')
+    doc.log_file = os.path.join(working_path, error_file_name)
 
     # all the activities i.e. Shelf_High_Heavycan, Shelf_Low_Heavycan, etc...
     doc.activity_list = next(os.walk(doc.data_path))[1]

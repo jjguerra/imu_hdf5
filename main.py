@@ -55,7 +55,16 @@ def check_matlab():
     printout(message='Checking matlab files', verbose=True)
 
     checking_location = raw_input('Matlab file folder: ')
-    matlab_labels_data(action='check', matlab_directory=checking_location, s_property='', folder_name='')
+    error_file_name = raw_input('Error file name: ')
+
+    # get location of program
+    if error_file_name == "":
+        file_name = 'Error_File_' + checking_location + '.txt'
+    else:
+        file_name = error_file_name + '.txt'
+
+    matlab_labels_data(action='check', matlab_directory=checking_location, s_property='', folder_name='',
+                       error_file_name=file_name)
 
 
 def process_matlab():
@@ -75,6 +84,10 @@ def process_matlab():
         specific_side = '_l_'
     elif side == 'R' or side == 'RIGHT':
         specific_side = '_r_'
+    elif side == 'P' or side == 'PARETIC':
+        specific_side = '_paretic_'
+    elif side == 'N' or side == 'NONPARETIC':
+        specific_side = '_nonparetic_'
     else:
         printout(message='No side specified. Please specified a side.', verbose=True)
         return

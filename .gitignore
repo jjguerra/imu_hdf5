@@ -9,3 +9,5 @@ model/__init__.pyc
 model/datafunctions.pyc
 model/hmm.pyc
 utils/output.pyc
+matlab*
+Matlab*

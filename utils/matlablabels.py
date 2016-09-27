@@ -48,7 +48,6 @@ class MatlabLabels(object):
                        '_T_C8_B', '_T_C8_E', '_T_E', '_T_IB0_B', '_T_IB0_E', '_T_T2C0_B', '_T_T2C0_E', '_T_A0B1_E',
                        '_T_A0B1_B']
 
-
         self.compact_list = ['REST', 'REA', 'T', 'RET', 'I', 'S', 'ST', 'SM', 'M', 'MC', 'THM', 'TC']
 
         self.jointUsed = ['']
