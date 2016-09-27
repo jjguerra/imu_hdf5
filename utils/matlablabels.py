@@ -45,7 +45,9 @@ class MatlabLabels(object):
                        '_T_B2B0_E', '_T_C0C1_B', '_T_C0C1_E', '_T_C0C2_B', '_T_C0C2_E', '_T_C1C0_B', '_T_C1C0_E',
                        '_T_C1_B', '_T_C1_E', '_T_C2C0_B', '_T_C2C0_E', '_T_C2_B', '_T_C2_E', '_T_C3_B', '_T_C3_E',
                        '_T_C4_B', '_T_C4_E', '_T_C5_B', '_T_C5_E', '_T_C6_B', '_T_C6_E', '_T_C7_B', '_T_C7_E',
-                       '_T_C8_B', '_T_C8_E', '_T_E', '_T_IB0_B', '_T_IB0_E', '_T_T2C0_B', '_T_T2C0_E']
+                       '_T_C8_B', '_T_C8_E', '_T_E', '_T_IB0_B', '_T_IB0_E', '_T_T2C0_B', '_T_T2C0_E', '_T_A0B1_E',
+                       '_T_A0B1_B']
+
 
         self.compact_list = ['REST', 'REA', 'T', 'RET', 'I', 'S', 'ST', 'SM', 'M', 'MC', 'THM', 'TC']
 
