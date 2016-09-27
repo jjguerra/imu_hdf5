@@ -14,7 +14,7 @@ from utils.matlabmover import move_matlab_files
 
 def select_dataset_quickrun(algorithm=''):
 
-    dataset_location = raw_input('Dataset location: ')
+    dataset_location = raw_input('Dataset directory: ')
 
     temp_path = os.path.dirname(sys.argv[0])
 
@@ -54,13 +54,13 @@ def check_matlab():
 
     printout(message='Checking matlab files', verbose=True)
 
-    checking_location = raw_input('Matlab file location: ')
+    checking_location = raw_input('Matlab file folder: ')
     matlab_labels_data(action='check', matlab_directory=checking_location, s_property='', folder_name='')
 
 
 def process_matlab():
 
-    dataset_location = raw_input('Dataset location: ')
+    dataset_location = raw_input('Dataset folder: ')
 
     temp_path = os.path.dirname(sys.argv[0])
 
@@ -79,7 +79,7 @@ def process_matlab():
         printout(message='No side specified. Please specified a side.', verbose=True)
         return
 
-    dataset_folder_name = raw_input('Created folder\' name: ')
+    dataset_folder_name = raw_input('Output folder\' name: ')
 
     printout(message='Converting matlab files', verbose=True)
     matlab_labels_data(action='extract', matlab_directory=dataset_location, s_property=specific_side,
@@ -90,8 +90,8 @@ def move_matlab():
 
     printout(message='In order to move matlab files', verbose=True)
 
-    initial_path = raw_input('Matlab directory: ')
-    forwarding_path = raw_input('Matlab destination: ')
+    initial_path = raw_input('Matlab current directory: ')
+    forwarding_path = raw_input('Matlab forwarding directory: ')
 
     if forwarding_path == "":
         # get location of program

@@ -153,6 +153,8 @@ def data_collection(file_properties, debugging, extract):
                 printout(message=msg, verbose=True)
 
                 printout(message='traversing data array', verbose=True)
+
+                # READING FILE
                 # loop through each row in the markerExtract file
                 for current_row_number, data in enumerate(data_array):
 
