@@ -160,10 +160,10 @@ def data_collection(file_properties, debugging, extract):
                     total_number_timesteps = \
                         matlab_content['tree']['subject'][0][0]['frames'][0][0]['frame'][0][0]['index'][0][-1][0][0]
 
-                    msg = 'Non-processed file size:{0}'.format(total_number_timesteps)
+                    msg = '\tTotal file size:{0}'.format(total_number_timesteps)
                     printout(message=msg, verbose=True)
 
-                    printout(message='traversing data array', verbose=True)
+                    printout(message='\ttraversing data array', verbose=True)
 
                     # READING FILE
                     # loop through each row in the markerExtract file
