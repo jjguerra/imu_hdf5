@@ -35,7 +35,7 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
 
         if quickrun:
             printout(message='Training Hidden Markov Model.', time=True, verbose=True)
-            hmm_model = hmm.GaussianHMM(n_components=8, covariance_type='diag', n_iter=10, verbose=True)
+            hmm_model = hmm.GaussianHMM(n_components=8, covariance_type='full', n_iter=10, verbose=True)
             hmm_model.fit(X=trainingdataset)
             printout(message='Finished training Hidden Markov Model.', time=True, verbose=True)
 

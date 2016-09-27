@@ -228,3 +228,12 @@ def preprocessing_data(dataset):
     n_statistical_descriptors = (statistical_descriptors - sd_mean) / sd_std
 
     return n_statistical_descriptors, label_list
+
+
+def repeated_labels(passed_list):
+    seen = set()
+    for x in passed_list:
+        if x in seen:
+            return True
+        seen.add(x)
+    return False

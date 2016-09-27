@@ -1,12 +1,10 @@
 Dataset*
-SensorData/
+SensorData*
 Dataset/
 .idea/
 .DS_Store
 Dataset_All/
-Error_File
-Error_File_Q435Reconvert
-Error_File_healthycontrolcorrections
+Error_File*
 model/__init__.pyc
 model/datafunctions.pyc
 model/hmm.pyc

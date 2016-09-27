@@ -120,7 +120,6 @@ if __name__ == '__main__':
         print '4: Move Matlab files from Dropbox to Working Directory'
         print '5: Perform Logistic Regression'
         print '6: Exit'
-
         print ''
 
         try:

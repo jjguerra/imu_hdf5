@@ -1,4 +1,4 @@
-from datafunctions import load_data, preprocessing_data
+from datafunctions import load_data, preprocessing_data, append_array
 from utils.output import printout
 from multiprocessing.dummy import Pool as ThreadPool
 from model.hmm import hmm_algo
@@ -11,7 +11,7 @@ def preprocessing(list_args):
     name = list_args[0]
     dataset = list_args[1]
 
-    msg = 'Pre-processing {0}.'.format(name)
+    msg = 'Pre-processing {0}'.format(name)
     printout(message=msg, verbose=True, time=True)
     dataset_normalized, labels = preprocessing_data(dataset=dataset)
     msg = 'Finished pre-processing {0}.'.format(name)
@@ -24,33 +24,50 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
 
     dataset_array, dataset_info = load_data(data_dir=dataset_directory)
 
-    for user_info in dataset_info:
+    printout(message='Starting pre-processing dataset', verbose=True, time=True)
 
-        testing_data = dataset_array[user_info.start_index:user_info.end_index]
-        # create a new array without the testing sensor data
-        training_data = np.delete(dataset_array, np.s_[user_info.start_index:user_info.end_index], axis=0)
+    # creating argument list for multiprocessing where a message and the dataset of an specific user is passed
+    arg_list = list()
+    for user_index, user in enumerate(dataset_info):
+        msg = 'dataset number={0} User={1}'.format(user_index, user.user)
+        arg_list.append([msg, dataset_array[user.start_index:user.end_index]])
 
-        # list of name of the dataset and its dataset used for multiprocessing
-        arg_list = [['testing dataset. User={0}'.format(user_info.user), testing_data],
-                    ['training dataset', training_data]]
+    # multiprocessing
+    pool = ThreadPool()
 
-        # multiprocessing
-        pool = ThreadPool()
+    # run hmm_preprocessing their own threads and return the results
+    # results = list
+    #   results[0] = testing dataset, results[1] = training dataset
+    processed_dataset = pool.map(preprocessing, arg_list)
+    # close the pool and wait for the work to finish
+    pool.close()
+    pool.join()
 
-        # run hmm_preprocessing their own threads and return the results
-        # results = list
-        #   results[0] = testing dataset, results[1] = training dataset
-        results = pool.map(preprocessing, arg_list)
-        # close the pool and wait for the work to finish
-        pool.close()
-        pool.join()
+    printout(message='Finished pre-processing dataset', verbose=True, time=True)
 
-        # fetch training and testing data from the objects
-        test_dataset = results[0][0]
-        test_labels = results[0][1]
+    for user_index, user_info in enumerate(dataset_info):
 
-        train_dataset = results[1][0]
-        train_labels = results[1][1]
+        msg = 'Analysing user:{0}\n\n'.format(user_info.user)
+        printout(message=msg, verbose=True)
+
+        printout(message='Calculating training and testing dataset', verbose=True, time=True)
+        # fetch testing data from the objects
+        test_dataset = processed_dataset[user_index][0]
+        test_labels = processed_dataset[user_index][1]
+
+        # defining train dataset and labels array
+        train_dataset = np.empty(shape=(0, 0))
+        train_labels = np.empty(shape=(0, 0))
+
+        # fetch training data from the objects without the testing data i.e. the data of user_index
+        for user_index_inner, user_info_inner in enumerate(dataset_info):
+            if user_index_inner != user_index:
+                train_dataset = append_array(o_array=train_dataset, array_to_add=processed_dataset[user_index_inner][0])
+                train_labels = append_array(o_array=train_labels, array_to_add=processed_dataset[user_index_inner][1])
+
+        # converting to numpy arrays
+        train_dataset = np.array(train_dataset)
+        train_labels = np.array(train_labels)
 
         printout(message='training data size:{0}'.format(np.shape(train_dataset)), verbose=True)
         printout(message='training label size:{0}'.format(np.shape(train_labels)), verbose=True)

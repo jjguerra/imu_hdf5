@@ -1,6 +1,5 @@
 import numpy as np
 import os
-import pandas as pd
 import re
 from utils.output import printout
 from collections import Counter
@@ -103,7 +102,7 @@ def preprocessing_data(dataset):
         sd_std = np.std(a=statistical_descriptors, axis=0)
         n_statistical_descriptors = (statistical_descriptors - sd_mean) / sd_std
 
-        return n_statistical_descriptors, label_list
+        return n_statistical_descriptors, np.array(label_list)
 
 
 def file_information(python_file):
@@ -147,11 +146,8 @@ def load_data(data_dir):
         raw_data = np.load(python_file_path)
 
         # adding the info to the sensordata list
-        if start_index == 0:
-            # remove label column
-            sensordata_array = raw_data
-        else:
-            sensordata_array = np.append(arr=sensordata_array, values=raw_data, axis=0)
+        sensordata_array = append_array(sensordata_array, raw_data)
+
         # get the max length of the added dataset
         end_index = np.shape(sensordata_array)[0]
 
@@ -192,3 +188,17 @@ def preprocessing_logistic_regression(predictions, labels):
         new_dataset.append(average_of_probabilities)
 
     return np.array(new_dataset), np.array(new_labels)
+
+
+def append_array(o_array, array_to_add):
+
+    # check to see if original array in empty
+    if o_array.size == 0:
+        merged_array = array_to_add
+    else:
+        # append  new array it to the original
+        merged_array = np.append(arr=o_array, values=array_to_add, axis=0)
+
+    return merged_array
+
+

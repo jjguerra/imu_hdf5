@@ -47,6 +47,8 @@ class MatlabLabels(object):
                        '_T_C4_B', '_T_C4_E', '_T_C5_B', '_T_C5_E', '_T_C6_B', '_T_C6_E', '_T_C7_B', '_T_C7_E',
                        '_T_C8_B', '_T_C8_E', '_T_E', '_T_IB0_B', '_T_IB0_E', '_T_T2C0_B', '_T_T2C0_E']
 
+        self.compact_list = ['REST', 'REA', 'T', 'RET', 'I', 'S', 'ST', 'SM', 'M', 'MC', 'THM', 'TC']
+
         self.jointUsed = ['']
 
         self.segmentUsed = ['RightHand']

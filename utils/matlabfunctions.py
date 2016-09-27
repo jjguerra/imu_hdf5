@@ -4,9 +4,10 @@ import numpy as np
 import scipy.io as sio
 from utils.matlablabels import MatlabLabels
 from utils.output import printout
+import re
 
 
-def error_message_func(line, label, error_message, debugging, logger):
+def error_message_func(line='', label='', error_message='', debugging='', logger=''):
 
     if label:
         str_error = 'Line={0}  Label={1} Error={2}'.format(line + 1, label, error_message)
@@ -39,11 +40,13 @@ def data_collection(file_properties, debugging, extract):
 
             # get name of matlab file
             matlab_file_name = file_properties.matlab_files_names_dict[activity][index_matlab_file]
-            print 'On activity: {}'.format(activity)
-            print 'Accessing file: {}'.format(matlab_file_name)
+            msg = 'On activity: {0}'.format(activity)
+            printout(message=msg, verbose=True)
+            msg = 'Accessing file: {}'.format(matlab_file_name)
+            printout(message=msg, verbose=True)
             if matlab_file_name not in matlab_file:
                 error_msg = 'Fatal Error. missing file={0} for activity={1}'.format(matlab_file_name, activity)
-                print error_msg
+                printout(message=error_msg, verbose=True)
                 file_properties.output_file_object.write('\t' + error_msg + '\n')
                 if not debugging:
                     exit(1)
@@ -72,26 +75,26 @@ def data_collection(file_properties, debugging, extract):
             tree2 = True
             if not ('tree2' in matlab_content):
                 error_msg = 'Fatal error. tree2 structure does not exists.'
-                print '\t' + error_msg
+                printout(message='\t' + error_msg, verbose=True)
                 temp_log_file_content.append('\t' + error_msg + '\n')
                 tree2 = False
                 if not debugging:
                     exit(1)
             else:
-                print '\ttree2 structure exists'
+                printout(message='\ttree2 structure exists', verbose=True)
 
             # markerExtract contains the label data
             marker_extract = True
             # check for marketExtract
             if not ('markerExtract' in matlab_content):
                 error_msg = 'Fatal error. MarkerExtract structure does not exists.'
-                print '\t' + error_msg
+                printout(message='\t' + error_msg, verbose=True)
                 temp_log_file_content.append('\t' + error_msg + '\n')
                 marker_extract = False
                 if not debugging:
                     exit(1)
             else:
-                print '\tMarkerExtract structure exists'
+                printout(message='\tMarkerExtract structure exists', verbose=True)
 
             # structure where the labels are store
             if marker_extract:
@@ -115,7 +118,7 @@ def data_collection(file_properties, debugging, extract):
                         exit(1)
 
                 # get label data
-                print '\tAccessing MarkerExtract data'
+                printout(message='\tAccessing MarkerExtract data', verbose=True)
                 # row_data[0][0] = label
                 # row_data[1][0][0] = time step
                 data_array = matlab_content['markerExtract']
@@ -149,7 +152,7 @@ def data_collection(file_properties, debugging, extract):
                 msg = 'Non-processed file size:{0}'.format(total_number_timesteps)
                 printout(message=msg, verbose=True)
 
-                print '\tTraversing data array ...'
+                printout(message='traversing data array', verbose=True)
                 # loop through each row in the markerExtract file
                 for current_row_number, data in enumerate(data_array):
 
@@ -191,9 +194,10 @@ def data_collection(file_properties, debugging, extract):
                         end_flag = not end_flag
                         continue
 
-                    print '\t\tdata cell information: row={0} label={1} timestep={2}'.format(current_row_number + 1,
+                    msg = '\t\tdata cell information: row={0} label={1} timestep={2}'.format(current_row_number + 1,
                                                                                              current_label,
                                                                                              current_timestep)
+                    printout(message=msg, verbose=True)
 
                     # remove space in the label
                     if ' ' in current_label:
@@ -318,7 +322,23 @@ def data_collection(file_properties, debugging, extract):
                             # exit(1)
 
                         if not debugging:
-                            current_class_label_index = motion_class.labels.index(current_label)
+                            if 'IGNORE' in current_label:
+                                current_class_label_index = motion_class.labels.index(current_label)
+                            else:
+                                try:
+                                    # instead of threating _T_A0A1_E and _T_B2B1_E different, treat them as _T_E i.e.
+                                    # as a compact label
+                                    splitted_label = current_label.split("_")[1]
+                                    # check if * or non-characters in the label
+                                    remove_non_characters = re.compile('[^a-zA-Z]')
+                                    splitted_label = remove_non_characters.sub('', splitted_label)
+                                    # get index of compact label
+                                    current_class_label_index = motion_class.compact_list.index(splitted_label)
+
+                                except ValueError:
+                                    msg = 'Error: label was not found in the compact label list'.format(current_label)
+                                    error_message_func(line=current_row_number, error_message=msg, debugging=debugging,
+                                                       label=current_label, logger=temp_log_file_content)
 
                             # provide the same labels to multiple time steps for hmm algorithm
                             label_range = current_timestep - last_timestep
@@ -355,6 +375,7 @@ def data_collection(file_properties, debugging, extract):
                 if not debugging and extract and tree2:
 
                     label_array = np.array(label_list)
+
                     # fetching sensors' data
                     extract_data_and_save_to_file(label_array, ignore_index_list, matlab_content['tree2'], motion_class,
                                                   file_properties, activity, index_matlab_file)
