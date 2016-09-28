@@ -5,11 +5,8 @@ Dataset/
 .DS_Store
 Dataset_All/
 Error_File*
-model/__init__.pyc
-model/datafunctions.pyc
-model/hmm.pyc
-utils/output.pyc
 matlab*
 Matlab*
 logfile
 strokedataset
+error_log*
