@@ -8,9 +8,9 @@ import re
 
 def error_message_func(line='', label='', error_message='', debugging='', logger='', timestep=''):
 
-    if label and timestep:
+    if label != '' and timestep != '':
         str_error = 'Line={0}  Label={1} Timestep={2} Error={3}'.format(line + 1, label, timestep + 3, error_message)
-    if label:
+    elif label:
         str_error = 'Line={0}  Label={1} Error={2}'.format(line + 1, label, error_message)
     elif line:
         str_error = 'Line={0}  Error={1}'.format(line + 1, error_message)
@@ -341,7 +341,7 @@ def data_collection(file_properties, debugging, extract):
                                     current_class_label_index = motion_class.labels.index(current_label)
                                 else:
                                     try:
-                                        # instead of threating _T_A0A1_E and _T_B2B1_E different, treat them as _T_E
+                                        # instead of threading _T_A0A1_E and _T_B2B1_E different, treat them as _T_E
                                         # i.e. as a compact label
                                         splitted_label = current_label.split("_")[1]
                                         # check if * or non-characters in the label
@@ -541,7 +541,8 @@ def extract_data_and_save_to_file(labels, ignored_indices, dataset, motion_class
     np.save(current_out_path, data_labels)
 
 
-def extract_information(doc, matlab_directory, action, matlab_filter, forward_folder, error_file_name, script_path):
+def extract_information(doc, matlab_directory, action, leftright_arm, forward_folder, error_file_name, script_path,
+                        pareticnonparetic=''):
     """
     Extracts the relevant information about the directories of the matlab files being considered
     updates two variables:
@@ -578,6 +579,16 @@ def extract_information(doc, matlab_directory, action, matlab_filter, forward_fo
     # all the activities i.e. Shelf_High_Heavycan, Shelf_Low_Heavycan, etc...
     doc.activity_list = next(os.walk(doc.data_path))[1]
 
+    # used for experimental patients
+    if pareticnonparetic:
+        # set of motions and labels
+        motion_class = MatlabLabels()
+
+        # get list of right or left dexterity user
+        specific_patients = motion_class.s_patients_dexterity[leftright_arm]
+
+        upattern = r'(^[A-Z]+[0-9]+)_[nonparetic|paretic]+_[active|nonactive]+_([a-z]+_high|[a-z]+_low|[a-z]+).*\.mat$'
+
     # loop through activities
     for activity in doc.activity_list:
         matlab_path_list = list()
@@ -590,16 +601,27 @@ def extract_information(doc, matlab_directory, action, matlab_filter, forward_fo
             for matlab_file in matlab_file_list:
                 # check if matlab files
                 if '.mat' in matlab_file:
-                    if matlab_filter == "":
+                    # use for checking files
+                    if leftright_arm == "":
                         # full matlab path
                         matlab_path_list.append(os.path.join(subject_path, matlab_file))
                         matlab_files_list.append(matlab_file)
                         doc.count += 1
-                    elif matlab_filter in matlab_file:
+                    # use when extracting control patients files
+                    elif leftright_arm in matlab_file:
                         # full matlab path
                         matlab_path_list.append(os.path.join(subject_path, matlab_file))
                         matlab_files_list.append(matlab_file)
                         doc.count += 1
+                    # use when extracting experimental patients files
+                    elif pareticnonparetic in matlab_file:
+                        user_information = re.match(pattern=upattern, string=matlab_file)
+                        # check whether the user is in the right or left side list
+                        if user_information.group(1) in specific_patients:
+                            # full matlab path
+                            matlab_path_list.append(os.path.join(subject_path, matlab_file))
+                            matlab_files_list.append(matlab_file)
+                            doc.count += 1
 
         # add the respective matlab files to their specific activities
         doc.matlab_files_path_dict[activity] = matlab_path_list

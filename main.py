@@ -63,8 +63,7 @@ def check_matlab():
     else:
         file_name = error_file_name + '.txt'
 
-    matlab_labels_data(action='check', matlab_directory=checking_location, s_property='', folder_name='',
-                       error_file_name=file_name)
+    matlab_labels_data(action='check', matlab_directory=checking_location, error_file_name=file_name)
 
 
 def process_matlab():
@@ -84,32 +83,33 @@ def process_matlab():
         if not directory:
             dataset_location = os.path.join(program_path, dataset_location)
 
-    more_specific_side = ''
-
-    side = raw_input('arm side: ').upper()
-    if side == 'L' or side == 'LEFT':
-        specific_side = '_l_'
-    elif side == 'R' or side == 'RIGHT':
-        specific_side = '_r_'
-
-    elif side == 'P' or side == 'PARETIC':
-        more_specific_side = 'paretic'
-
-    elif side == 'N' or side == 'NONPARETIC':
-        more_specific_side = 'nonparetic'
+    leftright_arm = raw_input('right(r) or left(l): ').upper()
+    if leftright_arm == 'L':
+        leftright_arm = '_l_'
+    elif leftright_arm == 'R':
+        leftright_arm = '_r_'
 
     else:
         printout(message='No side specified. Please specified a side.', verbose=True)
         return
 
-    if more_specific_side == 'paretic':
+    specific_side = ''
+    paretic_nonparetic_enter = raw_input('paretic(p), non-paretic(n) or neither(\'enter\'): ').upper()
+
+    if paretic_nonparetic_enter == 'P':
+        pareticnonparetic = 'paretic'
+
+    elif paretic_nonparetic_enter == 'N':
+        pareticnonparetic = 'nonparetic'
+
+    if pareticnonparetic == 'paretic':
         activenonactive = raw_input('active or non-active: ').upper()
         if activenonactive == 'A' or activenonactive == 'ACTIVE':
             specific_side = '_paretic_active_'
         elif activenonactive == 'N' or activenonactive == 'NONACTIVE':
             specific_side = '_paretic_nonactive_'
 
-    elif more_specific_side == 'nonparetic':
+    elif pareticnonparetic == 'nonparetic':
         activenonactive = raw_input('active or non-active: ').upper()
         if activenonactive == 'A' or activenonactive == 'ACTIVE':
             specific_side = '_nonparetic_active_'
@@ -119,8 +119,8 @@ def process_matlab():
     dataset_folder_name = raw_input('Output folder\'s name: ')
 
     printout(message='Converting matlab files', verbose=True)
-    matlab_labels_data(action='extract', matlab_directory=dataset_location, s_property=specific_side,
-                       folder_name=dataset_folder_name, program_path=program_path)
+    matlab_labels_data(action='extract', matlab_directory=dataset_location, leftright_arm=leftright_arm,
+                       pareticnonparetic=specific_side, folder_name=dataset_folder_name, program_path=program_path)
 
 
 def move_matlab():

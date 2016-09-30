@@ -3,6 +3,10 @@
 class MatlabLabels(object):
 
     def __init__(self):
+
+        self.s_patients_dexterity = {'_r_': ['Q440', 'Q445', 'Q480', 'Q482', 'Q492', 'Q540'],
+                                     '_l_': ['Q275', 'Q441', 'Q491', 'Q535']}
+
         self.possible_motions = ['_REST_', '_REA_', '_RET_', '_I_', '_S_', '_ST_', '_SM_', '_M_', '_MC_', '_T_', '_TC_',
                                  '_THM_']
 
