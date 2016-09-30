@@ -71,13 +71,20 @@ def process_matlab():
 
     dataset_location = raw_input('Dataset folder: ')
 
-    temp_path = os.path.dirname(sys.argv[0])
+    directory = False
+    if '/' in dataset_location:
+        directory = True
+
+    program_path = os.path.dirname(sys.argv[0])
 
     # get location of program
     if dataset_location == "":
-        dataset_location = os.path.join(temp_path, 'SensorData')
+        dataset_location = os.path.join(program_path, 'SensorData')
     else:
-        dataset_location = os.path.join(temp_path, dataset_location)
+        if not directory:
+            dataset_location = os.path.join(program_path, dataset_location)
+
+    more_specific_side = ''
 
     side = raw_input('arm side: ').upper()
     if side == 'L' or side == 'LEFT':
@@ -109,11 +116,11 @@ def process_matlab():
         elif activenonactive == 'N' or activenonactive == 'NONACTIVE':
             specific_side = '_nonparetic_nonactive_'
 
-    dataset_folder_name = raw_input('Output folder\' name: ')
+    dataset_folder_name = raw_input('Output folder\'s name: ')
 
     printout(message='Converting matlab files', verbose=True)
     matlab_labels_data(action='extract', matlab_directory=dataset_location, s_property=specific_side,
-                       folder_name=dataset_folder_name)
+                       folder_name=dataset_folder_name, program_path=program_path)
 
 
 def move_matlab():

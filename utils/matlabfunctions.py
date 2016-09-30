@@ -1,5 +1,4 @@
 import os
-import sys
 import numpy as np
 import scipy.io as sio
 from utils.matlablabels import MatlabLabels
@@ -7,8 +6,10 @@ from utils.output import printout
 import re
 
 
-def error_message_func(line='', label='', error_message='', debugging='', logger=''):
+def error_message_func(line='', label='', error_message='', debugging='', logger='', timestep=''):
 
+    if label and timestep:
+        str_error = 'Line={0}  Label={1} Timestep={2} Error={3}'.format(line + 1, label, timestep + 3, error_message)
     if label:
         str_error = 'Line={0}  Label={1} Error={2}'.format(line + 1, label, error_message)
     elif line:
@@ -160,11 +161,12 @@ def data_collection(file_properties, debugging, extract):
                     total_number_timesteps = \
                         matlab_content['tree']['subject'][0][0]['frames'][0][0]['frame'][0][0]['index'][0][-1][0][0]
 
-                    msg = '\tTotal file size:{0}'.format(total_number_timesteps)
+                    msg = '\tTotal time step size for tree structure:{0}'.format(total_number_timesteps)
                     printout(message=msg, verbose=True)
 
                     printout(message='\ttraversing data array', verbose=True)
 
+                    total_number_labels = len(data_array) - 1
                     # READING FILE
                     # loop through each row in the markerExtract file
                     for current_row_number, data in enumerate(data_array):
@@ -362,6 +364,13 @@ def data_collection(file_properties, debugging, extract):
                             error_message_func(line=current_row_number, error_message=error_msg,
                                                debugging=debugging, label='', logger=temp_log_file_content)
 
+                        if first_pass:
+                            if current_timestep != 0:
+                                error_msg = 'Time step does not start at 3'
+                                error_message_func(line=current_row_number, label=current_label,
+                                                   error_message=error_msg, debugging=debugging,
+                                                   logger=temp_log_file_content)
+
                         # store label for future comparison
                         previous_label = current_label
 
@@ -384,6 +393,22 @@ def data_collection(file_properties, debugging, extract):
                             ignore_index_list.append([last_timestep, current_timestep])
 
                         last_timestep = current_timestep
+
+                        if total_number_labels == current_row_number:
+
+                            # check last label ended in a '_E' label
+                            if '_E' not in current_label:
+                                error_msg = 'last label in markerextract is not a \'_E\' label'
+                                error_message_func(line=current_row_number,
+                                                   error_message=error_msg, debugging=debugging,
+                                                   logger=temp_log_file_content)
+
+                            # check size of labels and size dataset
+                            if (total_number_timesteps + 1) != last_timestep:
+                                error_msg = 'mismatch between number of time steps of tree ({0}) and labels in the ' \
+                                            'markerExtract ({1})'.format(total_number_timesteps + 1, last_timestep)
+                                error_message_func(error_message=error_msg, debugging=debugging,
+                                                   logger=temp_log_file_content)
 
                     if not debugging and extract and tree2:
 
@@ -516,7 +541,7 @@ def extract_data_and_save_to_file(labels, ignored_indices, dataset, motion_class
     np.save(current_out_path, data_labels)
 
 
-def extract_information(doc, matlab_directory, action, matlab_filter, forward_folder, error_file_name):
+def extract_information(doc, matlab_directory, action, matlab_filter, forward_folder, error_file_name, script_path):
     """
     Extracts the relevant information about the directories of the matlab files being considered
     updates two variables:
@@ -524,14 +549,14 @@ def extract_information(doc, matlab_directory, action, matlab_filter, forward_fo
         doc.matlab_files_path_dict[activity]: key is the activity and the value is the matlab file's path
         :rtype: none
     """
+
+    working_path = script_path
     # current working path
     if matlab_directory == "":
-        working_path = os.path.dirname(sys.argv[0])
         # including folder SensorData where all the matlab files are located
         doc.data_path = os.path.join(working_path, 'SensorData')
     else:
         doc.data_path = matlab_directory
-        working_path = "/".join(matlab_directory.split('/')[:-1])
 
     # check data_path
     if not os.path.exists(doc.data_path):
