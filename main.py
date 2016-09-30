@@ -102,6 +102,9 @@ def process_matlab():
     elif paretic_nonparetic_enter == 'N':
         pareticnonparetic = 'nonparetic'
 
+    else:
+        pareticnonparetic = ''
+
     if pareticnonparetic == 'paretic':
         activenonactive = raw_input('active or non-active: ').upper()
         if activenonactive == 'A' or activenonactive == 'ACTIVE':

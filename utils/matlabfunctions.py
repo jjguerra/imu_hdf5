@@ -450,7 +450,8 @@ def data_collection(file_properties, debugging, extract):
                 except NameError:
                     continue
 
-    file_properties.output_file_object.write('Done checking matlab files\n')
+    if not extract:
+        file_properties.output_file_object.write('Done checking matlab files\n')
     printout(message='Done checking matlab files.\n\n', verbose=True)
 
 
@@ -615,9 +616,20 @@ def extract_information(doc, matlab_directory, action, leftright_arm, forward_fo
                         doc.count += 1
                     # use when extracting experimental patients files
                     elif pareticnonparetic in matlab_file:
-                        user_information = re.match(pattern=upattern, string=matlab_file)
-                        # check whether the user is in the right or left side list
-                        if user_information.group(1) in specific_patients:
+                        add_file = False
+
+                        # if paretic or non-paretic information was provided
+                        if pareticnonparetic != "":
+                            user_information = re.match(pattern=upattern, string=matlab_file)
+                            # check whether the user is in the right or left side list
+                            if user_information.group(1) in specific_patients:
+                                add_file = True
+
+                        # if it was not provided, add all the users
+                        else:
+                            add_file = True
+
+                        if add_file:
                             # full matlab path
                             matlab_path_list.append(os.path.join(subject_path, matlab_file))
                             matlab_files_list.append(matlab_file)
