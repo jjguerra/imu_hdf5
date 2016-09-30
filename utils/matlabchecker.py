@@ -10,9 +10,9 @@ def matlab_labels_data(action='', matlab_directory='', pareticnonparetic='', fol
     extract_information(doc=file_info, matlab_directory=matlab_directory, action=action, forward_folder=folder_name,
                         error_file_name=error_file_name, leftright_arm=leftright_arm,
                         pareticnonparetic=pareticnonparetic, script_path=program_path)
-    file_info.initialize_log_file()
 
     if action == 'check':
+        file_info.initialize_log_file()
         printout(message='running \'check\' on the files')
         data_collection(file_properties=file_info, debugging=True, extract=False)
         # print 'statistic file: {}'.format(document_descriptions.moved_log_file)
