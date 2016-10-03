@@ -24,8 +24,6 @@ def select_dataset_quickrun(algorithm=''):
     else:
         dataset_location = os.path.join(temp_path, dataset_location)
 
-    printout(message='dataset directory:\'{0}\''.format(dataset_location), verbose=True)
-
     quickrun_selection = raw_input('Quickrun: ')
 
     quickrun = ''

@@ -45,7 +45,7 @@ def data_collection(file_properties, debugging, extract):
             matlab_file_name = file_properties.matlab_files_names_dict[activity][index_matlab_file]
             msg = 'On activity: {0}'.format(activity)
             printout(message=msg, verbose=True)
-            msg = 'Accessing file: {}'.format(matlab_file_name)
+            msg = 'Accessing file: {0}'.format(matlab_file_name)
             printout(message=msg, verbose=True)
             if matlab_file_name not in matlab_file:
                 error_msg = 'Fatal Error. missing file={0} for activity={1}'.format(matlab_file_name, activity)
@@ -183,8 +183,8 @@ def data_collection(file_properties, debugging, extract):
 
                         # if empty row_value
                         except ValueError:
-                            error_message_func(line=current_row_number, error_message='missing label', debugging=debugging,
-                                               logger=temp_log_file_content, label='')
+                            error_message_func(line=current_row_number, error_message='missing label',
+                                               debugging=debugging, logger=temp_log_file_content, label='')
                         except IndexError:
                             error_msg = 'Failed to get label. Probably empty cell []'
                             error_message_func(line=current_row_number, error_message=error_msg, debugging=debugging,

@@ -43,12 +43,12 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
     pool.close()
     pool.join()
 
-    printout(message='Finished pre-processing dataset', verbose=True, time=True)
+    printout(message='Finished pre-processing dataset', verbose=True, time=True, extraspaces=2)
 
     for user_index, user_info in enumerate(dataset_info):
 
-        msg = 'Analysing user:{0}\n\n'.format(user_info.user)
-        printout(message=msg, verbose=True)
+        msg = 'Analysing user:{0}'.format(user_info.user)
+        printout(message=msg, verbose=True, extraspaces=1)
 
         printout(message='Calculating training and testing dataset', verbose=True, time=True)
         # fetch testing data from the objects
@@ -85,8 +85,8 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
         else:
             printout(message='Wrong algorithm provided.', verbose=True)
 
-        msg = 'Finished analysing user:{0}\n\n'.format(user_info.user)
-        printout(message=msg, verbose=True)
+        msg = 'Finished analysing user:{0}'.format(user_info.user)
+        printout(message=msg, verbose=True, extraspaces=2)
 
     msg = 'Finished running {0}'.format(algorithm)
     printout(message=msg, verbose=True)
