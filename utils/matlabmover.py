@@ -2,6 +2,26 @@ import os
 import re
 
 
+def file_information(filename):
+
+    if 'paretic' in filename:
+        expression_pattern = \
+            r'(^[A-Z]+[0-9]+)_[nonparetic|paretic]+_[active|nonactive]+_([a-z]+_high|[a-z]+_low|[a-z]+).*\.mat'
+    else:
+        expression_pattern = r'(^[A-Z]+[0-9]+)_pilot_OT_[l|r]_([a-z]+_high|[a-z]+_low|[a-z]+).*\.mat'
+
+    # string_information = extracted useful information of the string
+    # i.e.
+    #    string = 'N537_pilot_OT_l_book_high.mvnx.mat'
+    #    string_information.group(0) = 'N537_pilot_OT_l_book_high.mvnx.mat'
+    #    user: string_information.group(1) = 'N537'
+    #    left|right: string_information.group(2) = 'l'
+    #    activity: string_information.group(3) = 'book_high'
+    s_information = re.match(pattern=expression_pattern, string=filename)
+
+    return s_information.group(1), s_information.group(2), s_information.group(3)
+
+
 def move_matlab_files(initial_path, forwarding_path):
     """
     move matlab files from a directory to another folder with the
@@ -35,22 +55,13 @@ def move_matlab_files(initial_path, forwarding_path):
         if '.mat' in current_matlab_file:
             print 'processing file: {}'.format(current_matlab_file)
             old_path = os.path.join(initial_path, current_matlab_file)
-            if 'paretic' in current_matlab_file:
-                expression_pattern = \
-                    r'(^[A-Z]+[0-9]+)_[nonparetic|paretic]+_[active|nonactive]+_([a-z]+_high|[a-z]+_low|[a-z]+).*\.mat$'
-            else:
-                expression_pattern = r'(^[A-Z]+[0-9]+)_pilot_OT_[l|r]_([a-z]+_high|[a-z]+_low|[a-z]+).*\.mat$'
-            # string_information = extracted useful information of the string
-            # i.e.
-            #    string = 'N537_pilot_OT_l_book_high.mvnx.mat'
-            #    string_information.group(0) = 'N537_pilot_OT_l_book_high.mvnx.mat'
-            #    user: string_information.group(1) = 'N537'
-            #    left|right: string_information.group(2) = 'l'
-            #    activity: string_information.group(3) = 'book_high'
-            string_information = re.match(pattern=expression_pattern, string=current_matlab_file)
-            if string_information.group(1) != "" and string_information.group(2) != "":
-                final_activity_path = os.path.join(forwarding_path, folder_dictionary[string_information.group(2)])
-                final_user_path = os.path.join(final_activity_path, string_information.group(1))
+
+            # get user and activity based on the file
+            user_info, activity_info = file_information(current_matlab_file)
+
+            if user_info != "" and activity_info != "":
+                final_activity_path = os.path.join(forwarding_path, folder_dictionary[activity_info])
+                final_user_path = os.path.join(final_activity_path, user_info)
 
                 if not os.path.exists(final_activity_path):
                     os.makedirs(final_activity_path)

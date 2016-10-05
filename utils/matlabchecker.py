@@ -15,7 +15,9 @@ def matlab_labels_data(action='', matlab_directory='', pareticnonparetic='', fol
         file_info.initialize_log_file()
         printout(message='running \'check\' on the files')
         data_collection(file_properties=file_info, debugging=True, extract=False)
-        # print 'statistic file: {}'.format(document_descriptions.moved_log_file)
+        printout(message='Done checking matlab files.', verbose=True, extraspaces=1)
+
     if action == 'extract':
         printout(message='running \'extract\' on the files')
         data_collection(file_properties=file_info, debugging=False, extract=True)
+        printout(message='Done extracting matlab files.', verbose=True, extraspaces=1)
