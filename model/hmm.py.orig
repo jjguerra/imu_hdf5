@@ -32,14 +32,21 @@ def results(hmm_model='', trainingdataset='', traininglabels='', testingdataset=
 
 
 def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testinglabels='', quickrun='', lengths=0):
+<<<<<<< HEAD
+=======
 
         import IPython
         IPython.embed()
+>>>>>>> d8ae42a2e3f6ab1a29f9aaefb01f93063f020494
 
         if quickrun:
             printout(message='Training Hidden Markov Model.', time=True, verbose=True)
             hmm_model = hmm.GaussianHMM(n_components=8, covariance_type='diag', n_iter=10, verbose=True)
+<<<<<<< HEAD
+            hmm_model.fit(X=trainingdataset['train'][...], lengths=lengths)
+=======
             hmm_model.fit(X=trainingdataset, lengths=lengths)
+>>>>>>> d8ae42a2e3f6ab1a29f9aaefb01f93063f020494
             printout(message='Finished training Hidden Markov Model.', time=True, verbose=True)
 
             results(hmm_model=hmm_model, trainingdataset=trainingdataset, traininglabels=traininglabels,

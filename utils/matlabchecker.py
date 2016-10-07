@@ -17,10 +17,7 @@ def matlab_labels_data(action='', matlab_directory='', pareticnonparetic='', fol
         data_collection(file_properties=file_info, debugging=True, extract=False)
         printout(message='Done checking matlab files.', verbose=True, extraspaces=1)
 
-    elif action == 'extract':
+    if action == 'extract':
         printout(message='running \'extract\' on the files')
         data_collection(file_properties=file_info, debugging=False, extract=True)
         printout(message='Done extracting matlab files.', verbose=True, extraspaces=1)
-
-    else:
-        printout(message='Wrong actioned passed.', verbose=True)
