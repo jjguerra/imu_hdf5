@@ -49,7 +49,7 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
 
     for user_index, user_info in enumerate(dataset_info):
 
-        msg = 'Analysing user:{0}'.format(user_info.user)
+        msg = 'Analysing user:{0} activity:{1}'.format(user_info.user, user_info.activity)
         printout(message=msg, verbose=True, extraspaces=1)
 
         printout(message='Calculating training and testing dataset', verbose=True, time=True)
@@ -62,7 +62,7 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
         train_labels = np.empty(shape=(0, 0))
 
         # length of each dataset
-        training_datasets_lengths = list()
+        training_dataset_lengths = list()
 
         # fetch training data from the objects without :
         #   1. the testing data i.e. the data of user_index
@@ -78,7 +78,7 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
                 train_labels = append_array(o_array=train_labels, array_to_add=labels)
                 # get the size of the dataset because it will be passed as an parameter to the hmm
                 length = np.shape(dataset)[0]
-                training_datasets_lengths.append(length)
+                training_dataset_lengths.append(length)
                 msg = 'User:{0} Activity:{1} Length:{2}'.format(user_info_inner.user, user_info_inner.activity, length)
                 printout(message=msg, verbose=True)
             else:
@@ -86,19 +86,19 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
                 printout(message=msg, verbose=True)
 
         # converting to numpy arrays
-        train_dataset = np.array(train_dataset)
-        train_labels = np.array(train_labels)
-        train_lengths = np.array(training_datasets_lengths)
+        training_dataset = np.array(train_dataset)
+        training_labels = np.array(train_labels)
+        training_length = np.array(training_dataset_lengths)
+
+        h5name = 'train_dataset_' + user_info.user + '_' + user_info.activity + '.hdf5'
+        h5_training_dataset = h5py.File(name=h5name, mode='w')
+        h5_training_dataset.create_dataset(name='train', data=train_dataset, shape=np.shape(train_dataset), chunks=True)
 
         printout(message='', verbose=True)
-        printout(message='training data size:{0}'.format(np.shape(train_dataset)), verbose=True)
-        printout(message='training label size:{0}'.format(np.shape(train_labels)), verbose=True)
-        printout(message='testing data size:{0}'.format(np.shape(test_dataset)), verbose=True)
-        printout(message='testing label size:{0}'.format(np.shape(test_labels)), verbose=True)
-
-        if algorithm == 'HMM':
-            hmm_algo(trainingdataset=train_dataset, traininglabels=train_labels, testingdataset=test_dataset,
-                     testinglabels=test_labels, quickrun=quickrun, lengths=train_lengths)
+        printout(message='training data size:{0}'.format(np.shape(training_dataset)), verbose=True)
+        printout(message='training label size:{0}'.format(np.shape(training_labels)), verbose=True)
+        printout(message='testing data size:{0}'.format(np.shape(testing_dataset)), verbose=True)
+        printout(message='testing label size:{0}'.format(np.shape(testing_labels)), verbose=True)
 
         try:
             if algorithm == 'HMM':
@@ -128,8 +128,8 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
             msg = 'Finished running {0}'.format(algorithm)
             printout(message=msg, verbose=True)
 
-        msg = 'Finished analysing user:{0}'.format(user_info.user)
-        printout(message=msg, verbose=True, extraspaces=2)
+            # removing created file
+            os.remove(h5name)
 
 
 
