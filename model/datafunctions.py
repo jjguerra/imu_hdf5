@@ -158,7 +158,7 @@ def load_data(data_dir):
         print '\tuser={0} activity={1}, start/end index={2}, size={3}'.format(user, activity, (start_index, end_index),
                                                                               np.shape(raw_data)[0])
 
-        printout(message='\tdata stored in dataframe\n', verbose=True)
+        printout(message='\tdata stored in dataframes\n', verbose=True)
 
     return sensordata_array, dataset_user_information
 

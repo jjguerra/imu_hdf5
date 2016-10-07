@@ -237,3 +237,140 @@ def repeated_labels(passed_list):
             return True
         seen.add(x)
     return False
+
+def extract_data_and_save_to_file(labels_array='', ignored_indices='', dataset='', motion_class='', dataset_path='',
+                                  current_file_name=''):
+
+    # variable to store all the segments and vectors values
+    data = np.empty((1, 1))
+
+    for vector in motion_class.vectorsUsed:
+
+        v_data = dataset[vector]
+        if 'joint' == vector:
+            for joints in motion_class.jointUsed:
+                sensor_data = v_data[0][0][joints][0][0][2:]
+                number_row, number_column = sensor_data.shape
+                _, ds_column = data.shape
+                # temporary array
+                temp_array = sensor_data
+                # if ds_column is 1 it is the first iteration and special measures have
+                # to be taken into consideration when specifying the size of the array if not
+                # check this condition, then the code would break trying to add the data
+                if ds_column != 1:
+                    # create new array with extra index for new data
+                    temp_array = np.zeros((number_row, number_column + ds_column))
+                    # merge data
+                    temp_array[:, 0:ds_column] = data
+                    temp_array[:, ds_column:] = sensor_data
+                # add values to the final variable
+                data = np.vstack(temp_array)
+        else:
+            for segments in motion_class.segmentUsed:
+                # obtains the values based on the segments and vectors used
+                sensor_data = v_data[0][0][segments][0][0][2:]
+                number_row, number_column = sensor_data.shape
+                _, ds_column = data.shape
+                # temporary array
+                temp_array = sensor_data
+                # if ds_column is 1 it is the first iteration and special measures have
+                # to be taken into consideration when specifying the size of the array if not
+                # check this condition, then the code would break trying to add the data
+                if ds_column != 1:
+                    # create new array with extra index for new data
+                    temp_array = np.zeros((number_row, number_column + ds_column))
+                    # merge data
+                    temp_array[:, 0:ds_column] = data
+                    temp_array[:, ds_column:] = sensor_data
+                # add values to the final variable
+                data = np.vstack(temp_array)
+
+    import IPython
+    IPython.embed()
+
+    # merge data with their respective labels
+    tmp_arr = ''
+    try:
+        printout(message='\tMerging data and labels arrays', verbose=True)
+        tmp_arr = np.c_[data, labels_array]
+
+    except ValueError:
+        msg = '\tsize of data: {0}'.format(np.shape(data))
+        printout(message=msg, verbose=True)
+        msg = '\tsize of labels: {0}'.format(np.shape(labels_array))
+        printout(message=msg, verbose=True, extraspaces=2)
+        exit(1)
+
+    if len(ignored_indices) != 0:
+        printout(message='\tRemoving \'Ignored\' labels', verbose=True)
+        data_labels = remove_ignores(tmp_arr, ignored_indices)
+    else:
+        data_labels = tmp_arr
+
+    # this information will be used to train the hmm since its important to know the start and end of
+    # an activity in order for the EM algo to not learn from non-concurrent activities
+    n_datapoints = np.shape(data_labels)[0]
+    array_length = np.zeros([n_datapoints, 1])
+    array_length[0, 0] = n_datapoints
+    dataset = np.c_[data_labels, array_length]
+
+    # current user and activity based on the file name
+    user, activity, leftright = file_information(current_file_name)
+
+    # list of files already processed
+    files_processed = [pfile for pfile in listdir(dataset_path) if isfile(join(dataset_path, pfile))]
+
+    # list of user already processed
+    users_processed = [pfile for pfile in files_processed if (user in pfile and activity in pfile)]
+
+    # concatenate users performing the same activities
+    for uprocessed in users_processed:
+        old_data = np.load(uprocessed)
+        tmp_arr = np.r(old_data, dataset)
+        dataset = tmp_arr
+
+    new_file_name = user + '_' + leftright + '_' + activity
+    current_out_path = os.path.join(dataset_path, new_file_name)
+
+    msg = '\tOutput file directory: {0}'.format(current_out_path)
+    printout(message=msg, verbose=True)
+    np.save(current_out_path, dataset)
+
+def load_data(data_dir):
+
+    # data file are store within the project dataset folder
+    dataset_files = os.listdir(data_dir)
+
+    # sensordata variable
+    sensordata_array = np.empty(shape=(0, 0))
+
+    # dataset user information
+    dataset_user_information = list()
+
+    # loop through every file
+    for python_file in dataset_files:
+        python_file_path = os.path.join(data_dir, python_file)
+        print 'reading file: {0}'.format(python_file)
+        # getting file information
+        user, activity = file_information(python_file)
+        start_index = np.shape(sensordata_array)[0]
+
+        # read data from file
+        raw_data = np.load(python_file_path)
+
+        # adding the info to the sensordata list
+        sensordata_array = append_array(sensordata_array, raw_data)
+
+        # get the max length of the added dataset
+        end_index = np.shape(sensordata_array)[0]
+
+        user_prop = UserInfo(user=user, activity=activity, start_index=start_index, end_index=end_index)
+
+        dataset_user_information.append(user_prop)
+
+        print '\tuser={0} activity={1}, start/end index={2}, size={3}'.format(user, activity, (start_index, end_index),
+                                                                              np.shape(raw_data)[0])
+
+        printout(message='\tdata stored in dataframes\n', verbose=True)
+
+    return sensordata_array, dataset_user_information

@@ -10,7 +10,7 @@ np.random.seed(0)
 def results(hmm_model='', trainingdataset='', traininglabels='', testingdataset='', testinglabels=''):
 
     printout(message='calculating Predictions', verbose=True)
-    train_predictions = hmm_model.predict_proba(trainingdataset)
+    train_predictions = hmm_model.predict_proba(trainingdataset['train'][...])
     test_predictions = hmm_model.predict_proba(testingdataset)
 
     printout(message='processing results for logistic regression algorithm', verbose=True)
@@ -27,16 +27,16 @@ def results(hmm_model='', trainingdataset='', traininglabels='', testingdataset=
     train_score = logistic_regression_model.score(logreg_train_data, logreg_train_labels)
     test_score = logistic_regression_model.score(logreg_test_data, logreg_test_labels)
 
-    printout(message='Final training data prediction score: {}'.format(train_score), verbose=True)
-    printout(message='Final testing data prediction score: {}'.format(test_score), verbose=True)
+    printout(message='Final training data prediction score: {0}'.format(train_score), verbose=True)
+    printout(message='Final testing data prediction score: {0}'.format(test_score), verbose=True)
 
 
-def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testinglabels='', quickrun=''):
+def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testinglabels='', quickrun='', lengths=0):
 
         if quickrun:
             printout(message='Training Hidden Markov Model.', time=True, verbose=True)
-            hmm_model = hmm.GaussianHMM(n_components=8, covariance_type='full', n_iter=10, verbose=True)
-            hmm_model.fit(X=trainingdataset)
+            hmm_model = hmm.GaussianHMM(n_components=8, covariance_type='diag', n_iter=10, verbose=True)
+            hmm_model.fit(X=trainingdataset['train'][...], lengths=lengths)
             printout(message='Finished training Hidden Markov Model.', time=True, verbose=True)
 
             results(hmm_model=hmm_model, trainingdataset=trainingdataset, traininglabels=traininglabels,

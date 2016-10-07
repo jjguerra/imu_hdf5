@@ -8,14 +8,19 @@ def matlab_labels_data(action='', matlab_directory='', pareticnonparetic='', fol
 
     file_info = Document()
     extract_information(doc=file_info, matlab_directory=matlab_directory, action=action, forward_folder=folder_name,
-                        error_file_name=error_file_name, leftright_arm=leftright_arm,
-                        pareticnonparetic=pareticnonparetic, script_path=program_path)
+                        error_file_name=error_file_name, leftright_arm=leftright_arm, script_path=program_path,
+                        pareticnonparetic=pareticnonparetic)
 
     if action == 'check':
         file_info.initialize_log_file()
         printout(message='running \'check\' on the files')
         data_collection(file_properties=file_info, debugging=True, extract=False)
-        # print 'statistic file: {}'.format(document_descriptions.moved_log_file)
-    if action == 'extract':
+        printout(message='Done checking matlab files.', verbose=True, extraspaces=1)
+
+    elif action == 'extract':
         printout(message='running \'extract\' on the files')
         data_collection(file_properties=file_info, debugging=False, extract=True)
+        printout(message='Done extracting matlab files.', verbose=True, extraspaces=1)
+
+    else:
+        printout(message='Wrong actioned passed.', verbose=True)

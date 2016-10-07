@@ -10,8 +10,8 @@ def results(logreg_model='', trainingdataset='', traininglabels='', testingdatas
     training_score = logreg_model.score(trainingdataset, traininglabels)
     testing_score = logreg_model.score(testingdataset, testinglabels)
 
-    printout(message='Final training data prediction score: {}'.format(training_score), verbose=True)
-    printout(message='Final testing data prediction score: {}'.format(testing_score), verbose=True)
+    printout(message='Final training data prediction score: {0}'.format(training_score), verbose=True)
+    printout(message='Final testing data prediction score: {0}'.format(testing_score), verbose=True)
 
 
 def logreg_algo(trainingdataset='', traininglabels='', testingdataset='', testinglabels='', quickrun=True):

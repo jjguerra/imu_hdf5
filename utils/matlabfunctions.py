@@ -4,6 +4,7 @@ import scipy.io as sio
 from utils.matlablabels import MatlabLabels
 from utils.output import printout
 import re
+import h5py
 
 
 def error_message_func(line='', label='', error_message='', debugging='', logger='', timestep=''):
@@ -45,7 +46,7 @@ def data_collection(file_properties, debugging, extract):
             matlab_file_name = file_properties.matlab_files_names_dict[activity][index_matlab_file]
             msg = 'On activity: {0}'.format(activity)
             printout(message=msg, verbose=True)
-            msg = 'Accessing file: {}'.format(matlab_file_name)
+            msg = 'Accessing file: {0}'.format(matlab_file_name)
             printout(message=msg, verbose=True)
             if matlab_file_name not in matlab_file:
                 error_msg = 'Fatal Error. missing file={0} for activity={1}'.format(matlab_file_name, activity)
@@ -183,8 +184,8 @@ def data_collection(file_properties, debugging, extract):
 
                         # if empty row_value
                         except ValueError:
-                            error_message_func(line=current_row_number, error_message='missing label', debugging=debugging,
-                                               logger=temp_log_file_content, label='')
+                            error_message_func(line=current_row_number, error_message='missing label',
+                                               debugging=debugging, logger=temp_log_file_content, label='')
                         except IndexError:
                             error_msg = 'Failed to get label. Probably empty cell []'
                             error_message_func(line=current_row_number, error_message=error_msg, debugging=debugging,
@@ -414,9 +415,16 @@ def data_collection(file_properties, debugging, extract):
 
                         label_array = np.array(label_list)
 
+                        msg = '\tObtaining sensor data from file {0}'.format(matlab_file_name)
+                        printout(message=msg, verbose=True)
                         # fetching sensors' data
-                        extract_data_and_save_to_file(label_array, ignore_index_list, matlab_content['tree2'], motion_class,
-                                                      file_properties, activity, index_matlab_file)
+                        datasetpath = file_properties.dataset_path
+                        extract_data_and_save_to_file(labels_array=label_array, ignored_indices=ignore_index_list,
+                                                      dataset=matlab_content['tree2'], motion_class=motion_class,
+                                                      current_file_name=matlab_file_name, dataset_path=datasetpath)
+
+                        msg = '\tFinished storing sensor data'
+                        printout(message=msg, verbose=True)
 
             if len(temp_log_file_content) != 0:
 
@@ -452,7 +460,6 @@ def data_collection(file_properties, debugging, extract):
 
     if not extract:
         file_properties.output_file_object.write('Done checking matlab files\n')
-    printout(message='Done checking matlab files.\n\n', verbose=True)
 
 
 def remove_ignores(tmp_arr, ignored_index_list):
@@ -470,8 +477,8 @@ def remove_ignores(tmp_arr, ignored_index_list):
     return np.array(final_list)
 
 
-def extract_data_and_save_to_file(labels, ignored_indices, dataset, motion_class, document_information, activities,
-                                  index_matlab_file):
+def extract_data_and_save_to_file(labels_array='', ignored_indices='', dataset='', motion_class='', dataset_path='',
+                                  current_file_name=''):
 
     # variable to store all the segments and vectors values
     data = np.empty((1, 1))
@@ -520,25 +527,26 @@ def extract_data_and_save_to_file(labels, ignored_indices, dataset, motion_class
     # merge data with their respective labels
     tmp_arr = ''
     try:
-        print '\tMerging data and labels arrays'
-        tmp_arr = np.c_[data, labels]
+        printout(message='\tMerging data and labels arrays', verbose=True)
+        tmp_arr = np.c_[data, labels_array]
 
     except ValueError:
-        print 'size of data: {0}'.format(np.shape(data))
-        print 'size of labels: {0}'.format(np.shape(labels))
-        print '\n'
+        msg = '\tsize of data: {0}'.format(np.shape(data))
+        printout(message=msg, verbose=True)
+        msg = '\tsize of labels: {0}'.format(np.shape(labels_array))
+        printout(message=msg, verbose=True, extraspaces=2)
         exit(1)
 
     if len(ignored_indices) != 0:
-        print '\tRemoving \'Ignore\' labels'
+        printout(message='\tRemoving \'Ignored\' labels', verbose=True)
         data_labels = remove_ignores(tmp_arr, ignored_indices)
     else:
         data_labels = tmp_arr
 
-    current_out_path = os.path.join(document_information.dataset_path,
-                                    document_information.matlab_files_names_dict[activities][index_matlab_file])
+    current_out_path = os.path.join(dataset_path, current_file_name)
 
-    print '\tOutput file directory: {}'.format(current_out_path)
+    msg = '\tOutput file directory: {0}'.format(current_out_path)
+    printout(message=msg, verbose=True)
     np.save(current_out_path, data_labels)
 
 
@@ -562,7 +570,8 @@ def extract_information(doc, matlab_directory, action, leftright_arm, forward_fo
 
     # check data_path
     if not os.path.exists(doc.data_path):
-        print "File " + doc.data_path + " does not exist"
+        msg = "File " + doc.data_path + " does not exist"
+        printout(message=msg, verbose=True)
         exit(1)
 
     if action == 'extract':
@@ -574,6 +583,8 @@ def extract_information(doc, matlab_directory, action, leftright_arm, forward_fo
 
         if not os.path.exists(doc.dataset_path):
             os.makedirs(doc.dataset_path)
+
+        doc.data_path_name = doc.dataset_path.split('/')[-1]
 
     doc.log_file = os.path.join(working_path, error_file_name)
 
@@ -600,8 +611,8 @@ def extract_information(doc, matlab_directory, action, leftright_arm, forward_fo
         # loop through each subject of the current activity
         for (subject_path, _, matlab_file_list) in os.walk(activity_path, topdown=False):
             for matlab_file in matlab_file_list:
-                # check if matlab files
-                if '.mat' in matlab_file:
+                # check if matlab files and not hidden files
+                if '.mat' in matlab_file and not matlab_file.startswith('.'):
                     # use for checking files
                     if leftright_arm == "":
                         # full matlab path
