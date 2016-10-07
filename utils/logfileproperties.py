@@ -5,7 +5,7 @@ class Document(object):
 
     def __init__(self):
         self.data_path = ''  # matlab files location
-        self.data_path_name = '' # matlab files location name
+        self.dataset_path_name = ''  # hdf5 files final location
         self.dataset_path = ''  # converted matlab files location
         self.activity_list = list()
         self.matlab_files_path_dict = dict()

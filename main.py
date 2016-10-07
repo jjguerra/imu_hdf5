@@ -181,7 +181,7 @@ def convert_matlab():
         dataset_folder_name = raw_input('Output folder\'s name: ')
 
         if dataset_folder_name == '':
-            file_path = os.path.join(program_path, 'processeddataset')
+            file_path = os.path.join(program_path, 'dataset')
         else:
             if os.path.isdir(dataset_folder_name):
                 file_path = dataset_folder_name

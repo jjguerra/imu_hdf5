@@ -24,7 +24,11 @@ def preprocessing(list_args):
 
 def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
 
-    dataset_array, dataset_info = load_data(data_dir=dataset_directory)
+    dataset_files = os.listdir(dataset_directory)
+    for s_file in dataset_files:
+        h5_file_object = h5py.File(s_file, 'r')
+
+
 
     printout(message='Starting pre-processing dataset', verbose=True, time=True)
 

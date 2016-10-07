@@ -33,6 +33,9 @@ def data_collection(file_properties, debugging, extract):
     # flags used for headers in the log file
     first_pass_ever = True
 
+    if extract:
+        out_file = h5py.File(file_properties.dataset_path_name, 'w')
+
     # loop through each activity
     for activity, matlab_file_list in file_properties.matlab_files_path_dict.iteritems():
 
@@ -417,13 +420,12 @@ def data_collection(file_properties, debugging, extract):
 
                         msg = '\tObtaining sensor data from file {0}'.format(matlab_file_name)
                         printout(message=msg, verbose=True)
-                        # fetching sensors' data
-                        datasetpath = file_properties.dataset_path
+                        # extracting sensors' data
                         extract_data_and_save_to_file(labels_array=label_array, ignored_indices=ignore_index_list,
                                                       dataset=matlab_content['tree2'], motion_class=motion_class,
-                                                      current_file_name=matlab_file_name, dataset_path=datasetpath)
+                                                      current_file_name=matlab_file_name, outfile_object=out_file)
 
-                        msg = '\tFinished storing sensor data'
+                        msg = '\tFinished storing sensor data for file {0}'.format(matlab_file_name)
                         printout(message=msg, verbose=True)
 
             if len(temp_log_file_content) != 0:
@@ -477,7 +479,7 @@ def remove_ignores(tmp_arr, ignored_index_list):
     return np.array(final_list)
 
 
-def extract_data_and_save_to_file(labels_array='', ignored_indices='', dataset='', motion_class='', dataset_path='',
+def extract_data_and_save_to_file(labels_array='', ignored_indices='', dataset='', motion_class='', outfile_object='',
                                   current_file_name=''):
 
     # variable to store all the segments and vectors values
@@ -543,11 +545,7 @@ def extract_data_and_save_to_file(labels_array='', ignored_indices='', dataset='
     else:
         data_labels = tmp_arr
 
-    current_out_path = os.path.join(dataset_path, current_file_name)
-
-    msg = '\tOutput file directory: {0}'.format(current_out_path)
-    printout(message=msg, verbose=True)
-    np.save(current_out_path, data_labels)
+    outfile_object.create_dataset(name=current_file_name, data=data_labels)
 
 
 def extract_information(doc, matlab_directory, action, leftright_arm, forward_folder, error_file_name, script_path,
@@ -574,19 +572,19 @@ def extract_information(doc, matlab_directory, action, leftright_arm, forward_fo
         printout(message=msg, verbose=True)
         exit(1)
 
+    # used the name of the folder where the matlab files are located
+    file_name = doc.data_path.split('/')[-1]
+
     if action == 'extract':
-        if forward_folder == "":
-            # location to store csv files
-            doc.dataset_path = os.path.join(working_path, 'Dataset')
-        else:
-            doc.dataset_path = os.path.join(working_path, forward_folder)
+        doc.dataset_path = os.path.join(working_path, forward_folder)
 
         if not os.path.exists(doc.dataset_path):
             os.makedirs(doc.dataset_path)
 
-        doc.data_path_name = doc.dataset_path.split('/')[-1]
+        doc.dataset_path_name = doc.dataset_path + '/' + file_name + '.hdf5'
 
-    doc.log_file = os.path.join(working_path, error_file_name)
+    else:
+        doc.log_file = os.path.join(working_path, error_file_name)
 
     # all the activities i.e. Shelf_High_Heavycan, Shelf_Low_Heavycan, etc...
     doc.activity_list = next(os.walk(doc.data_path))[1]
@@ -626,7 +624,7 @@ def extract_information(doc, matlab_directory, action, leftright_arm, forward_fo
                         matlab_files_list.append(matlab_file)
                         doc.count += 1
                     # use when extracting experimental patients files
-                    elif pareticnonparetic in matlab_file:
+                    elif pareticnonparetic and pareticnonparetic in matlab_file:
                         add_file = False
 
                         # if paretic or non-paretic information was provided
