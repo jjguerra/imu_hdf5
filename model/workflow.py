@@ -1,6 +1,5 @@
-from datafunctions import load_data, append_array
+from datafunctions import append_array
 from utils.output import printout
-from multiprocessing.dummy import Pool as ThreadPool
 from model.hmm import hmm_algo
 from model.logistic_regression import logreg_algo
 import numpy as np
@@ -10,128 +9,119 @@ import os
 
 def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
 
-    dataset_array, dataset_info = load_data(data_dir=dataset_directory)
+    # list all the files where the sensordata is stored
+    dataset_files = os.listdir(dataset_directory)
 
-    printout(message='Starting pre-processing dataset', verbose=True, time=True)
+    # need to put all the files in the same h5py file
+    if len(dataset_files) != 1:
 
-    # creating argument list for multiprocessing where a message and the dataset of an specific user is passed
-    arg_list = list()
-    for user_index, user in enumerate(dataset_info):
-        msg = 'dataset number={0} User={1}'.format(user_index, user.user)
-        arg_list.append([msg, dataset_array[user.start_index:user.end_index]])
+        file_name = 'merged_' + dataset_directory.split('/')[-1]
+        file_path = os.path.join(dataset_directory, file_name)
+        integrated_datasets_file = h5py.File(name=file_path, mode='w')
 
-    # multiprocessing
-    pool = ThreadPool()
+        printout(message='more than one set of files in the directory', verbose=True)
+        msg = 'merging files into {0}'.format(file_name)
+        printout(message=msg, verbose=True)
+        for s_file in dataset_files:
+            if '.hdf5' in s_file:
+                dataset_path = os.path.join(dataset_directory, s_file)
+                h5_file_object = h5py.File(dataset_path, 'r')
 
-    # run hmm_preprocessing their own threads and return the results
-    # results = list
-    #   results[0] = testing dataset, results[1] = training dataset
-    processed_dataset = pool.map(preprocessing, arg_list)
-    # close the pool and wait for the work to finish
-    pool.close()
-    pool.join()
+                for key, value in h5_file_object.iteritems():
+                    integrated_datasets_file.create_dataset(name=key, data=value)
 
-    printout(message='Finished pre-processing dataset', verbose=True, time=True, extraspaces=2)
+                h5_file_object.close()
 
-    for user_index, user_info in enumerate(dataset_info):
+        integrated_datasets_file.close()
 
-        msg = 'Analysing user:{0} activity:{1}'.format(user_info.user, user_info.activity)
-        printout(message=msg, verbose=True, extraspaces=1)
+        printout(message='finished merging files')
 
-        printout(message='Calculating training and testing dataset', verbose=True, time=True)
+    else:
+        file_name = dataset_files[0]
+
+    dataset_path = os.path.join(dataset_directory, file_name)
+    h5_file_object = h5py.File(dataset_path, 'r')
+
+    # printing a line for style and visibility
+    printout(message='', verbose=True)
+
+    for user_index, user_info in enumerate(h5_file_object.iterkeys()):
+
+        user = h5_file_object[user_info].attrs['user']
+        activity = h5_file_object[user_info].attrs['activity']
+        time = h5_file_object[user_info].attrs['time']
+        testing_dataset_object = h5_file_object[user_info]
+
+        msg = 'analysing user:{0} activity:{1} time:{2}'.format(user, activity, time)
+        printout(message=msg, verbose=True)
+
+        printout(message='calculating training and testing dataset', verbose=True, time=True)
         # fetch testing data from the objects
-        testing_dataset = processed_dataset[user_index][0]
-        testing_labels = processed_dataset[user_index][1]
-
-        # defining train dataset and labels array
-        train_dataset = np.empty(shape=(0, 0))
-        train_labels = np.empty(shape=(0, 0))
 
         # length of each dataset
         training_dataset_lengths = list()
 
+        # temporary training numpy array
+        tmp_training_array = np.empty(shape=(0, 0))
+
         # fetch training data from the objects without :
         #   1. the testing data i.e. the data of user_index
         #   2. other dataset with the same user and activity but different repetition
-        for user_index_inner, user_info_inner in enumerate(dataset_info):
-            if user_info_inner.user != user_info.user or user_info_inner.activity != user_info.activity:
-                # location of dataset
-                dataset = processed_dataset[user_index_inner][0]
-                # location of labels
-                labels = processed_dataset[user_index_inner][1]
-                # add them to the array
-                train_dataset = append_array(o_array=train_dataset, array_to_add=dataset)
-                train_labels = append_array(o_array=train_labels, array_to_add=labels)
+        for user_info_inner in h5_file_object.iterkeys():
+
+            # get the attributes of the training example
+            inner_user = h5_file_object[user_info_inner].attrs['user']
+            inner_activity = h5_file_object[user_info_inner].attrs['activity']
+            inner_time = h5_file_object[user_info_inner].attrs['time']
+
+            # make sure its not the same user doing the same activity during a different time
+            if user != inner_user or activity != inner_activity:
+                # appending dataset to temporary array
+                tmp_training_array = append_array(tmp_training_array, h5_file_object[user_info_inner].value)
                 # get the size of the dataset because it will be passed as an parameter to the hmm
-                length = np.shape(dataset)[0]
-                training_dataset_lengths.append(length)
-                msg = 'User:{0} Activity:{1} Length:{2}'.format(user_info_inner.user, user_info_inner.activity, length)
+                inner_length = h5_file_object[user_info_inner].shape[0]
+                training_dataset_lengths.append(inner_length)
+                msg = 'including user:{0} activity:{1} time:{2} length:{3}'.format(inner_user, inner_activity,
+                                                                                   inner_time, inner_length)
                 printout(message=msg, verbose=True)
             else:
-                msg = 'Skipping User:{0} Activity:{1}'.format(user_info_inner.user, user_info_inner.activity)
+                msg = 'skipping user:{0} activity:{1} time:{2}'.format(inner_user, inner_activity, inner_time)
                 printout(message=msg, verbose=True)
 
-        # converting to numpy arrays
-        training_dataset = np.array(train_dataset)
-        training_labels = np.array(train_labels)
-        training_length = np.array(training_dataset_lengths)
+        training_length = np.shape(tmp_training_array)
 
-        h5name = 'train_dataset_' + user_info.user + '_' + user_info.activity + '.hdf5'
-        h5_training_dataset = h5py.File(name=h5name, mode='w')
-        h5_training_dataset.create_dataset(name='train', data=train_dataset, shape=np.shape(train_dataset), chunks=True)
+        # defining train dataset and labels array
+        training_file_name = os.path.join(dataset_directory, 'training_file_' + str(user_info)[1:] + '.hdf5')
+        training_dataset_object = h5py.File(training_file_name, 'w')
+        training_dataset_object.create_dataset(name='training dataset', data=tmp_training_array)
 
         printout(message='', verbose=True)
-        printout(message='training data size:{0}'.format(np.shape(training_dataset)), verbose=True)
-        printout(message='training label size:{0}'.format(np.shape(training_labels)), verbose=True)
-        printout(message='testing data size:{0}'.format(np.shape(testing_dataset)), verbose=True)
-        printout(message='testing label size:{0}'.format(np.shape(testing_labels)), verbose=True)
+        printout(message='training data size:{0}'.format(training_length), verbose=True)
+        printout(message='testing data size:{0}'.format(testing_dataset_object.shape), verbose=True)
 
         try:
             if algorithm == 'HMM':
-                hmm_algo(trainingdataset=h5_training_dataset, traininglabels=training_labels, quickrun=quickrun,
-                         testingdataset=testing_dataset, testinglabels=testing_labels, lengths=training_length)
+                hmm_algo(trainingdataset=training_dataset_object, quickrun=quickrun,
+                         testingdataset=testing_dataset_object, lengths=training_dataset_lengths)
 
             elif algorithm == 'Logistic Regression':
-                logreg_algo(trainingdataset=h5_training_dataset, traininglabels=training_labels, quickrun=quickrun,
-                            testingdataset=testing_dataset, testinglabels=testing_labels, )
+                logreg_algo(trainingdataset=training_dataset_object, quickrun=quickrun,
+                            testingdataset=testing_dataset_object)
 
             else:
                 printout(message='Wrong algorithm provided.', verbose=True)
 
             # closing h5py file
-            h5_training_dataset.close()
+            training_dataset_object.close()
 
-            msg = 'Finished analysing user:{0} activity:{1}'.format(user_info.user, user_info.activity)
-            printout(message=msg, verbose=True, extraspaces=2)
+            msg = 'finished analysing user:{0} activity:{1} time:{2}'.format(user, activity, time)
+            printout(message=msg, verbose=True, extraspaces=1)
+
+            # removing training dataset h5py file
+            os.remove(training_file_name)
 
         except:
-            msg = 'Failed while running algorithm on user: {0} activity:{1}'.format(user_info.user, user_info.activity)
+            msg = 'Failed while running algorithm on user: {0} activity:{1}'.format(user, activity)
             printout(message=msg, verbose=True)
-            h5_training_dataset.close()
+            training_dataset_object.close()
             exit(1)
-
-        else:
-            msg = 'Finished running {0}'.format(algorithm)
-            printout(message=msg, verbose=True)
-
-            # removing created file
-            os.remove(h5name)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

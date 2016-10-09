@@ -181,7 +181,8 @@ def ml_algorithm(algorithm=''):
     msg = 'Running {0} Model'.format(algorithm)
     printout(message=msg, verbose=True)
 
-    imu_algorithm(dataset_directory=dataset_location, algorithm=algorithm, quickrun=quickrun)
+    feature_extraction(h5_directory=dataset_location, algorithm=algorithm, quickrun=quickrun, action='imu',
+                       program_path=program_path)
 
 
 # go through all the matlab files and make sure there are not data or labels mistakes
@@ -223,7 +224,8 @@ def convert_featurize_matlab(action):
 
     else:
         printout(message='obtaining \'features\' of the files')
-        feature_extraction(h5_directory=dataset_location, folder_name=file_path, program_path=program_path)
+        feature_extraction(h5_directory=dataset_location, folder_name=file_path, program_path=program_path,
+                           action='featurize')
 
 
 # moves and organizes matlab files based on activity and then on users

@@ -499,7 +499,9 @@ def add_attributes(outfile_object, current_file_name):
         outfile_object.attrs['user'] = user
         outfile_object.attrs['activity'] = activity
         outfile_object.attrs['leftright'] = rightleft
-        outfile_object.attrs['time'] = time
+
+        if time:
+            outfile_object.attrs['time'] = time
 
 
 def extract_data_and_save_to_file(labels_array='', ignored_indices='', dataset='', motion_class='', outfile_object='',
