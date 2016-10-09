@@ -49,7 +49,10 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
 
         user = h5_file_object[user_info].attrs['user']
         activity = h5_file_object[user_info].attrs['activity']
-        time = h5_file_object[user_info].attrs['time']
+        try:
+            time = h5_file_object[user_info].attrs['time']
+        except IndexError:
+            time = ''
         testing_dataset_object = h5_file_object[user_info]
 
         msg = 'analysing user:{0} activity:{1} time:{2}'.format(user, activity, time)
@@ -72,7 +75,11 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
             # get the attributes of the training example
             inner_user = h5_file_object[user_info_inner].attrs['user']
             inner_activity = h5_file_object[user_info_inner].attrs['activity']
-            inner_time = h5_file_object[user_info_inner].attrs['time']
+
+            try:
+                inner_time = h5_file_object[user_info_inner].attrs['time']
+            except IndexError:
+                inner_time = ''
 
             # make sure its not the same user doing the same activity during a different time
             if user != inner_user or activity != inner_activity:

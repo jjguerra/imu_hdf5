@@ -1,5 +1,6 @@
 import os
 import re
+from utils.output import printout
 
 
 def file_information(filename):
@@ -22,7 +23,11 @@ def file_information(filename):
         pareticnonparetic = s_information.group(2)
         activenonactive = s_information.group(3)
         activity = s_information.group(4)
-        time = s_information.group(5)
+        try:
+            time = s_information.group(5)
+        except IndexError:
+            printout(message='\tno time provided',verbose=True)
+            time = ''
 
         return user, pareticnonparetic, activenonactive, activity, time
     else:
@@ -43,6 +48,8 @@ def file_information(filename):
         rightleft = s_information.group(2)
         activity = s_information.group(3)
         time = s_information.group(5)
+        if time == '':
+            printout(message='\tno time provided', verbose=True)
 
         return user, rightleft, time, activity
 

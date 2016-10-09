@@ -491,7 +491,8 @@ def add_attributes(outfile_object, current_file_name):
         outfile_object.attrs['activity'] = activity
         outfile_object.attrs['paretic_nonparetic'] = paretic_nonparetic
         outfile_object.attrs['active_nonactive'] = active_nonactive
-        outfile_object.attrs['time'] = time
+        if time:
+            outfile_object.attrs['time'] = time
     else:
         user, rightleft, time, activity = file_information(current_file_name)
 
