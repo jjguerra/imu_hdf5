@@ -49,13 +49,9 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
 
         user = h5_file_object[user_info].attrs['user']
         activity = h5_file_object[user_info].attrs['activity']
-        try:
-            time = h5_file_object[user_info].attrs['time']
-        except IndexError:
-            time = ''
         testing_dataset_object = h5_file_object[user_info]
 
-        msg = 'analysing user:{0} activity:{1} time:{2}'.format(user, activity, time)
+        msg = 'analysing user:{0} activity:{1}'.format(user, activity)
         printout(message=msg, verbose=True)
 
         printout(message='calculating training and testing dataset', verbose=True, time=True)
@@ -76,11 +72,6 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
             inner_user = h5_file_object[user_info_inner].attrs['user']
             inner_activity = h5_file_object[user_info_inner].attrs['activity']
 
-            try:
-                inner_time = h5_file_object[user_info_inner].attrs['time']
-            except IndexError:
-                inner_time = ''
-
             # make sure its not the same user doing the same activity during a different time
             if user != inner_user or activity != inner_activity:
                 # appending dataset to temporary array
@@ -88,11 +79,10 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
                 # get the size of the dataset because it will be passed as an parameter to the hmm
                 inner_length = h5_file_object[user_info_inner].shape[0]
                 training_dataset_lengths.append(inner_length)
-                msg = 'including user:{0} activity:{1} time:{2} length:{3}'.format(inner_user, inner_activity,
-                                                                                   inner_time, inner_length)
+                msg = 'including user:{0} activity:{1} length:{2}'.format(inner_user, inner_activity, inner_length)
                 printout(message=msg, verbose=True)
             else:
-                msg = 'skipping user:{0} activity:{1} time:{2}'.format(inner_user, inner_activity, inner_time)
+                msg = 'skipping user:{0} activity:{1}'.format(inner_user, inner_activity)
                 printout(message=msg, verbose=True)
 
         training_length = np.shape(tmp_training_array)

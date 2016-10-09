@@ -1,13 +1,12 @@
 import os
 import re
-from utils.output import printout
 
 
 def file_information(filename):
 
     if 'paretic' in filename:
         expression_pattern = \
-            r'(^[A-Z]+[0-9]+)_[nonparetic|paretic]+_[active|nonactive]+_(radialcan|radialtp)(_(t\d)|).*\.mat'
+            r'(^[A-Z]+[0-9]+)_(nonparetic|paretic)+_(active|nonactive)+_(radialcan|radialtp).*\.mat'
 
         # string_information = extracted useful information of the string
         # i.e.
@@ -17,23 +16,16 @@ def file_information(filename):
         #    paretic|nonparetic: string_information.group(2) = 'paretic'
         #    active|nonactive: string_information.group(3) = 'active'
         #    activity: string_information.group(4) = 'activity'
-        #    time: string_information.group(5) = 't1'
         s_information = re.match(pattern=expression_pattern, string=filename)
         user = s_information.group(1)
         pareticnonparetic = s_information.group(2)
         activenonactive = s_information.group(3)
         activity = s_information.group(4)
-        try:
-            time = s_information.group(5)
-        except IndexError:
-            printout(message='\tno time provided',verbose=True)
-            time = ''
 
-        return user, pareticnonparetic, activenonactive, activity, time
+        return user, pareticnonparetic, activenonactive, activity
     else:
         expression_pattern = r'(^[A-Z]+[0-9]+)_pilot_OT_([l|r])_(feeding|radialcan|radialtp|book_[high|low]|' \
-                             r'detergent_[high|low]|heavycan_[high|low]|lightcan_[high|low]|tp_[high|low])' \
-                             r'(_(t\d)|).*\.mat'
+                             r'detergent_[high|low]|heavycan_[high|low]|lightcan_[high|low]|tp_[high|low]).*\.mat'
 
         # string_information = extracted useful information of the string
         # i.e.
@@ -47,11 +39,8 @@ def file_information(filename):
         user = s_information.group(1)
         rightleft = s_information.group(2)
         activity = s_information.group(3)
-        time = s_information.group(5)
-        if time == '':
-            printout(message='\tno time provided', verbose=True)
 
-        return user, rightleft, time, activity
+        return user, rightleft, activity
 
 
 def move_matlab_files(initial_path, forwarding_path):
@@ -89,7 +78,7 @@ def move_matlab_files(initial_path, forwarding_path):
             old_path = os.path.join(initial_path, current_matlab_file)
 
             # get user and activity based on the file
-            user_info, _, _, activity_info = file_information(current_matlab_file)
+            user_info, _, activity_info = file_information(current_matlab_file)
 
             if user_info != "" and activity_info != "":
                 final_activity_path = os.path.join(forwarding_path, folder_dictionary[activity_info])
