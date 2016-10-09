@@ -1,4 +1,4 @@
-from datafunctions import load_data, preprocessing_data, append_array
+from datafunctions import load_data, append_array
 from utils.output import printout
 from multiprocessing.dummy import Pool as ThreadPool
 from model.hmm import hmm_algo
@@ -8,27 +8,9 @@ import h5py
 import os
 
 
-def preprocessing(list_args):
-
-    name = list_args[0]
-    dataset = list_args[1]
-
-    msg = 'Pre-processing {0}'.format(name)
-    printout(message=msg, verbose=True, time=True)
-    dataset_normalized, labels = preprocessing_data(dataset=dataset)
-    msg = 'Finished pre-processing {0}.'.format(name)
-    printout(message=msg, verbose=True, time=True)
-
-    return dataset_normalized, labels
-
-
 def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
 
-    dataset_files = os.listdir(dataset_directory)
-    for s_file in dataset_files:
-        h5_file_object = h5py.File(s_file, 'r')
-
-
+    dataset_array, dataset_info = load_data(data_dir=dataset_directory)
 
     printout(message='Starting pre-processing dataset', verbose=True, time=True)
 

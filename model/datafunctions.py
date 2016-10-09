@@ -4,6 +4,8 @@ import re
 from utils.output import printout
 from collections import Counter
 import random
+import h5py
+from utils.matlabfunctions import add_attributes
 
 
 class UserInfo:
@@ -51,12 +53,15 @@ def most_common(lst):
         return m_frequent[0][0]
 
 
-def preprocessing_data(dataset):
+def preprocessing_data(dataset_object):
+
+        preprocessed_dataset_object = dataset_object[0]
+        postprocessed_dataset_object = dataset_object[1]
 
         # sliding window properties
         window_size = 60
         step = 1
-        chunks = sliding_window(dataset, window_size, step)
+        chunks = sliding_window(preprocessed_dataset_object[:], window_size, step)
 
         label_list = list()
 
@@ -102,7 +107,11 @@ def preprocessing_data(dataset):
         sd_std = np.std(a=statistical_descriptors, axis=0)
         n_statistical_descriptors = (statistical_descriptors - sd_mean) / sd_std
 
-        return n_statistical_descriptors, np.array(label_list)
+        postprocessed_dataset_object.create_dataset(name=preprocessed_dataset_object.name,
+                                                    data=np.c_[n_statistical_descriptors, np.array(label_list)])
+
+        add_attributes(postprocessed_dataset_object[preprocessed_dataset_object.name],
+                       str(preprocessed_dataset_object.name)[1:])
 
 
 def file_information(python_file):
@@ -200,5 +209,43 @@ def append_array(o_array, array_to_add):
         merged_array = np.append(arr=o_array, values=array_to_add, axis=0)
 
     return merged_array
+
+
+# getting the statistical descriptors
+def featurize(file_properties=''):
+
+    # processed dataset file
+    processed_file_object = h5py.File(name=file_properties.dataset_path_name, mode='w')
+
+    # list all the files where the sensordata is stored
+    dataset_files = os.listdir(file_properties.data_path)
+
+    # loop through the files in the folder
+    for s_file in dataset_files:
+        dataset_path = os.path.join(file_properties.data_path, s_file)
+        h5_file_object = h5py.File(dataset_path, 'r')
+
+        msg = 'Starting pre-processing dataset {0}'.format(h5_file_object.filename)
+        printout(message=msg, verbose=True, time=True)
+
+        last_dataset = len(h5_file_object) - 1
+        for dataset_index, dataset_key in enumerate(h5_file_object.iterkeys()):
+
+            global_msg = 'dataset {0} out of {1} user:{2} activity:{3}'.\
+                format(dataset_index, last_dataset, h5_file_object[dataset_key].attrs['user'],
+                       h5_file_object[dataset_key].attrs['activity'])
+
+            # function used to call the statistical descriptor function
+
+            msg = 'Pre-processing {0}'.format(global_msg)
+            printout(message=msg, verbose=True, time=True)
+            preprocessing_data(dataset_object=[h5_file_object[dataset_key], processed_file_object])
+            msg = 'Finished pre-processing {0}.'.format(global_msg)
+            printout(message=msg, verbose=True, time=True)
+
+        msg = 'Finished pre-processing dataset {0}'.format(h5_file_object.name)
+        printout(message=msg, verbose=True, time=True, extraspaces=2)
+
+    processed_file_object.close()
 
 

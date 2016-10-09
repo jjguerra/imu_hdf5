@@ -4,8 +4,8 @@ from time import gmtime, strftime
 class Document(object):
 
     def __init__(self):
-        self.data_path = ''  # matlab files location
-        self.dataset_path_name = ''  # hdf5 files final location
+        self.data_path = ''  # matlab or hdf5 files location
+        self.dataset_path_name = ''  # hdf5 (before processing) or hdf5 (after processing) files final location
         self.dataset_path = ''  # converted matlab files location
         self.activity_list = list()
         self.matlab_files_path_dict = dict()

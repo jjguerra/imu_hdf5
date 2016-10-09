@@ -6,20 +6,45 @@ def file_information(filename):
 
     if 'paretic' in filename:
         expression_pattern = \
-            r'(^[A-Z]+[0-9]+)_[nonparetic|paretic]+_[active|nonactive]+_([a-z]+_high|[a-z]+_low|[a-z]+).*\.mat'
+            r'(^[A-Z]+[0-9]+)_[nonparetic|paretic]+_[active|nonactive]+_(radialcan|radialtp)(_(t\d)|).*\.mat'
+
+        # string_information = extracted useful information of the string
+        # i.e.
+        #    string = 'N537_pilot_OT_l_book_high.mvnx.mat'
+        #    string_information.group(0) = 'Q440_paretic_active_radialcan_t1.mvnx.mat'
+        #    user: string_information.group(1) = 'N440'
+        #    paretic|nonparetic: string_information.group(2) = 'paretic'
+        #    active|nonactive: string_information.group(3) = 'active'
+        #    activity: string_information.group(4) = 'activity'
+        #    time: string_information.group(5) = 't1'
+        s_information = re.match(pattern=expression_pattern, string=filename)
+        user = s_information.group(1)
+        pareticnonparetic = s_information.group(2)
+        activenonactive = s_information.group(3)
+        activity = s_information.group(4)
+        time = s_information.group(5)
+
+        return user, pareticnonparetic, activenonactive, activity, time
     else:
-        expression_pattern = r'(^[A-Z]+[0-9]+)_pilot_OT_[l|r]_([a-z]+_high|[a-z]+_low|[a-z]+).*\.mat'
+        expression_pattern = r'(^[A-Z]+[0-9]+)_pilot_OT_([l|r])_(feeding|radialcan|radialtp|book_[high|low]|' \
+                             r'detergent_[high|low]|heavycan_[high|low]|lightcan_[high|low]|tp_[high|low])' \
+                             r'(_(t\d)|).*\.mat'
 
-    # string_information = extracted useful information of the string
-    # i.e.
-    #    string = 'N537_pilot_OT_l_book_high.mvnx.mat'
-    #    string_information.group(0) = 'N537_pilot_OT_l_book_high.mvnx.mat'
-    #    user: string_information.group(1) = 'N537'
-    #    left|right: string_information.group(2) = 'l'
-    #    activity: string_information.group(3) = 'book_high'
-    s_information = re.match(pattern=expression_pattern, string=filename)
+        # string_information = extracted useful information of the string
+        # i.e.
+        #    string = 'N537_pilot_OT_l_book_high.mvnx.mat'
+        #    string_information.group(0) = 'N537_pilot_OT_l_book_high_t1.mvnx.mat'
+        #    user: string_information.group(1) = 'N537'
+        #    left|right: string_information.group(2) = 'l'
+        #    activity: string_information.group(3) = 'book_high'
+        #    time: string_information.group(5) = 't1'
+        s_information = re.match(pattern=expression_pattern, string=filename)
+        user = s_information.group(1)
+        rightleft = s_information.group(2)
+        activity = s_information.group(3)
+        time = s_information.group(5)
 
-    return s_information.group(1), s_information.group(2), s_information.group(3)
+        return user, rightleft, time, activity
 
 
 def move_matlab_files(initial_path, forwarding_path):
@@ -57,7 +82,7 @@ def move_matlab_files(initial_path, forwarding_path):
             old_path = os.path.join(initial_path, current_matlab_file)
 
             # get user and activity based on the file
-            user_info, activity_info = file_information(current_matlab_file)
+            user_info, _, _, activity_info = file_information(current_matlab_file)
 
             if user_info != "" and activity_info != "":
                 final_activity_path = os.path.join(forwarding_path, folder_dictionary[activity_info])

@@ -7,15 +7,109 @@ Created on Jun 13, 2016
 from utils.output import printout
 import os
 import sys
-
 from model.workflow import imu_algorithm
 from utils.matlabchecker import matlab_labels_data
 from utils.matlabmover import move_matlab_files
+from utils.featureextract import feature_extraction
 
 # imu project path
 program_path = os.path.dirname(sys.argv[0])
 
 
+def forwarding_folder(action):
+    output_error = True
+    while output_error:
+        # get the folder where all the processed matlab files will be stored
+        dataset_folder_name = raw_input('Output folder\'s name: ')
+
+        if dataset_folder_name == '' and action == 'extract':
+            file_path = os.path.join(program_path, 'dataset')
+        elif dataset_folder_name == '' and action == 'featurize':
+            file_path = os.path.join(program_path, 'processed_dataset')
+        else:
+            if os.path.isdir(dataset_folder_name):
+                file_path = dataset_folder_name
+            else:
+                file_path = os.path.join(program_path, dataset_folder_name)
+        try:
+            # if does not exists, create it
+            if not os.path.exists(file_path):
+                os.makedirs(file_path)
+        except OSError:
+            msg = 'Error. {0} directory cannot be created.'.format(file_path)
+            printout(message=msg, verbose=True)
+            printout(message='Please chose a different forwarding directory.')
+
+        else:
+            output_error = False
+
+    return file_path
+
+
+def forwarding_filters():
+
+    right_left_error = True
+    while right_left_error:
+        leftright_arm = raw_input('right(r) or left(l): ').upper()
+        if leftright_arm == 'L' or leftright_arm == 'LEFT':
+            leftright_arm = '_l_'
+        elif leftright_arm == 'R' or leftright_arm == 'RIGHT':
+            leftright_arm = '_r_'
+
+        else:
+            printout(message='No side specified. Please specified a side.', verbose=True)
+            continue
+
+        right_left_error = False
+
+    paretic_nonparetic_errors = True
+    while paretic_nonparetic_errors:
+        specific_side = ''
+        paretic_nonparetic_enter = raw_input('paretic(p), non-paretic(n) or neither(\'enter\'): ').upper()
+
+        if paretic_nonparetic_enter == 'P' or paretic_nonparetic_enter == 'PARETIC':
+            pareticnonparetic = 'paretic'
+
+        elif paretic_nonparetic_enter == 'N' or paretic_nonparetic_enter == 'NONPARETIC':
+            pareticnonparetic = 'nonparetic'
+
+        elif paretic_nonparetic_enter == '':
+            pareticnonparetic = ''
+
+        else:
+            printout(message='Wrong option selected.', verbose=True)
+            continue
+
+        paretic_nonparetic_errors = False
+
+    active_nonactive_errors = True
+    while active_nonactive_errors:
+        if pareticnonparetic == 'paretic':
+            activenonactive = raw_input('active(a) or non-active(n): ').upper()
+            if activenonactive == 'A' or activenonactive == 'ACTIVE':
+                specific_side = '_paretic_active_'
+            elif activenonactive == 'N' or activenonactive == 'NONACTIVE':
+                specific_side = '_paretic_nonactive_'
+            else:
+                printout(message='Wrong option selected.', verbose=True)
+                continue
+
+        elif pareticnonparetic == 'nonparetic':
+            activenonactive = raw_input('active or non-active: ').upper()
+            if activenonactive == 'A' or activenonactive == 'ACTIVE':
+                specific_side = '_nonparetic_active_'
+            elif activenonactive == 'N' or activenonactive == 'NONACTIVE':
+                specific_side = '_nonparetic_nonactive_'
+            else:
+                printout(message='Wrong option selected.', verbose=True)
+                continue
+
+        active_nonactive_errors = False
+
+    return leftright_arm, specific_side
+
+
+# make sure all the directory information is correct
 def check_location(matlab_or_dataset, default_folder):
 
     not_correct_dataset_location = True
@@ -39,6 +133,7 @@ def check_location(matlab_or_dataset, default_folder):
             else:
                 printout(message='Error. input is not a folder or a directory.', verbose=True)
                 printout(message='Please chose a correct folder or directory.')
+                continue
 
         if not os.path.exists(file_path):
             msg = 'Error. {0} directory {1} does not exists.'.format(matlab_or_dataset, file_path)
@@ -112,97 +207,23 @@ def check_matlab():
 
 
 # convert the matlab files to .npy files so they can be used by the algorithm efficiently
-def convert_matlab():
+# or obtain statistical descriptors of the time series dataset
+def convert_featurize_matlab(action):
 
     # get the right dataset location
     dataset_location = check_location(matlab_or_dataset='Matlab', default_folder='sensordata')
+    # get output folder
+    file_path = forwarding_folder(action=action)
 
-    right_left_error = True
-    while right_left_error:
-        leftright_arm = raw_input('right(r) or left(l): ').upper()
-        if leftright_arm == 'L' or leftright_arm == 'LEFT':
-            leftright_arm = '_l_'
-        elif leftright_arm == 'R' or leftright_arm == 'RIGHT':
-            leftright_arm = '_r_'
+    if action == 'extract':
+        leftright_arm, specific_side = forwarding_filters()
+        printout(message='Converting matlab files', verbose=True)
+        matlab_labels_data(action=action, matlab_directory=dataset_location, leftright_arm=leftright_arm,
+                           pareticnonparetic=specific_side, folder_name=file_path, program_path=program_path)
 
-        else:
-            printout(message='No side specified. Please specified a side.', verbose=True)
-            continue
-
-        right_left_error = False
-
-    paretic_nonparetic_errors = True
-    while paretic_nonparetic_errors:
-        specific_side = ''
-        paretic_nonparetic_enter = raw_input('paretic(p), non-paretic(n) or neither(\'enter\'): ').upper()
-
-        if paretic_nonparetic_enter == 'P' or paretic_nonparetic_enter == 'PARETIC':
-            pareticnonparetic = 'paretic'
-
-        elif paretic_nonparetic_enter == 'N' or paretic_nonparetic_enter == 'NONPARETIC':
-            pareticnonparetic = 'nonparetic'
-
-        elif paretic_nonparetic_enter == '':
-            pareticnonparetic = ''
-
-        else:
-            printout(message='Wrong option selected.', verbose=True)
-            continue
-
-        paretic_nonparetic_errors = False
-
-    active_nonactive_errors = True
-    while active_nonactive_errors:
-        if pareticnonparetic == 'paretic':
-            activenonactive = raw_input('active(a) or non-active(n): ').upper()
-            if activenonactive == 'A' or activenonactive == 'ACTIVE':
-                specific_side = '_paretic_active_'
-            elif activenonactive == 'N' or activenonactive == 'NONACTIVE':
-                specific_side = '_paretic_nonactive_'
-            else:
-                printout(message='Wrong option selected.', verbose=True)
-                continue
-
-        elif pareticnonparetic == 'nonparetic':
-            activenonactive = raw_input('active or non-active: ').upper()
-            if activenonactive == 'A' or activenonactive == 'ACTIVE':
-                specific_side = '_nonparetic_active_'
-            elif activenonactive == 'N' or activenonactive == 'NONACTIVE':
-                specific_side = '_nonparetic_nonactive_'
-            else:
-                printout(message='Wrong option selected.', verbose=True)
-                continue
-
-        active_nonactive_errors = False
-
-    output_error = True
-    while output_error:
-        # get the folder where all the processed matlab files will be stored
-        dataset_folder_name = raw_input('Output folder\'s name: ')
-
-        if dataset_folder_name == '':
-            file_path = os.path.join(program_path, 'dataset')
-        else:
-            if os.path.isdir(dataset_folder_name):
-                file_path = dataset_folder_name
-            else:
-                file_path = os.path.join(program_path, dataset_folder_name)
-        try:
-            # if does not exists, create it
-            if not os.path.exists(file_path):
-                os.makedirs(file_path)
-        except OSError:
-            msg = 'Error. {0} directory cannot be created.'.format(file_path)
-            printout(message=msg, verbose=True)
-            printout(message='Please chose a different forwarding directory.')
-
-        else:
-            output_error = False
-
-    printout(message='Converting matlab files', verbose=True)
-
-    matlab_labels_data(action='extract', matlab_directory=dataset_location, leftright_arm=leftright_arm,
-                       pareticnonparetic=specific_side, folder_name=file_path, program_path=program_path)
+    else:
+        printout(message='obtaining \'features\' of the files')
+        feature_extraction(h5_directory=dataset_location, folder_name=file_path, program_path=program_path)
 
 
 # moves and organizes matlab files based on activity and then on users
@@ -264,9 +285,10 @@ if __name__ == '__main__':
         print '1: HMM program'
         print '2: Check Matlab files'
         print '3: Convert Matlab files to HMM format file'
-        print '4: Move Matlab files from Dropbox to Working Directory'
-        print '5: Perform Logistic Regression'
-        print '6: Exit'
+        print '4: Process matlab files i.e. featurize'
+        print '5: Move Matlab files from Dropbox to Working Directory'
+        print '6: Perform Logistic Regression'
+        print '7: Exit'
         print ''
 
         try:
@@ -277,12 +299,14 @@ if __name__ == '__main__':
             elif selected_option == 2:
                 check_matlab()
             elif selected_option == 3:
-                convert_matlab()
+                convert_featurize_matlab('extract')
             elif selected_option == 4:
-                move_matlab()
+                convert_featurize_matlab('featurize')
             elif selected_option == 5:
-                ml_algorithm('Logistic Regression')
+                move_matlab()
             elif selected_option == 6:
+                ml_algorithm('Logistic Regression')
+            elif selected_option == 7:
                 exit_program()
             else:
                 printout(message='Wrong option selected.', verbose=True)

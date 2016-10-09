@@ -3,6 +3,7 @@ import numpy as np
 import scipy.io as sio
 from utils.matlablabels import MatlabLabels
 from utils.output import printout
+from utils.matlabmover import file_information
 import re
 import h5py
 
@@ -479,6 +480,28 @@ def remove_ignores(tmp_arr, ignored_index_list):
     return np.array(final_list)
 
 
+def add_attributes(outfile_object, current_file_name):
+
+    # add attributes to files
+    if 'paretic' in current_file_name:
+        user, paretic_nonparetic, active_nonactive, activity, time = file_information(current_file_name)
+
+        # adding attributes or descriptions to the hdf5 files
+        outfile_object.attrs['user'] = user
+        outfile_object.attrs['activity'] = activity
+        outfile_object.attrs['paretic_nonparetic'] = paretic_nonparetic
+        outfile_object.attrs['active_nonactive'] = active_nonactive
+        outfile_object.attrs['time'] = time
+    else:
+        user, rightleft, time, activity = file_information(current_file_name)
+
+        # adding attributes or descriptions to the hdf5 files
+        outfile_object.attrs['user'] = user
+        outfile_object.attrs['activity'] = activity
+        outfile_object.attrs['leftright'] = rightleft
+        outfile_object.attrs['time'] = time
+
+
 def extract_data_and_save_to_file(labels_array='', ignored_indices='', dataset='', motion_class='', outfile_object='',
                                   current_file_name=''):
 
@@ -547,9 +570,12 @@ def extract_data_and_save_to_file(labels_array='', ignored_indices='', dataset='
 
     outfile_object.create_dataset(name=current_file_name, data=data_labels)
 
+    add_attributes(outfile_object[current_file_name], current_file_name)
 
-def extract_information(doc, matlab_directory, action, leftright_arm, forward_folder, error_file_name, script_path,
-                        pareticnonparetic=''):
+
+# extracting the file and users information
+def extract_mat_information(doc, matlab_directory, action, leftright_arm, forward_folder, error_file_name, script_path,
+                            pareticnonparetic=''):
     """
     Extracts the relevant information about the directories of the matlab files being considered
     updates two variables:
