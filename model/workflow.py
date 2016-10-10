@@ -82,7 +82,7 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
                                           'training_file_' + str(user_info) + '.hdf5')
         training_dataset_object = h5py.File(training_file_name, 'w')
 
-        total_inner_users = len(h5_file_object)
+        total_inner_users = len(h5_file_object) - 1
         # fetch training data from the objects without :
         #   1. the testing data i.e. the data of user_index
         #   2. other dataset with the same user and activity but different repetition
@@ -129,7 +129,8 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
                     inner_user, inner_activity, n_inner_row, u_index, total_inner_users)
                 printout(message=msg, verbose=True)
 
-        training_length = n_inner_row
+        training_dataset_lengths = np.array(training_dataset_lengths)
+        training_dset_object = training_dataset_object['training dataset']
 
         # # defining train dataset and labels array
         # training_file_name = os.path.join(dataset_directory, 'training_file_' + str(user_info)[1:] + '.hdf5')
@@ -137,16 +138,17 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
         # training_dataset_object.create_dataset(name='training dataset', data=tmp_training_array)
 
         printout(message='', verbose=True)
-        printout(message='training data size:{0}'.format(training_length), verbose=True)
+        printout(message='training data size:{0}'.format(training_dset_object.shape),
+                 verbose=True)
         printout(message='testing data size:{0}'.format(testing_dataset_object.shape), verbose=True)
 
         try:
             if algorithm == 'HMM':
-                hmm_algo(trainingdataset=training_dataset_object, quickrun=quickrun,
+                hmm_algo(trainingdataset=training_dset_object, quickrun=quickrun,
                          testingdataset=testing_dataset_object, lengths=training_dataset_lengths)
 
             elif algorithm == 'Logistic Regression':
-                logreg_algo(trainingdataset=training_dataset_object, quickrun=quickrun,
+                logreg_algo(trainingdataset=training_dset_object, quickrun=quickrun,
                             testingdataset=testing_dataset_object)
 
             else:
@@ -155,14 +157,14 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
             # closing h5py file
             training_dataset_object.close()
 
-            msg = 'finished analysing user:{0} activity:{1} time:{2}'.format(user, activity)
+            msg = 'finished analysing user:{0} activity:{1}'.format(user, activity)
             printout(message=msg, verbose=True, extraspaces=1)
 
             # removing training dataset h5py file
             os.remove(training_file_name)
 
         except:
-            msg = 'Failed while running algorithm on user: {0} activity:{1}'.format(user, activity)
+            msg = 'Failed while running algorithm on user:{0} activity:{1}'.format(user, activity)
             printout(message=msg, verbose=True)
             training_dataset_object.close()
             exit(1)

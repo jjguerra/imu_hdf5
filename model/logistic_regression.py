@@ -2,28 +2,27 @@ from utils.output import printout
 from sklearn.linear_model import LogisticRegression
 
 
-def results(logreg_model='', trainingdataset='', traininglabels='', testingdataset='', testinglabels=''):
+def results(logreg_model='', trainingdataset='', testingdataset=''):
 
     printout(message='Finished training Logistic Regression Model.', time=True, verbose=True)
 
     printout(message='calculating Predictions', verbose=True)
-    training_score = logreg_model.score(trainingdataset, traininglabels)
-    testing_score = logreg_model.score(testingdataset, testinglabels)
+    training_score = logreg_model.score(trainingdataset[:, :-1], trainingdataset[:, -1])
+    testing_score = logreg_model.score(testingdataset[:, :-1], testingdataset[:, -1])
 
     printout(message='Final training data prediction score: {0}'.format(training_score), verbose=True)
     printout(message='Final testing data prediction score: {0}'.format(testing_score), verbose=True)
 
 
-def logreg_algo(trainingdataset='', traininglabels='', testingdataset='', testinglabels='', quickrun=True):
+def logreg_algo(trainingdataset='', testingdataset='', quickrun=True):
 
     if quickrun:
 
         printout(message='Training Logistic Regression Model.', time=True, verbose=True)
         logreg_model = LogisticRegression()
-        logreg_model = logreg_model.fit(trainingdataset, traininglabels)
+        logreg_model = logreg_model.fit(trainingdataset[:, :-1], trainingdataset[:, -1])
 
-        results(logreg_model=logreg_model, trainingdataset=trainingdataset, traininglabels=traininglabels,
-                testingdataset=testingdataset, testinglabels=testinglabels)
+        results(logreg_model=logreg_model, trainingdataset=trainingdataset, testingdataset=testingdataset)
 
     else:
 
@@ -37,10 +36,9 @@ def logreg_algo(trainingdataset='', traininglabels='', testingdataset='', testin
                       '\t\tnumber of jobs:{3}'.format(c, t, 200, -1)
                 printout(message=msg, verbose=True)
                 logreg_model = LogisticRegression(C=c, tol=t, max_iter=200, n_jobs=-1, verbose=True)
-                logreg_model = logreg_model.fit(trainingdataset, traininglabels)
+                logreg_model = logreg_model.fit(trainingdataset[:, :-1], trainingdataset[:, -1])
 
-                results(logreg_model=logreg_model, trainingdataset=trainingdataset, traininglabels=traininglabels,
-                        testingdataset=testingdataset, testinglabels=testinglabels)
+                results(logreg_model=logreg_model, trainingdataset=trainingdataset, testingdataset=testingdataset)
 
 
 

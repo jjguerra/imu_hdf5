@@ -10,10 +10,10 @@ np.random.seed(0)
 def results(hmm_model='', trainingdataset='', testingdataset=''):
 
     printout(message='calculating Predictions', verbose=True)
-    train_predictions = hmm_model.predict_proba(trainingdataset['training dataset'][:, :-1])
+    train_predictions = hmm_model.predict_proba(trainingdataset[:, :-1])
     test_predictions = hmm_model.predict_proba(testingdataset[:, :-1])
 
-    traininglabels = trainingdataset['training dataset'][:, -1]
+    traininglabels = trainingdataset[:, -1]
     testinglabels = testingdataset[:, -1]
 
     printout(message='processing results for logistic regression algorithm', verbose=True)
@@ -39,7 +39,7 @@ def hmm_algo(trainingdataset='', testingdataset='', quickrun='', lengths=0):
     if quickrun:
         printout(message='Training Hidden Markov Model.', time=True, verbose=True)
         hmm_model = hmm.GaussianHMM(n_components=8, covariance_type='diag', n_iter=10, verbose=True)
-        hmm_model.fit(X=trainingdataset['training dataset'][:, :-1], lengths=lengths)
+        hmm_model.fit(X=trainingdataset[:, :-1], lengths=lengths)
         printout(message='Finished training Hidden Markov Model.', time=True, verbose=True)
 
         results(hmm_model=hmm_model, trainingdataset=trainingdataset, testingdataset=testingdataset)
@@ -64,7 +64,7 @@ def hmm_algo(trainingdataset='', testingdataset='', quickrun='', lengths=0):
                         printout(message='Training Hidden Markov Model.', time=True, verbose=True)
                         hmm_model = hmm.GaussianHMM(n_components=nc, covariance_type=ct, n_iter=ni, verbose=True,
                                                     tol=t)
-                        hmm_model.fit(X=trainingdataset['training dataset'][:, :-1])
+                        hmm_model.fit(X=trainingdataset[:, :-1])
                         printout(message='Finished training Hidden Markov Model.', time=True, verbose=True)
 
                         results(hmm_model=hmm_model, trainingdataset=trainingdataset, testingdataset=testingdataset)
