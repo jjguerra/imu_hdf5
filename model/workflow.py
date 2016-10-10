@@ -14,7 +14,11 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
     dataset_files = os.listdir(dataset_directory)
 
     # need to put all the files in the same h5py file
-    if len(dataset_files) != 1:
+    if len(dataset_files) < 1:
+        msg = 'Error no files in the directory:{0}'.format(dataset_directory)
+        printout(message=msg, verbose=True)
+        
+    if len(dataset_files) > 1:
 
         file_name = 'merged_' + dataset_directory.split('/')[-1] + '.hdf5'
         file_path = os.path.join(dataset_directory, file_name)
