@@ -17,7 +17,7 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
     if len(dataset_files) < 1:
         msg = 'Error no files in the directory:{0}'.format(dataset_directory)
         printout(message=msg, verbose=True)
-        
+
     if len(dataset_files) > 1:
 
         file_name = 'merged_' + dataset_directory.split('/')[-1] + '.hdf5'
@@ -66,8 +66,14 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
         # length of each dataset
         training_dataset_lengths = list()
 
-        # temporary training numpy array
-        tmp_training_array = np.empty(shape=(0, 0))
+        # # temporary training numpy array
+        # tmp_training_array = np.empty(shape=(0, 0))
+
+        # flag used to create a dataset for the first file
+        first_file = True
+
+        # keep track of the total number of rows
+        n_inner_row = 0
 
         # fetch training data from the objects without :
         #   1. the testing data i.e. the data of user_index
@@ -80,23 +86,44 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
 
             # make sure its not the same user doing the same activity during a different time
             if user != inner_user or activity != inner_activity:
-                # appending dataset to temporary array
-                tmp_training_array = append_array(tmp_training_array, h5_file_object[user_info_inner].value)
+
                 # get the size of the dataset because it will be passed as an parameter to the hmm
-                inner_length = h5_file_object[user_info_inner].shape[0]
-                training_dataset_lengths.append(inner_length)
-                msg = 'including user:{0} activity:{1} length:{2}'.format(inner_user, inner_activity, inner_length)
+                n_inner_row += h5_file_object[user_info_inner].shape[0]
+                n_inner_column = h5_file_object[user_info_inner].shape[1]
+
+                if first_file:
+                    # defining train dataset and labels array
+                    training_file_name = os.path.join(dataset_directory,
+                                                      'training_file_' + str(user_info)[1:] + '.hdf5')
+                    training_dataset_object = h5py.File(training_file_name, 'w')
+                    training_dataset_object.create_dataset(name='training dataset', shape=(n_inner_row, n_inner_column),
+                                                           maxshape=(None, n_inner_column),
+                                                           chunks=True)
+                    training_dataset_object[:] = h5_file_object[user_info_inner].value
+
+                else:
+                    # resize the dataset to accommodate the new data
+                    training_dataset_object.resize(n_inner_row, axis=0)
+                    training_dataset_object[index_start_appending:] = h5_file_object[user_info_inner].value
+
+                index_start_appending = n_inner_row
+
+                # appending dataset to temporary array
+                # tmp_training_array = append_array(tmp_training_array, h5_file_object[user_info_inner].value)
+                training_dataset_lengths.append(n_inner_row)
+                msg = 'including user:{0} activity:{1} length:{2}'.format(inner_user, inner_activity, n_inner_row)
                 printout(message=msg, verbose=True)
+
             else:
                 msg = 'skipping user:{0} activity:{1}'.format(inner_user, inner_activity)
                 printout(message=msg, verbose=True)
 
-        training_length = np.shape(tmp_training_array)
+        training_length = n_inner_row
 
-        # defining train dataset and labels array
-        training_file_name = os.path.join(dataset_directory, 'training_file_' + str(user_info)[1:] + '.hdf5')
-        training_dataset_object = h5py.File(training_file_name, 'w')
-        training_dataset_object.create_dataset(name='training dataset', data=tmp_training_array)
+        # # defining train dataset and labels array
+        # training_file_name = os.path.join(dataset_directory, 'training_file_' + str(user_info)[1:] + '.hdf5')
+        # training_dataset_object = h5py.File(training_file_name, 'w')
+        # training_dataset_object.create_dataset(name='training dataset', data=tmp_training_array)
 
         printout(message='', verbose=True)
         printout(message='training data size:{0}'.format(training_length), verbose=True)
