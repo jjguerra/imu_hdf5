@@ -2,6 +2,7 @@ from datafunctions import append_array
 from utils.output import printout
 from model.hmm import hmm_algo
 from model.logistic_regression import logreg_algo
+from utils.matlabfunctions import add_attributes
 import numpy as np
 import h5py
 import os
@@ -15,11 +16,11 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
     # need to put all the files in the same h5py file
     if len(dataset_files) != 1:
 
-        file_name = 'merged_' + dataset_directory.split('/')[-1]
+        file_name = 'merged_' + dataset_directory.split('/')[-1] + '.hdf5'
         file_path = os.path.join(dataset_directory, file_name)
         integrated_datasets_file = h5py.File(name=file_path, mode='w')
 
-        printout(message='more than one set of files in the directory', verbose=True)
+        printout(message='more than one file in the directory', verbose=True)
         msg = 'merging files into {0}'.format(file_name)
         printout(message=msg, verbose=True)
         for s_file in dataset_files:
@@ -29,6 +30,7 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
 
                 for key, value in h5_file_object.iteritems():
                     integrated_datasets_file.create_dataset(name=key, data=value)
+                    add_attributes(integrated_datasets_file[key], key)
 
                 h5_file_object.close()
 
@@ -111,7 +113,7 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
             # closing h5py file
             training_dataset_object.close()
 
-            msg = 'finished analysing user:{0} activity:{1} time:{2}'.format(user, activity, time)
+            msg = 'finished analysing user:{0} activity:{1} time:{2}'.format(user, activity)
             printout(message=msg, verbose=True, extraspaces=1)
 
             # removing training dataset h5py file
