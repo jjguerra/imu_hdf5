@@ -28,11 +28,13 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
         msg = 'merging files into {0}'.format(file_name)
         printout(message=msg, verbose=True)
         for s_file in dataset_files:
-            if '.hdf5' in s_file:
+            if '.hdf5' in s_file and 'merged' not in s_file:
                 dataset_path = os.path.join(dataset_directory, s_file)
                 h5_file_object = h5py.File(dataset_path, 'r')
 
                 for key, value in h5_file_object.iteritems():
+                    msg = '\tadding file:{0}'.format(key)
+                    printout(message=msg, verbose=True)
                     integrated_datasets_file.create_dataset(name=key, data=value)
                     add_attributes(integrated_datasets_file[key], key)
 
@@ -73,49 +75,58 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
         first_file = True
 
         # keep track of the total number of rows
-        n_inner_row = 0
+        total_inner_row = 0
 
+        # defining train dataset and labels array
+        training_file_name = os.path.join(dataset_directory,
+                                          'training_file_' + str(user_info) + '.hdf5')
+        training_dataset_object = h5py.File(training_file_name, 'w')
+
+        total_inner_users = len(h5_file_object)
         # fetch training data from the objects without :
         #   1. the testing data i.e. the data of user_index
         #   2. other dataset with the same user and activity but different repetition
-        for user_info_inner in h5_file_object.iterkeys():
+        for u_index, user_info_inner in enumerate(h5_file_object.iterkeys()):
 
             # get the attributes of the training example
             inner_user = h5_file_object[user_info_inner].attrs['user']
             inner_activity = h5_file_object[user_info_inner].attrs['activity']
 
+            # shape of the current dataset
+            n_inner_row, n_inner_column = h5_file_object[user_info_inner].shape
+
             # make sure its not the same user doing the same activity during a different time
             if user != inner_user or activity != inner_activity:
 
                 # get the size of the dataset because it will be passed as an parameter to the hmm
-                n_inner_row += h5_file_object[user_info_inner].shape[0]
-                n_inner_column = h5_file_object[user_info_inner].shape[1]
+                total_inner_row += h5_file_object[user_info_inner].shape[0]
 
                 if first_file:
-                    # defining train dataset and labels array
-                    training_file_name = os.path.join(dataset_directory,
-                                                      'training_file_' + str(user_info)[1:] + '.hdf5')
-                    training_dataset_object = h5py.File(training_file_name, 'w')
-                    training_dataset_object.create_dataset(name='training dataset', shape=(n_inner_row, n_inner_column),
+                    training_dataset_object.create_dataset(name='training dataset',
+                                                           shape=(total_inner_row, n_inner_column),
                                                            maxshape=(None, n_inner_column),
                                                            chunks=True)
-                    training_dataset_object[:] = h5_file_object[user_info_inner].value
+                    training_dataset_object['training dataset'][:, :] = h5_file_object[user_info_inner].value
+                    first_file = False
 
                 else:
                     # resize the dataset to accommodate the new data
-                    training_dataset_object.resize(n_inner_row, axis=0)
-                    training_dataset_object[index_start_appending:] = h5_file_object[user_info_inner].value
+                    training_dataset_object['training dataset'].resize(total_inner_row, axis=0)
+                    training_dataset_object['training dataset'][index_start_appending:] = \
+                        h5_file_object[user_info_inner].value
 
-                index_start_appending = n_inner_row
+                index_start_appending = total_inner_row
 
                 # appending dataset to temporary array
                 # tmp_training_array = append_array(tmp_training_array, h5_file_object[user_info_inner].value)
                 training_dataset_lengths.append(n_inner_row)
-                msg = 'including user:{0} activity:{1} length:{2}'.format(inner_user, inner_activity, n_inner_row)
+                msg = '\tincluding user:{0} activity:{1} length:{2} (user index {3} of {4})'.format(
+                    inner_user, inner_activity, n_inner_row, u_index, total_inner_users)
                 printout(message=msg, verbose=True)
 
             else:
-                msg = 'skipping user:{0} activity:{1}'.format(inner_user, inner_activity)
+                msg = '\tskipping user:{0} activity:{1} length:{2} (user index {3} of {4})'.format(
+                    inner_user, inner_activity, n_inner_row, u_index, total_inner_users)
                 printout(message=msg, verbose=True)
 
         training_length = n_inner_row
