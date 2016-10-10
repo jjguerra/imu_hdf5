@@ -61,7 +61,7 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
             activity = h5_file_object[user_info].attrs['activity']
             testing_dataset_object = h5_file_object[user_info]
 
-            msg = 'analysing user:{0} activity:{1}'.format(user, activity)
+            msg = 'analysing {0}'.format(user_info)
             printout(message=msg, verbose=True)
 
             printout(message='calculating training and testing dataset', verbose=True, time=True)
@@ -122,13 +122,11 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
                     # appending dataset to temporary array
                     # tmp_training_array = append_array(tmp_training_array, h5_file_object[user_info_inner].value)
                     training_dataset_lengths.append(n_inner_row)
-                    msg = '\tincluding user:{0} activity:{1} length:{2} (user index {3} of {4})'.format(
-                        inner_user, inner_activity, n_inner_row, u_index, total_inner_users)
+                    msg = '\tincluding {0} (user index {1} of {2})'.format(user_info_inner, u_index, total_inner_users)
                     printout(message=msg, verbose=True)
 
                 else:
-                    msg = '\tskipping user:{0} activity:{1} length:{2} (user index {3} of {4})'.format(
-                        inner_user, inner_activity, n_inner_row, u_index, total_inner_users)
+                    msg = '\tskipping {0} (user index {1} of {2})'.format(user_info_inner, u_index, total_inner_users)
                     printout(message=msg, verbose=True)
 
             training_dataset_lengths = np.array(training_dataset_lengths)

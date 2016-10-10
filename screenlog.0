@@ -1,0 +1,7 @@
+
+jjguerra@syros:~/imu$ ls
+[0m[01;34mdataset[0m                 [01;32m__init__.py[0m   [01;34mmodel[0m                           screenlog.0
+[01;34mdataset_practice[0m        [01;32m__init__.pyc[0m  [01;34mprocessed_sensordata_all_right[0m  [01;32mTo_Do.txt[0m
+error_log_practice.txt  [01;32mmain.py[0m       [01;32mREADME.md[0m                       [01;34mutils[0m
+jjguerra@syros:~/imu$ m[Krm -rf screenlog.0 
+jjguerra@syros:~/imu$ [H[Jjjguerra@syros:~/imu$ 
