@@ -14,9 +14,9 @@ def results(hmm_model='', trainingdataset='', traininglabels='', testingdataset=
     test_predictions = hmm_model.predict_proba(testingdataset[:])
 
     printout(message='processing results for logistic regression algorithm', verbose=True)
-    logreg_train_data, logreg_train_labels = preprocessing_logistic_regression(predictions=train_predictions[:],
+    logreg_train_data, logreg_train_labels = preprocessing_logistic_regression(predictions=train_predictions,
                                                                                labels=traininglabels[:])
-    logreg_test_data, logreg_test_labels = preprocessing_logistic_regression(predictions=test_predictions[:],
+    logreg_test_data, logreg_test_labels = preprocessing_logistic_regression(predictions=test_predictions,
                                                                              labels=testinglabels[:])
 
     # mapping hmm labels to true labels
@@ -35,10 +35,10 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
              quickrun='', lengths=0, user='', activity=''):
 
     if quickrun:
-        printout(message='Training Hidden Markov Model.', time=True, verbose=True)
+        printout(message='starting training Hidden Markov Model.', time=True, verbose=True)
         hmm_model = hmm.GaussianHMM(n_components=8, covariance_type='diag', n_iter=10, verbose=True)
         hmm_model.fit(X=trainingdataset[:], user=user, activity=activity, lengths=lengths)
-        printout(message='Finished training Hidden Markov Model.', time=True, verbose=True)
+        printout(message='finished training Hidden Markov Model.', time=True, verbose=True)
 
         results(hmm_model=hmm_model, trainingdataset=trainingdataset, traininglabels=traininglabels,
                 testingdataset=testingdataset, testinglabels=testinglabels)
@@ -60,11 +60,11 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
                               '\t\tcovariance type:{3}'.format(nc, ni, t, ct)
                         printout(message=msg, verbose=True)
 
-                        printout(message='Training Hidden Markov Model.', time=True, verbose=True)
+                        printout(message='starting raining Hidden Markov Model.', time=True, verbose=True)
                         hmm_model = hmm.GaussianHMM(n_components=nc, covariance_type=ct, n_iter=ni, verbose=True,
                                                     tol=t)
                         hmm_model.fit(X=trainingdataset[:, :-1])
-                        printout(message='Finished training Hidden Markov Model.', time=True, verbose=True)
+                        printout(message='finished training Hidden Markov Model.', time=True, verbose=True)
 
                         results(hmm_model=hmm_model, trainingdataset=trainingdataset, traininglabels=traininglabels,
                                 testingdataset=testingdataset, testinglabels=testinglabels)

@@ -174,9 +174,7 @@ def load_data(data_dir):
 
 def preprocessing_logistic_regression(predictions, labels):
 
-    dataset = np.zeros([np.shape(predictions)[0], np.shape(predictions)[1] + 1])
-    dataset[:, 0:np.shape(predictions)[1]] += predictions
-    dataset[:, -1] += labels
+    dataset = np.append(predictions, labels, 1)
     window_size = 150
     step = 30
     chunks = sliding_window(sequence=dataset, window_size=window_size, step=step)

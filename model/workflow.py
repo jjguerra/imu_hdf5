@@ -67,8 +67,11 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
 
             user = h5_file_object[user_info].attrs['user']
             activity = h5_file_object[user_info].attrs['activity']
-            training_testing_dataset_object.create_dataset(name='testing data', data=h5_file_object[user_info][:, :-1])
-            training_testing_dataset_object.create_dataset(name='testing labels', data=h5_file_object[user_info][:, -1])
+            n_row, n_col = np.shape(h5_file_object[user_info][:, :-1])
+            training_testing_dataset_object.create_dataset(name='testing data', shape=(n_row, n_col))
+            training_testing_dataset_object['testing data'][:, :] = h5_file_object[user_info].value[:, :-1]
+            training_testing_dataset_object.create_dataset(name='testing labels', shape=(n_row, 1))
+            training_testing_dataset_object['testing labels'][:, 0] = h5_file_object[user_info].value[:, -1]
 
             msg = 'analysing {0}'.format(user_info)
             printout(message=msg, verbose=True)
@@ -169,7 +172,7 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
                                 testinglabels=testing_label_object)
 
                 else:
-                    printout(message='Wrong algorithm provided.', verbose=True)
+                    printout(message='wrong algorithm provided.', verbose=True)
 
                 # closing h5py file
                 training_testing_dataset_object.close()
