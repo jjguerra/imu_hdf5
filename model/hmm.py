@@ -7,20 +7,17 @@ import numpy as np
 np.random.seed(0)
 
 
-def results(hmm_model='', trainingdataset='', testingdataset=''):
+def results(hmm_model='', trainingdataset='', traininglabels='', testingdataset='', testinglabels=''):
 
     printout(message='calculating Predictions', verbose=True)
-    train_predictions = hmm_model.predict_proba(trainingdataset[:, :-1])
-    test_predictions = hmm_model.predict_proba(testingdataset[:, :-1])
-
-    traininglabels = trainingdataset[:, -1]
-    testinglabels = testingdataset[:, -1]
+    train_predictions = hmm_model.predict_proba(trainingdataset[:])
+    test_predictions = hmm_model.predict_proba(testingdataset[:])
 
     printout(message='processing results for logistic regression algorithm', verbose=True)
-    logreg_train_data, logreg_train_labels = preprocessing_logistic_regression(predictions=train_predictions,
-                                                                               labels=traininglabels)
-    logreg_test_data, logreg_test_labels = preprocessing_logistic_regression(predictions=test_predictions,
-                                                                             labels=testinglabels)
+    logreg_train_data, logreg_train_labels = preprocessing_logistic_regression(predictions=train_predictions[:],
+                                                                               labels=traininglabels[:])
+    logreg_test_data, logreg_test_labels = preprocessing_logistic_regression(predictions=test_predictions[:],
+                                                                             labels=testinglabels[:])
 
     # mapping hmm labels to true labels
     logistic_regression_model = LogisticRegression()
@@ -34,15 +31,17 @@ def results(hmm_model='', trainingdataset='', testingdataset=''):
     printout(message='final testing data prediction score: {0}'.format(test_score), verbose=True)
 
 
-def hmm_algo(trainingdataset='', testingdataset='', quickrun='', lengths=0):
+def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testinglabels='',
+             quickrun='', lengths=0, user='', activity=''):
 
     if quickrun:
         printout(message='Training Hidden Markov Model.', time=True, verbose=True)
         hmm_model = hmm.GaussianHMM(n_components=8, covariance_type='diag', n_iter=10, verbose=True)
-        hmm_model.fit(X=trainingdataset[:, :-1], lengths=lengths)
+        hmm_model.fit(X=trainingdataset[:], user=user, activity=activity, lengths=lengths)
         printout(message='Finished training Hidden Markov Model.', time=True, verbose=True)
 
-        results(hmm_model=hmm_model, trainingdataset=trainingdataset, testingdataset=testingdataset)
+        results(hmm_model=hmm_model, trainingdataset=trainingdataset, traininglabels=traininglabels,
+                testingdataset=testingdataset, testinglabels=testinglabels)
 
     else:
         n_iterations = [10, 50, 100, 1000]
@@ -67,5 +66,6 @@ def hmm_algo(trainingdataset='', testingdataset='', quickrun='', lengths=0):
                         hmm_model.fit(X=trainingdataset[:, :-1])
                         printout(message='Finished training Hidden Markov Model.', time=True, verbose=True)
 
-                        results(hmm_model=hmm_model, trainingdataset=trainingdataset, testingdataset=testingdataset)
+                        results(hmm_model=hmm_model, trainingdataset=trainingdataset, traininglabels=traininglabels,
+                                testingdataset=testingdataset, testinglabels=testinglabels)
 

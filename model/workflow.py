@@ -1,4 +1,3 @@
-from datafunctions import append_array
 from utils.output import printout
 from model.hmm import hmm_algo
 from model.logistic_regression import logreg_algo
@@ -6,6 +5,7 @@ from utils.matlabfunctions import add_attributes
 import numpy as np
 import h5py
 import os
+import datetime
 
 
 def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
@@ -57,9 +57,18 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
 
         if 'paretic' in user_info:
 
+            now = datetime.datetime.now()
+
+            # defining train dataset and labels array
+            c_filename = 'training_testing_file_' + str(user_info) + '_' + str(now.hour) + str(now.minute) + \
+                         str(now.second) + '_' + '.hdf5'
+            training_file_name = os.path.join(dataset_directory, c_filename)
+            training_testing_dataset_object = h5py.File(training_file_name, 'w')
+
             user = h5_file_object[user_info].attrs['user']
             activity = h5_file_object[user_info].attrs['activity']
-            testing_dataset_object = h5_file_object[user_info]
+            training_testing_dataset_object.create_dataset(name='testing data', data=h5_file_object[user_info][:, :-1])
+            training_testing_dataset_object.create_dataset(name='testing labels', data=h5_file_object[user_info][:, -1])
 
             msg = 'analysing {0}'.format(user_info)
             printout(message=msg, verbose=True)
@@ -70,19 +79,11 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
             # length of each dataset
             training_dataset_lengths = list()
 
-            # # temporary training numpy array
-            # tmp_training_array = np.empty(shape=(0, 0))
-
             # flag used to create a dataset for the first file
             first_file = True
 
             # keep track of the total number of rows
             total_inner_row = 0
-
-            # defining train dataset and labels array
-            training_file_name = os.path.join(dataset_directory,
-                                              'training_file_' + str(user_info) + '.hdf5')
-            training_dataset_object = h5py.File(training_file_name, 'w')
 
             total_inner_users = len(h5_file_object) - 1
             # fetch training data from the objects without :
@@ -97,6 +98,9 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
                 # shape of the current dataset
                 n_inner_row, n_inner_column = h5_file_object[user_info_inner].shape
 
+                # removing label columns
+                n_inner_column -= 1
+
                 # make sure its not the same user doing the same activity during a different time
                 if user != inner_user and activity == inner_activity:
 
@@ -104,23 +108,32 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
                     total_inner_row += h5_file_object[user_info_inner].shape[0]
 
                     if first_file:
-                        training_dataset_object.create_dataset(name='training dataset',
-                                                               shape=(total_inner_row, n_inner_column),
-                                                               maxshape=(None, n_inner_column),
-                                                               chunks=True)
-                        training_dataset_object['training dataset'][:, :] = h5_file_object[user_info_inner].value
+                        training_testing_dataset_object.create_dataset(name='training data',
+                                                                       shape=(total_inner_row, n_inner_column),
+                                                                       maxshape=(None, n_inner_column), chunks=True)
+
+                        training_testing_dataset_object.create_dataset(name='training labels',
+                                                                       shape=(total_inner_row, 1),
+                                                                       maxshape=(None, 1), chunks=True)
+
+                        training_testing_dataset_object['training data'][:, :] = \
+                            h5_file_object[user_info_inner].value[:, :-1]
+                        training_testing_dataset_object['training labels'][:, 0] = \
+                            h5_file_object[user_info_inner].value[:, -1]
                         first_file = False
 
                     else:
                         # resize the dataset to accommodate the new data
-                        training_dataset_object['training dataset'].resize(total_inner_row, axis=0)
-                        training_dataset_object['training dataset'][index_start_appending:] = \
-                            h5_file_object[user_info_inner].value
+                        training_testing_dataset_object['training data'].resize(total_inner_row, axis=0)
+                        training_testing_dataset_object['training data'][index_start_appending:] = \
+                            h5_file_object[user_info_inner].value[:, :-1]
+
+                        training_testing_dataset_object['training labels'].resize(total_inner_row, axis=0)
+                        training_testing_dataset_object['training labels'][index_start_appending:, 0] = \
+                            h5_file_object[user_info_inner].value[:, -1]
 
                     index_start_appending = total_inner_row
 
-                    # appending dataset to temporary array
-                    # tmp_training_array = append_array(tmp_training_array, h5_file_object[user_info_inner].value)
                     training_dataset_lengths.append(n_inner_row)
                     msg = '\tincluding {0} (user index {1} of {2})'.format(user_info_inner, u_index, total_inner_users)
                     printout(message=msg, verbose=True)
@@ -130,32 +143,36 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
                     printout(message=msg, verbose=True)
 
             training_dataset_lengths = np.array(training_dataset_lengths)
-            training_dset_object = training_dataset_object['training dataset']
-
-            # # defining train dataset and labels array
-            # training_file_name = os.path.join(dataset_directory, 'training_file_' + str(user_info)[1:] + '.hdf5')
-            # training_dataset_object = h5py.File(training_file_name, 'w')
-            # training_dataset_object.create_dataset(name='training dataset', data=tmp_training_array)
+            training_data_object = training_testing_dataset_object['training data']
+            training_label_object = training_testing_dataset_object['training labels']
+            testing_data_object = training_testing_dataset_object['testing data']
+            testing_label_object = training_testing_dataset_object['testing labels']
 
             printout(message='', verbose=True)
-            printout(message='training data size:{0}'.format(training_dset_object.shape),
+            printout(message='training data size:{0}'.format(training_data_object.shape),
                      verbose=True)
-            printout(message='testing data size:{0}'.format(testing_dataset_object.shape), verbose=True)
+            printout(message='training labels size:{0}'.format(training_label_object.shape),
+                     verbose=True)
+            printout(message='testing data size:{0}'.format(testing_data_object.shape), verbose=True)
+            printout(message='testing data size:{0}'.format(testing_label_object.shape), verbose=True)
 
             try:
                 if algorithm == 'HMM':
-                    hmm_algo(trainingdataset=training_dset_object, quickrun=quickrun,
-                             testingdataset=testing_dataset_object, lengths=training_dataset_lengths)
+                    hmm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
+                             quickrun=quickrun, testingdataset=testing_data_object, testinglabels=testing_label_object,
+                             lengths=training_dataset_lengths,
+                             user=user, activity=activity)
 
                 elif algorithm == 'Logistic Regression':
-                    logreg_algo(trainingdataset=training_dset_object, quickrun=quickrun,
-                                testingdataset=testing_dataset_object)
+                    logreg_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
+                                quickrun=quickrun, testingdataset=testing_data_object,
+                                testinglabels=testing_label_object)
 
                 else:
                     printout(message='Wrong algorithm provided.', verbose=True)
 
                 # closing h5py file
-                training_dataset_object.close()
+                training_testing_dataset_object.close()
 
                 msg = 'finished analysing user:{0} activity:{1}'.format(user, activity)
                 printout(message=msg, verbose=True, extraspaces=1)
@@ -166,5 +183,5 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
             except:
                 msg = 'Failed while running algorithm on user:{0} activity:{1}'.format(user, activity)
                 printout(message=msg, verbose=True)
-                training_dataset_object.close()
+                training_testing_dataset_object.close()
                 exit(1)
