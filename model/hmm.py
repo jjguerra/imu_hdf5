@@ -31,15 +31,16 @@ def results(train_predictions='', traininglabels='', test_predictions='', testin
 
 
 def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testinglabels='',
-             quickrun='', lengths=0, user='', activity=''):
+             quickrun='', lengths=0, user='', activity='', program_path=''):
 
     if quickrun:
 
-        root_folder = 'data'
+        root_folder = '/'.join(program_path.split('/')[:-1])
+        data_dir = os.path.join(root_folder, 'data')
 
         files_in_data = ''
-        if os.path.exists(root_folder):
-            files_in_data = os.listdir(root_folder)
+        if os.path.exists(data_dir):
+            files_in_data = os.listdir(data_dir)
 
         loaded_model = False
 
@@ -49,7 +50,7 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
             if (user in sfile) and (activity in sfile) and ('hmm' in sfile) and ('.npy' not in sfile):
                 printout(message='\thmm model found', time=True, verbose=True)
                 # calculate the whole path
-                data_path = os.path.join(root_folder, sfile)
+                data_path = os.path.join(data_dir, sfile)
                 # load the model
                 hmm_model = joblib.load(data_path)
                 # turn on flag so the code does not re-train the model
@@ -62,13 +63,13 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
             # train model
             printout(message='starting training Hidden Markov Model.', time=True, verbose=True)
             hmm_model = hmm.GaussianHMM(n_components=8, covariance_type='diag', n_iter=10, verbose=True)
-            hmm_model.fit(X=trainingdataset[:], user=user, activity=activity, lengths=lengths)
+            hmm_model.fit(X=trainingdataset[:], user=user, activity=activity, data_dir=data_dir, lengths=lengths)
             printout(message='finished training Hidden Markov Model.', time=True, verbose=True)
 
             # create a name for a file based on the user, activity and the time
             filename = 'hmm_' + user + '_' + activity + '_' + str(datetime.now().strftime('%Y%m%d%H%M%S'))
             # calculate the whole path
-            data_path = os.path.join(root_folder, filename)
+            data_path = os.path.join(data_dir, filename)
 
             # if data folder does not exists, make it
             if not os.path.exists(root_folder):

@@ -8,7 +8,7 @@ import os
 import datetime
 
 
-def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
+def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=''):
 
     # list all the files where the sensordata is stored
     dataset_files = os.listdir(dataset_directory)
@@ -165,7 +165,7 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
                     hmm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
                              quickrun=quickrun, testingdataset=testing_data_object, testinglabels=testing_label_object,
                              lengths=training_dataset_lengths,
-                             user=user, activity=activity)
+                             user=user, activity=activity, program_path=program_path)
 
                 elif algorithm == 'Logistic Regression':
                     logreg_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
