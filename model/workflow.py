@@ -11,8 +11,8 @@ import datetime
 def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
 
     # list all the files where the sensordata is stored
-    #dataset_files = os.listdir(dataset_directory)
-    dataset_files = ['processed_sensordata.hdf5']
+    dataset_files = os.listdir(dataset_directory)
+    # dataset_files = ['processed_sensordata.hdf5']
 
     # need to put all the files in the same h5py file
     if len(dataset_files) < 1:
@@ -56,7 +56,7 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
 
     for user_index, user_info in enumerate(h5_file_object.iterkeys()):
 
-        if 'paretic' in user_info and 'Q440' not in user_info:
+        if 'paretic' in user_info:
 
             now = datetime.datetime.now()
 
@@ -183,8 +183,6 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun=''):
 
                 # removing training dataset h5py file
                 os.remove(training_file_name)
-
-                exit(0)
 
             except:
                 msg = 'Failed while running algorithm on user:{0} activity:{1}'.format(user, activity)
