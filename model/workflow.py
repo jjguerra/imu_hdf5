@@ -160,32 +160,25 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
             printout(message='testing data size:{0}'.format(testing_data_object.shape), verbose=True)
             printout(message='testing data size:{0}'.format(testing_label_object.shape), verbose=True)
 
-            try:
-                if algorithm == 'HMM':
-                    hmm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
-                             quickrun=quickrun, testingdataset=testing_data_object, testinglabels=testing_label_object,
-                             lengths=training_dataset_lengths,
-                             user=user, activity=activity, program_path=program_path)
+            if algorithm == 'HMM':
+                hmm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
+                         quickrun=quickrun, testingdataset=testing_data_object, testinglabels=testing_label_object,
+                         lengths=training_dataset_lengths,
+                         user=user, activity=activity, program_path=program_path)
 
-                elif algorithm == 'Logistic Regression':
-                    logreg_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
-                                quickrun=quickrun, testingdataset=testing_data_object,
-                                testinglabels=testing_label_object)
+            elif algorithm == 'Logistic Regression':
+                logreg_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
+                            quickrun=quickrun, testingdataset=testing_data_object,
+                            testinglabels=testing_label_object)
 
-                else:
-                    printout(message='wrong algorithm provided.', verbose=True)
+            else:
+                printout(message='wrong algorithm provided.', verbose=True)
 
-                # closing h5py file
-                training_testing_dataset_object.close()
+            # closing h5py file
+            training_testing_dataset_object.close()
 
-                msg = 'finished analysing user:{0} activity:{1}'.format(user, activity)
-                printout(message=msg, verbose=True, extraspaces=1)
+            msg = 'finished analysing user:{0} activity:{1}'.format(user, activity)
+            printout(message=msg, verbose=True, extraspaces=1)
 
-                # removing training dataset h5py file
-                os.remove(training_file_name)
-
-            except:
-                msg = 'Failed while running algorithm on user:{0} activity:{1}'.format(user, activity)
-                printout(message=msg, verbose=True)
-                training_testing_dataset_object.close()
-                exit(1)
+            # removing training dataset h5py file
+            os.remove(training_file_name)
