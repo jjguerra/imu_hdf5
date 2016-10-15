@@ -6,14 +6,12 @@ Created on Jun 13, 2016
 """
 from utils.output import printout
 import os
-import sys
-from model.workflow import imu_algorithm
 from utils.matlabchecker import matlab_labels_data
 from utils.matlabmover import move_matlab_files
 from utils.featureextract import feature_extraction
 
 # imu project path
-program_path = os.path.dirname(sys.argv[0])
+program_path = '/'.join(os.path.realpath(__file__).split('/')[:-1])
 
 
 def forwarding_folder(action):
