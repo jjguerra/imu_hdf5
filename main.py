@@ -4,11 +4,15 @@ Created on Jun 13, 2016
 @author: jjguerra
 @version:0.2
 """
-from utils.output import printout
 import os
 from utils.matlabchecker import matlab_labels_data
 from utils.matlabmover import move_matlab_files
 from utils.featureextract import feature_extraction
+import logging
+import argparse
+from utils.logger import logger_initialization
+from utils.output import printout
+
 
 # imu project path
 program_path = '/'.join(os.path.realpath(__file__).split('/')[:-1])
@@ -21,7 +25,7 @@ def forwarding_folder(action):
         dataset_folder_name = raw_input('Output folder\'s name: ')
 
         if dataset_folder_name == '' and action == 'extract':
-            file_path = os.path.join(program_path, 'dataset')
+            file_path = os.path.join(program_path, 'converted_dataset')
         elif dataset_folder_name == '' and action == 'featurize':
             file_path = os.path.join(program_path, 'processed_dataset')
         else:
@@ -36,7 +40,8 @@ def forwarding_folder(action):
         except OSError:
             msg = 'Error. {0} directory cannot be created.'.format(file_path)
             printout(message=msg, verbose=True)
-            printout(message='Please chose a different forwarding directory.')
+            msg = 'Chose a different forwarding directory.'
+            printout(message=msg, verbose=True)
 
         else:
             output_error = False
@@ -55,7 +60,8 @@ def forwarding_filters():
             leftright_arm = '_r_'
 
         else:
-            printout(message='No side specified. Please specified a side.', verbose=True)
+            msg = 'No side specified. Please specified a side.'
+            printout(message=msg, verbose=True)
             continue
 
         right_left_error = False
@@ -75,7 +81,8 @@ def forwarding_filters():
             pareticnonparetic = ''
 
         else:
-            printout(message='Wrong option selected.', verbose=True)
+            msg = 'Wrong option selected.'
+            printout(message=msg, verbose=True)
             continue
 
         paretic_nonparetic_errors = False
@@ -89,7 +96,8 @@ def forwarding_filters():
             elif activenonactive == 'N' or activenonactive == 'NONACTIVE':
                 specific_side = '_paretic_nonactive_'
             else:
-                printout(message='Wrong option selected.', verbose=True)
+                msg = 'Wrong option selected.'
+                printout(message=msg, verbose=True)
                 continue
 
         elif pareticnonparetic == 'nonparetic':
@@ -99,7 +107,8 @@ def forwarding_filters():
             elif activenonactive == 'N' or activenonactive == 'NONACTIVE':
                 specific_side = '_nonparetic_nonactive_'
             else:
-                printout(message='Wrong option selected.', verbose=True)
+                msg = 'Wrong option selected.'
+                printout(message=msg, verbose=True)
                 continue
 
         active_nonactive_errors = False
@@ -129,14 +138,17 @@ def check_location(matlab_or_dataset, default_folder):
             elif os.path.isfile(dataset_location):
                 file_path = os.path.join(program_path, dataset_location)
             else:
-                printout(message='Error. input is not a folder or a directory.', verbose=True)
-                printout(message='Please chose a correct folder or directory.')
+                msg = 'Error. input is not a folder or a directory.'
+                printout(message=msg, verbose=True)
+                msg = 'Please chose a correct folder or directory.'
+                printout(message=msg, verbose=True)
                 continue
 
         if not os.path.exists(file_path):
             msg = 'Error. {0} directory {1} does not exists.'.format(matlab_or_dataset, file_path)
             printout(message=msg, verbose=True)
-            printout(message='Please chose a different dataset directory.')
+            msg = 'Please chose a different dataset directory.'
+            printout(message=msg, verbose=True)
         else:
             # right dataset directory was provided
             not_correct_dataset_location = False
@@ -156,6 +168,7 @@ def select_dataset_quickrun():
         # quickrun options is to run only the short version of the selected algorithm
         # rather than the algorithm with multiple parameters
         quickrun_selection = raw_input('Quickrun: ').upper()
+        print ''
 
         # get location of program
         if quickrun_selection == "":
@@ -165,7 +178,8 @@ def select_dataset_quickrun():
         elif quickrun_selection == 'False' or quickrun_selection == 'F':
             quickrun = False
         else:
-            printout(message='Error. Wrong option for quickrun selected.', verbose=True)
+            msg = 'Error. Wrong option for quickrun selected.'
+            printout(message=msg, verbose=True)
 
     return file_path, quickrun
 
@@ -176,11 +190,10 @@ def ml_algorithm(algorithm=''):
     # get dataset directory
     dataset_location, quickrun = select_dataset_quickrun()
 
-    msg = 'Running {0} Model'.format(algorithm)
-    printout(message=msg, verbose=True)
+    logging.getLogger('regular.time.line').info('Running {0} Model'.format(algorithm))
 
     feature_extraction(h5_directory=dataset_location, algorithm=algorithm, quickrun=quickrun, action='imu',
-                       program_path=program_path)
+                       program_path=program_path, logger=logging)
 
 
 # go through all the matlab files and make sure there are not data or labels mistakes
@@ -200,9 +213,13 @@ def check_matlab():
     else:
         file_name = error_file_name + '.txt'
 
-    printout(message='Checking matlab files', verbose=True)
+    msg = 'starting checking matlab files'
+    logging.getLogger('regular.time').info(msg)
 
     matlab_labels_data(action='check', matlab_directory=checking_location, error_file_name=file_name)
+
+    msg = 'finished checking matlab files'
+    logging.getLogger('regular.time').info(msg)
 
 
 # convert the matlab files to .npy files so they can be used by the algorithm efficiently
@@ -216,14 +233,20 @@ def convert_featurize_matlab(action):
 
     if action == 'extract':
         leftright_arm, specific_side = forwarding_filters()
-        printout(message='Converting matlab files', verbose=True)
-        matlab_labels_data(action=action, matlab_directory=dataset_location, leftright_arm=leftright_arm,
-                           pareticnonparetic=specific_side, folder_name=file_path, program_path=program_path)
+        msg = 'starting extracting matlab files'
+        logging.getLogger('regular.time').info(msg)
+        matlab_labels_data(action=action, matlab_directory=dataset_location, program_path=program_path,
+                           leftright_arm=leftright_arm, pareticnonparetic=specific_side, folder_name=file_path)
+        msg = 'finished extracting matlab files'
+        logging.getLogger('regular.time').info(msg)
 
     else:
-        printout(message='obtaining \'features\' of the files')
+        msg = 'starting \'featurization\' of the files'
+        logging.getLogger('regular.time').info(msg)
         feature_extraction(h5_directory=dataset_location, folder_name=file_path, program_path=program_path,
                            action='featurize')
+        msg = 'finished \'featurization\' of the files'
+        logging.getLogger('regular.time').info(msg)
 
 
 # moves and organizes matlab files based on activity and then on users
@@ -256,25 +279,34 @@ def move_matlab():
         except OSError:
             msg = 'Error. {0} directory cannot be created.'.format(final_path)
             printout(message=msg, verbose=True)
-            printout(message='Please chose a different forwarding directory.')
+            msg = 'Please chose a different forwarding directory.'
+            printout(message=msg, verbose=True)
         else:
             forwarding_error = False
 
-    msg = 'Moving matlab files from {0} to {1}'.format(initial_path, final_path)
-
-    printout(message=msg, verbose=True)
+    msg = 'starting moving matlab files from {0} to {1}'.format(initial_path, final_path)
+    logging.getLogger('').info(msg)
 
     move_matlab_files(initial_path, forwarding_path)
+    msg = 'finished moving matlab files from {0} to {1}'.format(initial_path, final_path)
+    logging.getLogger('').info(msg)
 
 
 # close
 def exit_program():
 
-    printout(message='Program terminated.\n', verbose=True)
+    msg = 'Program terminated.\n'
+    logging.getLogger('').info(msg)
     exit(0)
 
 
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-l", "--log", dest="logLevel", choices=['DEBUG', 'INFO', 'ERROR'],
+                        help="Set the logging level")
+
+    logger_initialization(parser=parser)
 
     selected_option = -1
     while selected_option != 5:

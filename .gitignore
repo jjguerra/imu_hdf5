@@ -15,7 +15,8 @@ control*
 experiment*
 sensor*
 practice*
-processed*
+*.hdf5
 data*
 data/
 *.pyc
+*.log

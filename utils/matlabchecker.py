@@ -3,8 +3,8 @@ from utils.logfileproperties import Document
 from utils.output import printout
 
 
-def matlab_labels_data(action='', matlab_directory='', pareticnonparetic='', folder_name='', error_file_name='logfile',
-                       program_path='', leftright_arm=''):
+def matlab_labels_data(action='', matlab_directory='', pareticnonparetic='', folder_name='', program_path='',
+                       error_file_name='logfile', leftright_arm=''):
 
     file_info = Document()
     extract_mat_information(doc=file_info, matlab_directory=matlab_directory, action=action, forward_folder=folder_name,
@@ -13,14 +13,12 @@ def matlab_labels_data(action='', matlab_directory='', pareticnonparetic='', fol
 
     if action == 'check':
         file_info.initialize_log_file()
-        printout(message='running \'check\' on the files')
+        # running \'check\' on the files
         data_collection(file_properties=file_info, debugging=True, extract=False)
-        printout(message='Done checking matlab files.', verbose=True, extraspaces=1)
 
     elif action == 'extract':
-        printout(message='running \'extract\' on the files')
+        # running \'extract\' on the files
         data_collection(file_properties=file_info, debugging=False, extract=True)
-        printout(message='Done extracting matlab files.', verbose=True, extraspaces=1)
 
     else:
         printout(message='Wrong actioned passed.', verbose=True)
