@@ -175,7 +175,7 @@ def select_dataset_quickrun():
             quickrun = True
         elif quickrun_selection == 'TRUE' or quickrun_selection == 'T':
             quickrun = True
-        elif quickrun_selection == 'False' or quickrun_selection == 'F':
+        elif quickrun_selection == 'FALSE' or quickrun_selection == 'F':
             quickrun = False
         else:
             msg = 'Error. Wrong option for quickrun selected.'

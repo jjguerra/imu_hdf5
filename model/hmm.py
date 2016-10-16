@@ -96,26 +96,26 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
         n_iterations = [10, 50, 100, 1000]
         components = [5, 8, 10, 15, 20]
         tolerance = [0.01, 0.001]
-        covariance_types = ['full', 'diag', 'spherical', 'tied']
-        for ni in n_iterations:
+        covariance_types = ['tied', 'diag', 'spherical', 'full']
+        for ct in covariance_types:
             for nc in components:
                 for t in tolerance:
-                    for ct in covariance_types:
+                    for ni in n_iterations:
                         logger.getLogger('tab.regular.time').info('starting training Hidden Markov Model.')
-                        logger.getLogger('tab.regular').info('model parameters:')
-                        msg = 'number of states:{0}'.format(nc)
+                        logger.getLogger('tab.regular').info('\tmodel parameters')
+                        msg = '\t\tnumber of states:{0}'.format(nc)
                         logger.getLogger('tab.regular').info(msg)
-                        msg = 'number of iterations:{0}'.format(ni)
+                        msg = '\t\tnumber of iterations:{0}'.format(ni)
                         logger.getLogger('tab.regular').info(msg)
-                        msg = 'tolerance:{0}'.format(t)
+                        msg = '\t\ttolerance:{0}'.format(t)
                         logger.getLogger('tab.regular').info(msg)
-                        msg = 'covariance type:{0}'.format(ct)
+                        msg = '\t\tcovariance type:{0}'.format(ct)
                         logger.getLogger('tab.regular').info(msg)
 
                         hmm_model = hmm.GaussianHMM(n_components=nc, covariance_type=ct, n_iter=ni, verbose=True,
                                                     tol=t)
                         hmm_model.fit(X=trainingdataset[:], user=user, activity=activity,
-                                      lengths=lengths, quickrun=quickrun)
+                                      lengths=lengths, quickrun=quickrun, data_dir='')
                         logger.getLogger('tab.regular.time').info('finished training Hidden Markov Model.')
 
                         logger.getLogger('tab.regular.time').info('calculating predictions')
