@@ -3,6 +3,15 @@
 class MatlabLabels(object):
 
     def __init__(self):
+        self.excluded_users = ['Q445_paretic_active_radialcan_t1.mvnx.mat',
+                               'Q445_paretic_active_radialtp_t1.mvnx.mat',
+                               'Q445_paretic_active_radialtp_t2.mvnx.mat',
+                               'Q445_paretic_active_radialtp_t3.mvnx.mat',
+                               'Q445_paretic_active_radialtp_t4.mvnx.mat',
+                               'Q445_paretic_active_radialtp_t5.mvnx.mat',
+                               'Q480_paretic_active_radialcan_t1.mvnx.mat',
+                               'Q480_paretic_active_radialcan_t4.mvnx.mat',
+                               'Q480_paretic_active_radialcan_t5.mvnx.mat']
 
         self.s_patients_dexterity = {'_r_': ['Q440', 'Q445', 'Q480', 'Q482', 'Q492', 'Q540'],
                                      '_l_': ['Q275', 'Q441', 'Q491', 'Q535']}

@@ -2,6 +2,7 @@ from utils.output import printout
 from model.hmm import hmm_algo
 from model.logistic_regression import logreg_algo
 from utils.matlabfunctions import add_attributes
+from utils.matlablabels import MatlabLabels
 import numpy as np
 import h5py
 import os
@@ -9,6 +10,9 @@ from datetime import datetime
 
 
 def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path='', logger=''):
+
+    label_object = MatlabLabels()
+    excluded_labels = label_object.excluded_users
 
     # list all the files where the sensordata is stored
     # dataset_files = os.listdir(dataset_directory)
@@ -60,7 +64,7 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
 
             # defining train dataset and labels array
             c_filename = 'training_testing_file_' + str(user_info) + '_' + datetime.now().strftime('%Y%m%d%H%M%S')\
-                         + '_' + '.hdf5'
+                         + '.hdf5'
             training_file_name = os.path.join(dataset_directory, c_filename)
             training_testing_dataset_object = h5py.File(training_file_name, 'w')
 
@@ -72,10 +76,10 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
             training_testing_dataset_object.create_dataset(name='testing labels', shape=(n_row, 1))
             training_testing_dataset_object['testing labels'][:, 0] = h5_file_object[user_info].value[:, -1]
 
-            msg = 'analysing {0}'.format(user_info)
+            msg = 'Analysing {0}'.format(user_info)
             logger.getLogger('regular.time').info(msg)
 
-            msg = 'calculating training and testing dataset'
+            msg = 'Calculating training and testing dataset'
             logger.getLogger('regular.time').info(msg)
             # fetch testing data from the objects
 
@@ -105,7 +109,7 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
                 n_inner_column -= 1
 
                 # make sure its not the same user doing the same activity during a different time
-                if user != inner_user and activity == inner_activity:
+                if (user != inner_user) and (activity == inner_activity) and (user_info_inner not in excluded_labels):
 
                     # get the size of the dataset because it will be passed as an parameter to the hmm
                     total_inner_row += h5_file_object[user_info_inner].shape[0]
@@ -138,11 +142,11 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
                     index_start_appending = total_inner_row
 
                     training_dataset_lengths.append(n_inner_row)
-                    msg = 'including {0} (user index {1} of {2})'.format(user_info_inner, u_index, total_inner_users)
+                    msg = 'Including {0} (user index {1} of {2})'.format(user_info_inner, u_index, total_inner_users)
                     logger.getLogger('tab.regular').info(msg)
 
                 else:
-                    msg = 'skipping {0} (user index {1} of {2})'.format(user_info_inner, u_index, total_inner_users)
+                    msg = 'Skipping {0} (user index {1} of {2})'.format(user_info_inner, u_index, total_inner_users)
                     logger.getLogger('tab.regular').info(msg)
 
             training_dataset_lengths = np.array(training_dataset_lengths)
@@ -151,14 +155,14 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
             testing_data_object = training_testing_dataset_object['testing data']
             testing_label_object = training_testing_dataset_object['testing labels']
 
-            msg = 'training data size:{0}'.format(training_data_object.shape)
+            msg = 'Training data size:{0}'.format(training_data_object.shape)
             logger.getLogger('line.tab.regular').info(msg)
-            msg = 'training labels size:{0}'.format(training_label_object.shape)
+            msg = 'Training labels size:{0}'.format(training_label_object.shape)
             logger.getLogger('tab.regular').info(msg)
-            msg = 'testing data size:{0}'.format(testing_data_object.shape)
+            msg = 'Testing data size:{0}'.format(testing_data_object.shape)
             logger.getLogger('tab.regular').info(msg)
-            msg = 'testing data size:{0}'.format(testing_label_object.shape)
-            logger.getLogger('tab.regular').info(msg)
+            msg = 'Testing data size:{0}'.format(testing_label_object.shape)
+            logger.getLogger('tab.regular.line').info(msg)
 
             if algorithm == 'HMM':
                 hmm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
@@ -172,13 +176,13 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
                             testinglabels=testing_label_object)
 
             else:
-                printout(message='wrong algorithm provided.', verbose=True)
+                printout(message='Wrong algorithm provided.', verbose=True)
 
             # closing h5py file
             training_testing_dataset_object.close()
 
-            msg = 'finished analysing user:{0} activity:{1}'.format(user, activity)
-            logger.getLogger('tab.regular.line').info(msg)
+            msg = 'Finished analysing {0}'.format(user_info)
+            logger.getLogger('tab.regular.time.line').info(msg)
 
             # removing training dataset h5py file
             os.remove(training_file_name)
