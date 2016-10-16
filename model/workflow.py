@@ -76,7 +76,7 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
             training_testing_dataset_object.create_dataset(name='testing labels', shape=(n_row, 1))
             training_testing_dataset_object['testing labels'][:, 0] = h5_file_object[user_info].value[:, -1]
 
-            msg = 'Analysing {0}'.format(user_info)
+            msg = 'Starting analysing {0}'.format(user_info)
             logger.getLogger('regular.time').info(msg)
 
             msg = 'Calculating training and testing dataset'
@@ -164,25 +164,30 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
             msg = 'Testing data size:{0}'.format(testing_label_object.shape)
             logger.getLogger('tab.regular.line').info(msg)
 
-            if algorithm == 'HMM':
-                hmm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
-                         quickrun=quickrun, testingdataset=testing_data_object, testinglabels=testing_label_object,
-                         lengths=training_dataset_lengths,
-                         user=user, activity=activity, program_path=program_path, logger=logger)
+            try:
+                if algorithm == 'HMM':
+                    hmm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
+                             quickrun=quickrun, testingdataset=testing_data_object, testinglabels=testing_label_object,
+                             lengths=training_dataset_lengths,
+                             user=user, activity=activity, program_path=program_path, logger=logger)
 
-            elif algorithm == 'Logistic Regression':
-                logreg_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
-                            quickrun=quickrun, testingdataset=testing_data_object,
-                            testinglabels=testing_label_object)
+                elif algorithm == 'Logistic Regression':
+                    logreg_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
+                                quickrun=quickrun, testingdataset=testing_data_object,
+                                testinglabels=testing_label_object)
 
-            else:
-                printout(message='Wrong algorithm provided.', verbose=True)
+                else:
+                    printout(message='Wrong algorithm provided.', verbose=True)
 
-            # closing h5py file
-            training_testing_dataset_object.close()
+                # closing h5py file
+                training_testing_dataset_object.close()
 
-            msg = 'Finished analysing {0}'.format(user_info)
-            logger.getLogger('tab.regular.time.line').info(msg)
+                msg = 'Finished analysing {0}'.format(user_info)
+                logger.getLogger('tab.regular.time.line').info(msg)
+
+            except:
+                msg = 'Error while analysing {0}'.format(user_info)
+                logger.getLogger('tab.regular.time.line').error(msg)
 
             # removing training dataset h5py file
             os.remove(training_file_name)

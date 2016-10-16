@@ -66,7 +66,8 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
             # train model
             logger.getLogger('tab.regular.time').info('starting training Hidden Markov Model.')
             hmm_model = hmm.GaussianHMM(n_components=8, covariance_type='diag', n_iter=10, verbose=True)
-            hmm_model.fit(X=trainingdataset[:], user=user, activity=activity, data_dir=data_dir, lengths=lengths)
+            hmm_model.fit(X=trainingdataset[:], user=user, activity=activity, data_dir=data_dir, lengths=lengths,
+                          quickrun=quickrun)
             logger.getLogger('tab.regular.time').info('finished training Hidden Markov Model.')
 
             # create a name for a file based on the user, activity and the time
@@ -100,25 +101,28 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
             for nc in components:
                 for t in tolerance:
                     for ct in covariance_types:
-                        printout(message='Training HMM model', time=True, verbose=True)
-                        msg = '\tmodel parameters: \n ' \
-                              '\t\tnumber of states:{0}' \
-                              '\t\tnumber of iterations:{1}' \
-                              '\t\ttolerance:{2}' \
-                              '\t\tcovariance type:{3}'.format(nc, ni, t, ct)
-                        printout(message=msg, verbose=True)
+                        logger.getLogger('tab.regular.time').info('starting training Hidden Markov Model.')
+                        logger.getLogger('tab.regular').info('model parameters:')
+                        msg = 'number of states:{0}'.format(nc)
+                        logger.getLogger('tab.regular').info(msg)
+                        msg = 'number of iterations:{0}'.format(ni)
+                        logger.getLogger('tab.regular').info(msg)
+                        msg = 'tolerance:{0}'.format(t)
+                        logger.getLogger('tab.regular').info(msg)
+                        msg = 'covariance type:{0}'.format(ct)
+                        logger.getLogger('tab.regular').info(msg)
 
-                        printout(message='starting raining Hidden Markov Model.', time=True, verbose=True)
                         hmm_model = hmm.GaussianHMM(n_components=nc, covariance_type=ct, n_iter=ni, verbose=True,
                                                     tol=t)
-                        hmm_model.fit(X=trainingdataset[:, :-1])
-                        printout(message='finished training Hidden Markov Model.', time=True, verbose=True)
+                        hmm_model.fit(X=trainingdataset[:], user=user, activity=activity,
+                                      lengths=lengths, quickrun=quickrun)
+                        logger.getLogger('tab.regular.time').info('finished training Hidden Markov Model.')
 
-                        printout(message='calculating Predictions', verbose=True)
+                        logger.getLogger('tab.regular.time').info('calculating predictions')
                         train_predictions = hmm_model.predict_proba(trainingdataset[:])
                         test_predictions = hmm_model.predict_proba(testingdataset[:])
 
                         # using the model, run algorithms
                         results(train_predictions=train_predictions, traininglabels=traininglabels[:],
-                                test_predictions=test_predictions, testinglabels=testinglabels[:])
+                                test_predictions=test_predictions, testinglabels=testinglabels[:], logger=logger)
 
