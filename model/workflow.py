@@ -60,7 +60,8 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
 
     for user_index, user_info in enumerate(h5_file_object.iterkeys()):
 
-        if 'paretic' in user_info:
+        #if ('paretic' in user_info) and ('Q482' in user_info or 'Q492' in user_info or 'Q540' in user_info):
+        if ('paretic' in user_info) and ('Q440' in user_info or 'Q445' in user_info or 'Q480' in user_info):
 
             # defining train dataset and labels array
             c_filename = 'training_testing_file_' + str(user_info) + '_' + datetime.now().strftime('%Y%m%d%H%M%S')\
