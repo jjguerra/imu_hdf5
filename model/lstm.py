@@ -89,22 +89,26 @@ def lstm_algo(trainingdataset='', traininglabels='', testingdataset='', testingl
 
     score = [0, 0]
 
-    # for iteration in range(1, 10):
+    for iteration in range(1, 10):
 
-    filename = 'kerasmodel_' + datetime.now().strftime('%Y%m%d%H%M%S') + '.h5'
-    filepath = os.path.join(logs_run, filename)
+        filename = 'kerasmodel_' + datetime.now().strftime('%Y%m%d%H%M%S') + '.h5'
+        filepath = os.path.join(logs_run, filename)
 
-    # msg = 'starting iteration: {0}'.format(iteration)
-    # logger.getLogger('tab.regular').info(msg)
-    model.fit(x, y, batch_size=128, nb_epoch=1)
+        # msg = 'starting iteration: {0}'.format(iteration)
+        # logger.getLogger('tab.regular').info(msg)
+        model.fit(x, y, batch_size=128, nb_epoch=1)
 
-    logger.getLogger('tab.regular').info('running evaluate')
-    loss_and_metrics = model.evaluate(x2, y2)
+        logger.getLogger('tab.regular').info('running evaluate')
+        loss_and_metrics = model.evaluate(x2, y2)
 
-    msg = 'error and accuracy: {0}'.format(loss_and_metrics)
-    logger.getLogger('tab.regular').info(msg)
+        msg = 'error and accuracy: {0}'.format(loss_and_metrics)
+        logger.getLogger('tab.regular').info(msg)
 
-    if loss_and_metrics[0] > score[0]:
-        score = loss_and_metrics
-        model.save(filepath)
+        if loss_and_metrics[1] > score[1]:
+            logger.getLogger('tab.regular').info('model\'s accuracy is higher than previous one')
+
+            msg = 'saving model\'s parameters in file:{0}'.format(filepath)
+            logger.getLogger('tab.regular').info(msg)
+            score = loss_and_metrics
+            model.save(filepath)
 

@@ -197,4 +197,4 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
             #     logger.getLogger('tab.regular.time.line').error(msg)
             #
             # # removing training dataset h5py file
-            # os.remove(training_file_name)
+            os.remove(training_file_name)
