@@ -339,6 +339,8 @@ if __name__ == '__main__':
             elif selected_option == 6:
                 ml_algorithm('Logistic Regression')
             elif selected_option == 7:
+                ml_algorithm('LSTM')
+            elif selected_option == 8:
                 exit_program()
             else:
                 printout(message='Wrong option selected.', verbose=True)

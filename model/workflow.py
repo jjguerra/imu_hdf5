@@ -1,6 +1,7 @@
 from utils.output import printout
 from model.hmm import hmm_algo
 from model.logistic_regression import logreg_algo
+from model.lstm import lstm_algo
 from utils.matlabfunctions import add_attributes
 from utils.matlablabels import MatlabLabels
 import numpy as np
@@ -61,8 +62,8 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
     for user_index, user_info in enumerate(h5_file_object.iterkeys()):
 
         #if ('paretic' in user_info) and ('Q482' in user_info or 'Q492' in user_info or 'Q540' in user_info):
-        if ('paretic' in user_info) and ('Q440' in user_info or 'Q445' in user_info or 'Q480' in user_info):
-
+        #if ('paretic' in user_info) and ('Q440' in user_info or 'Q445' in user_info or 'Q480' in user_info):
+        if 'paretic' in user_info:
             # defining train dataset and labels array
             c_filename = 'training_testing_file_' + str(user_info) + '_' + datetime.now().strftime('%Y%m%d%H%M%S')\
                          + '.hdf5'
@@ -176,6 +177,11 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
                     logreg_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
                                 quickrun=quickrun, testingdataset=testing_data_object,
                                 testinglabels=testing_label_object)
+
+                elif algorithm == 'LSTM':
+                    lstm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
+                              testingdataset=testing_data_object, testinglabels=testing_label_object,
+                              lengths=training_dataset_lengths)
 
                 else:
                     printout(message='Wrong algorithm provided.', verbose=True)

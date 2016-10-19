@@ -96,7 +96,7 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
         n_iterations = [10, 50, 100, 1000]
         components = [5, 8, 10, 15, 20]
         tolerance = [0.01, 0.001]
-        covariance_types = ['tied', 'diag', 'spherical', 'full']
+        covariance_types = ['spherical', 'diag', 'full', 'tied']
         for ct in covariance_types:
             for nc in components:
                 for t in tolerance:
@@ -114,8 +114,8 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
 
                         hmm_model = hmm.GaussianHMM(n_components=nc, covariance_type=ct, n_iter=ni, verbose=True,
                                                     tol=t)
-                        hmm_model.fit(X=trainingdataset[:], user=user, activity=activity,
-                                      lengths=lengths, quickrun=quickrun, data_dir='')
+                        hmm_model.fit(X=trainingdataset[:], user=user, activity=activity, data_dir='', lengths=lengths,
+                                      quickrun=quickrun)
                         logger.getLogger('tab.regular.time').info('finished training Hidden Markov Model.')
 
                         logger.getLogger('tab.regular.time').info('calculating predictions')
