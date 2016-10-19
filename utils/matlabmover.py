@@ -6,7 +6,8 @@ def file_information(filename):
 
     if 'paretic' in filename:
         expression_pattern = \
-            r'(^[A-Z]+[0-9]+)_(nonparetic|paretic)+_(active|nonactive)+_(radialcan|radialtp).*\.mat'
+            r'(^[A-Z]+[0-9]+)_(nonparetic|paretic)+_(active|nonactive)+_(radialcan|radialtp)' \
+            r'(_(t\d{1})|_(t\d-t\d)|.*).mvnx.mat'
 
         # string_information = extracted useful information of the string
         # i.e.
@@ -22,10 +23,18 @@ def file_information(filename):
         activenonactive = s_information.group(3)
         activity = s_information.group(4)
 
-        return user, pareticnonparetic, activenonactive, activity
+        # if this is empty then there is not time variable in the filename
+        flag = s_information.group(5)
+        if flag != '':
+            time = s_information.group(6)
+        else:
+            time = ''
+
+        return user, pareticnonparetic, activenonactive, activity, time
     else:
-        expression_pattern = r'(^[A-Z]+[0-9]+)_pilot_OT_([l|r])_(feeding|radialcan|radialtp|book_[high|low]|' \
-                             r'detergent_[high|low]|heavycan_[high|low]|lightcan_[high|low]|tp_[high|low]).*\.mat'
+        expression_pattern = r'(^[A-Z]+[0-9]+)_pilot_OT_([l|r])_(feeding|radialcan|radialtp|book_low|book_high|' \
+                             r'detergent_high|detergent_low|heavycan_high|heavycan_low|lightcan_high|lightcan_low|' \
+                             r'tp_high|tp_low)(_(t\d{1})|_(t\d-t\d)|.*).mvnx.mat'
 
         # string_information = extracted useful information of the string
         # i.e.
@@ -39,8 +48,17 @@ def file_information(filename):
         user = s_information.group(1)
         rightleft = s_information.group(2)
         activity = s_information.group(3)
+        # if this is empty then there is not time variable in the filename
+        flag = s_information.group(4)
+        if flag != '':
+            if '-' in flag:
+                time = s_information.group(6)
+            else:
+                time = s_information.group(5)
+        else:
+            time = ''
 
-        return user, rightleft, activity
+        return user, rightleft, activity, time
 
 
 def move_matlab_files(initial_path, forwarding_path):

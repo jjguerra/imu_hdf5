@@ -48,7 +48,6 @@ def get_data(x_train, y_train_condensed, x_test, y_test_condensed, lengths):
     x = list()
     y = list()
     for i in range(0, num_train_samples-max_len, step):
-        print i
         x_temp = x_train[i:i+max_len]
         end = is_end[i:i+max_len]
         y_temp = y_train[i+max_len]
@@ -62,7 +61,6 @@ def get_data(x_train, y_train_condensed, x_test, y_test_condensed, lengths):
     x2 = list()
     y2 = list()
     for i in range(0, num_test_samples-max_len, step):
-        print i
         x_temp = x_test[i:i+max_len]
         end = is_end[i:i+max_len]
         y_temp = y_test[i+max_len]
