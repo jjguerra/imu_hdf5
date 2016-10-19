@@ -49,30 +49,31 @@ def get_data(x_train, y_train_condensed, x_test, y_test_condensed, lengths):
     y = list()
     for i in range(0, num_train_samples-max_len, step):
         print i
-        x = x_train[i:i+max_len]
+        x_temp = x_train[i:i+max_len]
         end = is_end[i:i+max_len]
-        y = y_train[i+max_len]
+        y_temp = y_train[i+max_len]
         if end.max() < 1:
-            x.append(x)  # max_len X 666
-            y.append(y)  # 1 X 4
-            
-    x = np.array(x)  # num_samples X max_len X 666
-    y = np.array(y)  # num_samples X 4
+            x.append(x_temp)  # max_len X 666
+            y.append(y_temp)  # 1 X 4
+
+    training_x = np.array(x)  # num_samples X max_len X 666
+    training_y = np.array(y)  # num_samples X 4
 
     x2 = list()
     y2 = list()
     for i in range(0, num_test_samples-max_len, step):
         print i
-        x = x_test[i:i+max_len]
+        x_temp = x_test[i:i+max_len]
         end = is_end[i:i+max_len]
-        y = y_test[i+max_len]
+        y_temp = y_test[i+max_len]
         if end.max() < 1:
-            x2.append(x)  # max_len X 666
-            y2.append(y)  # 1 X 4
+            x2.append(x_temp)  # max_len X 666
+            y2.append(y_temp)  # 1 X 4
             
-    x2 = np.array(x2)  # num_samples X max_len X 666
-    y2 = np.array(y2)  # num_samples X 4
-    return x, y, x2, y2
+    testing_x = np.array(x2)  # num_samples X max_len X 666
+    testing_y = np.array(y2)  # num_samples X 4
+
+    return training_x, training_y, testing_x, testing_y
     
 
 def lstm_algo(trainingdataset='', traininglabels='', testingdataset='', testinglabels='', lengths=''):
