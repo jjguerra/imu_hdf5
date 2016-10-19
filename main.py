@@ -320,7 +320,8 @@ if __name__ == '__main__':
         print '4: Process matlab files i.e. featurize'
         print '5: Move Matlab files from Dropbox to Working Directory'
         print '6: Perform Logistic Regression'
-        print '7: Exit'
+        print '7: Perform LSTM'
+        print '8: Exit'
         print ''
 
         try:
