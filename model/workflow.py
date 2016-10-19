@@ -17,7 +17,7 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
 
     # list all the files where the sensordata is stored
     # dataset_files = os.listdir(dataset_directory)
-    dataset_files = ['processed_sensordata.hdf5']
+    dataset_files = ['processed_sensordata_merged.hdf5']
 
     # need to put all the files in the same h5py file
     if len(dataset_files) < 1:
@@ -181,7 +181,7 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
             elif algorithm == 'LSTM':
                 lstm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
                           testingdataset=testing_data_object, testinglabels=testing_label_object,
-                          lengths=training_dataset_lengths)
+                          lengths=training_dataset_lengths, logger=logger)
 
             else:
                 printout(message='Wrong algorithm provided.', verbose=True)

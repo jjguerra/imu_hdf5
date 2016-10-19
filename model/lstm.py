@@ -1,11 +1,11 @@
-# coding: utf-8
-import h5py
+import os
 import numpy as np
-import keras
 from keras.layers import Dense, LSTM
 from keras.layers import Activation
 from keras.models import Sequential
 from keras.optimizers import RMSprop
+from sklearn.externals import joblib
+from datetime import datetime
 
 MAX_LEN = 500
 
@@ -74,18 +74,37 @@ def get_data(x_train, y_train_condensed, x_test, y_test_condensed, lengths):
     return training_x, training_y, testing_x, testing_y
     
 
-def lstm_algo(trainingdataset='', traininglabels='', testingdataset='', testinglabels='', lengths=''):
+def lstm_algo(trainingdataset='', traininglabels='', testingdataset='', testinglabels='', lengths='', logger=''):
 
     x, y, x2, y2 = get_data(x_train=trainingdataset, y_train_condensed=traininglabels, x_test=testingdataset,
                             y_test_condensed=testinglabels, lengths=lengths)
+
+    logs_run = 'runs'
+    if not os.path.exists(logs_run):
+        os.mkdir(logs_run)
 
     model = get_model()
     optimizer = RMSprop(lr=0.01)
     model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 
-    for iteration in range(1, 10):
-        print "starting iteration: " + str(iteration)
-        model.fit(x, y, batch_size=128, nb_epoch=1)
-        
-        print "running evaluate"
-        print model.evaluate(x2, y2)
+    score = [0, 0]
+
+    # for iteration in range(1, 10):
+
+    filename = 'kerasmodel_' + datetime.now().strftime('%Y%m%d%H%M%S') + '.h5'
+    filepath = os.path.join(logs_run, filename)
+
+    # msg = 'starting iteration: {0}'.format(iteration)
+    # logger.getLogger('tab.regular').info(msg)
+    model.fit(x, y, batch_size=128, nb_epoch=1)
+
+    logger.getLogger('tab.regular').info('running evaluate')
+    loss_and_metrics = model.evaluate(x2, y2)
+
+    msg = 'error and accuracy: {0}'.format(loss_and_metrics)
+    logger.getLogger('tab.regular').info(msg)
+
+    if loss_and_metrics[0] > score[0]:
+        score = loss_and_metrics
+        model.save(filepath)
+
