@@ -77,8 +77,8 @@ def get_data(x_train, y_train_condensed, x_test, y_test_condensed, lengths):
 
 def lstm_algo(trainingdataset='', traininglabels='', testingdataset='', testinglabels='', lengths=''):
 
-    x, y, x2, y2 = get_data(X_train=trainingdataset, Y_train_condensed=traininglabels, X_test=testingdataset,
-                            Y_test_condensed=testinglabels, lengths=lengths)
+    x, y, x2, y2 = get_data(x_train=trainingdataset, y_train_condensed=traininglabels, x_test=testingdataset,
+                            y_test_condensed=testinglabels, lengths=lengths)
 
     model = get_model()
     optimizer = RMSprop(lr=0.01)
