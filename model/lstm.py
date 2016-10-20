@@ -28,7 +28,8 @@ def get_data(x_train, y_train_condensed, x_test, y_test_condensed, lengths):
     # num_samples x 1
     # but we need num_samples x 3
 
-    num_states = len(set(y_train_condensed[:].flatten()))
+    # num_states = len(set(y_train_condensed[:].flatten()))
+    num_states = 12
     num_train_samples = y_train_condensed.shape[0]
     num_test_samples = y_test_condensed.shape[0]
 
