@@ -4,7 +4,6 @@ from keras.layers import Dense, LSTM
 from keras.layers import Activation
 from keras.models import Sequential
 from keras.optimizers import RMSprop
-from sklearn.externals import joblib
 from datetime import datetime
 
 MAX_LEN = 500
@@ -17,7 +16,7 @@ def get_model():
     model.add(Activation("relu"))
     model.add(Dense(output_dim=30))
     model.add(Activation("relu"))
-    model.add(Dense(output_dim=4))
+    model.add(Dense(output_dim=12))
     model.add(Activation("softmax"))
 
     return model 
@@ -28,8 +27,8 @@ def get_data(x_train, y_train_condensed, x_test, y_test_condensed, lengths):
     # num_samples x 1
     # but we need num_samples x 3
 
-    # num_states = len(set(y_train_condensed[:].flatten()))
-    num_states = 12
+    num_states = len(set(y_train_condensed[:].flatten()))
+
     num_train_samples = y_train_condensed.shape[0]
     num_test_samples = y_test_condensed.shape[0]
 

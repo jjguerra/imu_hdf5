@@ -61,140 +61,137 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
 
     for user_index, user_info in enumerate(h5_file_object.iterkeys()):
 
-        #if ('paretic' in user_info) and ('Q482' in user_info or 'Q492' in user_info or 'Q540' in user_info):
-        #if ('paretic' in user_info) and ('Q440' in user_info or 'Q445' in user_info or 'Q480' in user_info):
-        if 'paretic' in user_info:
-            # defining train dataset and labels array
-            c_filename = 'training_testing_file_' + str(user_info) + '_' + datetime.now().strftime('%Y%m%d%H%M%S')\
-                         + '.hdf5'
-            training_file_name = os.path.join(dataset_directory, c_filename)
-            training_testing_dataset_object = h5py.File(training_file_name, 'w')
+        # defining train dataset and labels array
+        c_filename = 'training_testing_file_' + str(user_info) + '_' + datetime.now().strftime('%Y%m%d%H%M%S')\
+                     + '.hdf5'
+        training_file_name = os.path.join(dataset_directory, c_filename)
+        training_testing_dataset_object = h5py.File(training_file_name, 'w')
 
-            user = h5_file_object[user_info].attrs['user']
-            activity = h5_file_object[user_info].attrs['activity']
-            n_row, n_col = np.shape(h5_file_object[user_info][:, :-1])
-            training_testing_dataset_object.create_dataset(name='testing data', shape=(n_row, n_col))
-            training_testing_dataset_object['testing data'][:, :] = h5_file_object[user_info].value[:, :-1]
-            training_testing_dataset_object.create_dataset(name='testing labels', shape=(n_row, 1))
-            training_testing_dataset_object['testing labels'][:, 0] = h5_file_object[user_info].value[:, -1]
+        user = h5_file_object[user_info].attrs['user']
+        activity = h5_file_object[user_info].attrs['activity']
+        n_row, n_col = np.shape(h5_file_object[user_info][:, :-1])
+        training_testing_dataset_object.create_dataset(name='testing data', shape=(n_row, n_col))
+        training_testing_dataset_object['testing data'][:, :] = h5_file_object[user_info].value[:, :-1]
+        training_testing_dataset_object.create_dataset(name='testing labels', shape=(n_row, 1))
+        training_testing_dataset_object['testing labels'][:, 0] = h5_file_object[user_info].value[:, -1]
 
-            msg = 'Starting analysing {0}'.format(user_info)
-            logger.getLogger('regular.time').info(msg)
+        msg = 'Starting analysing {0}'.format(user_info)
+        logger.getLogger('regular.time').info(msg)
 
-            msg = 'Calculating training and testing dataset'
-            logger.getLogger('regular.time').info(msg)
-            # fetch testing data from the objects
+        msg = 'Calculating training and testing dataset'
+        logger.getLogger('regular.time').info(msg)
+        # fetch testing data from the objects
 
-            # length of each dataset
-            training_dataset_lengths = list()
+        # length of each dataset
+        training_dataset_lengths = list()
 
-            # flag used to create a dataset for the first file
-            first_file = True
+        # flag used to create a dataset for the first file
+        first_file = True
 
-            # keep track of the total number of rows
-            total_inner_row = 0
+        # keep track of the total number of rows
+        total_inner_row = 0
 
-            total_inner_users = len(h5_file_object) - 1
-            # fetch training data from the objects without :
-            #   1. the testing data i.e. the data of user_index
-            #   2. other dataset with the same user and activity but different repetition
-            for u_index, user_info_inner in enumerate(h5_file_object.iterkeys()):
+        total_inner_users = len(h5_file_object) - 1
+        # fetch training data from the objects without :
+        #   1. the testing data i.e. the data of user_index
+        #   2. other dataset with the same user and activity but different repetition
+        for u_index, user_info_inner in enumerate(h5_file_object.iterkeys()):
 
-                # get the attributes of the training example
-                inner_user = h5_file_object[user_info_inner].attrs['user']
-                inner_activity = h5_file_object[user_info_inner].attrs['activity']
+            # get the attributes of the training example
+            inner_user = h5_file_object[user_info_inner].attrs['user']
+            inner_activity = h5_file_object[user_info_inner].attrs['activity']
 
-                # shape of the current dataset
-                n_inner_row, n_inner_column = h5_file_object[user_info_inner].shape
+            # shape of the current dataset
+            n_inner_row, n_inner_column = h5_file_object[user_info_inner].shape
 
-                # removing label columns
-                n_inner_column -= 1
+            # removing label columns
+            n_inner_column -= 1
 
-                # make sure its not the same user doing the same activity during a different time
-                if (user != inner_user) and (activity == inner_activity) and (user_info_inner not in excluded_labels):
+            # make sure its not the same user doing the same activity during a different time
+            if (user != inner_user) and (activity == inner_activity) and (user_info_inner not in excluded_labels):
 
-                    # get the size of the dataset because it will be passed as an parameter to the hmm
-                    total_inner_row += h5_file_object[user_info_inner].shape[0]
+                # get the size of the dataset because it will be passed as an parameter to the hmm
+                total_inner_row += h5_file_object[user_info_inner].shape[0]
 
-                    if first_file:
-                        training_testing_dataset_object.create_dataset(name='training data',
-                                                                       shape=(total_inner_row, n_inner_column),
-                                                                       maxshape=(None, n_inner_column), chunks=True)
+                if first_file:
+                    training_testing_dataset_object.create_dataset(name='training data',
+                                                                   shape=(total_inner_row, n_inner_column),
+                                                                   maxshape=(None, n_inner_column), chunks=True)
 
-                        training_testing_dataset_object.create_dataset(name='training labels',
-                                                                       shape=(total_inner_row, 1),
-                                                                       maxshape=(None, 1), chunks=True)
+                    training_testing_dataset_object.create_dataset(name='training labels',
+                                                                   shape=(total_inner_row, 1),
+                                                                   maxshape=(None, 1), chunks=True)
 
-                        training_testing_dataset_object['training data'][:, :] = \
-                            h5_file_object[user_info_inner].value[:, :-1]
-                        training_testing_dataset_object['training labels'][:, 0] = \
-                            h5_file_object[user_info_inner].value[:, -1]
-                        first_file = False
-
-                    else:
-                        # resize the dataset to accommodate the new data
-                        training_testing_dataset_object['training data'].resize(total_inner_row, axis=0)
-                        training_testing_dataset_object['training data'][index_start_appending:] = \
-                            h5_file_object[user_info_inner].value[:, :-1]
-
-                        training_testing_dataset_object['training labels'].resize(total_inner_row, axis=0)
-                        training_testing_dataset_object['training labels'][index_start_appending:, 0] = \
-                            h5_file_object[user_info_inner].value[:, -1]
-
-                    index_start_appending = total_inner_row
-
-                    training_dataset_lengths.append(n_inner_row)
-                    msg = 'Including {0} (user index {1} of {2})'.format(user_info_inner, u_index, total_inner_users)
-                    logger.getLogger('tab.regular').info(msg)
+                    training_testing_dataset_object['training data'][:, :] = \
+                        h5_file_object[user_info_inner].value[:, :-1]
+                    training_testing_dataset_object['training labels'][:, 0] = \
+                        h5_file_object[user_info_inner].value[:, -1]
+                    first_file = False
 
                 else:
-                    msg = 'Skipping {0} (user index {1} of {2})'.format(user_info_inner, u_index, total_inner_users)
-                    logger.getLogger('tab.regular').info(msg)
+                    # resize the dataset to accommodate the new data
+                    training_testing_dataset_object['training data'].resize(total_inner_row, axis=0)
+                    training_testing_dataset_object['training data'][index_start_appending:] = \
+                        h5_file_object[user_info_inner].value[:, :-1]
 
-            training_dataset_lengths = np.array(training_dataset_lengths)
-            training_data_object = training_testing_dataset_object['training data']
-            training_label_object = training_testing_dataset_object['training labels']
-            testing_data_object = training_testing_dataset_object['testing data']
-            testing_label_object = training_testing_dataset_object['testing labels']
+                    training_testing_dataset_object['training labels'].resize(total_inner_row, axis=0)
+                    training_testing_dataset_object['training labels'][index_start_appending:, 0] = \
+                        h5_file_object[user_info_inner].value[:, -1]
 
-            msg = 'Training data size:{0}'.format(training_data_object.shape)
-            logger.getLogger('line.tab.regular').info(msg)
-            msg = 'Training labels size:{0}'.format(training_label_object.shape)
-            logger.getLogger('tab.regular').info(msg)
-            msg = 'Testing data size:{0}'.format(testing_data_object.shape)
-            logger.getLogger('tab.regular').info(msg)
-            msg = 'Testing data size:{0}'.format(testing_label_object.shape)
-            logger.getLogger('tab.regular.line').info(msg)
+                index_start_appending = total_inner_row
 
-            # try:
-            if algorithm == 'HMM':
-                hmm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
-                         quickrun=quickrun, testingdataset=testing_data_object, testinglabels=testing_label_object,
-                         lengths=training_dataset_lengths,
-                         user=user, activity=activity, program_path=program_path, logger=logger)
-
-            elif algorithm == 'Logistic Regression':
-                logreg_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
-                            quickrun=quickrun, testingdataset=testing_data_object,
-                            testinglabels=testing_label_object)
-
-            elif algorithm == 'LSTM':
-                lstm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
-                          testingdataset=testing_data_object, testinglabels=testing_label_object,
-                          lengths=training_dataset_lengths, logger=logger)
+                training_dataset_lengths.append(n_inner_row)
+                msg = 'Including {0} (user index {1} of {2})'.format(user_info_inner, u_index, total_inner_users)
+                logger.getLogger('tab.regular').info(msg)
 
             else:
-                printout(message='Wrong algorithm provided.', verbose=True)
+                msg = 'Skipping {0} (user index {1} of {2})'.format(user_info_inner, u_index, total_inner_users)
+                logger.getLogger('tab.regular').info(msg)
 
-            # closing h5py file
-            training_testing_dataset_object.close()
+        training_dataset_lengths = np.array(training_dataset_lengths)
+        training_data_object = training_testing_dataset_object['training data']
+        training_label_object = training_testing_dataset_object['training labels']
+        testing_data_object = training_testing_dataset_object['testing data']
+        testing_label_object = training_testing_dataset_object['testing labels']
 
-            msg = 'Finished analysing {0}'.format(user_info)
-            logger.getLogger('tab.regular.time.line').info(msg)
+        msg = 'Training data size:{0}'.format(training_data_object.shape)
+        logger.getLogger('line.tab.regular').info(msg)
+        msg = 'Training labels size:{0}'.format(training_label_object.shape)
+        logger.getLogger('tab.regular').info(msg)
+        msg = 'Testing data size:{0}'.format(testing_data_object.shape)
+        logger.getLogger('tab.regular').info(msg)
+        msg = 'Testing data size:{0}'.format(testing_label_object.shape)
+        logger.getLogger('tab.regular.line').info(msg)
 
-            # except:
-            #     msg = 'Error while analysing {0}'.format(user_info)
-            #     logger.getLogger('tab.regular.time.line').error(msg)
-            #
-            # # removing training dataset h5py file
-            os.remove(training_file_name)
+        # try:
+        if algorithm == 'HMM':
+            hmm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
+                     quickrun=quickrun, testingdataset=testing_data_object, testinglabels=testing_label_object,
+                     lengths=training_dataset_lengths,
+                     user=user, activity=activity, program_path=program_path, logger=logger)
+
+        elif algorithm == 'Logistic Regression':
+            logreg_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
+                        quickrun=quickrun, testingdataset=testing_data_object,
+                        testinglabels=testing_label_object)
+
+        elif algorithm == 'LSTM':
+            lstm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
+                      testingdataset=testing_data_object, testinglabels=testing_label_object,
+                      lengths=training_dataset_lengths, logger=logger)
+
+        else:
+            printout(message='Wrong algorithm provided.', verbose=True)
+
+        # closing h5py file
+        training_testing_dataset_object.close()
+
+        msg = 'Finished analysing {0}'.format(user_info)
+        logger.getLogger('tab.regular.time.line').info(msg)
+
+        # except:
+        #     msg = 'Error while analysing {0}'.format(user_info)
+        #     logger.getLogger('tab.regular.time.line').error(msg)
+        #
+        # # removing training dataset h5py file
+        os.remove(training_file_name)
