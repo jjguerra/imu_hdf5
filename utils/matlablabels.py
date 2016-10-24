@@ -61,6 +61,9 @@ class MatlabLabels(object):
                        '_T_C3_E', '_T_C4_B', '_T_C4_E', '_T_C5_B', '_T_C5_E', '_T_C6_B', '_T_C6_E', '_T_C7_B',
                        '_T_C7_E', '_T_C8_B', '_T_C8_E', '_T_E', '_T_IB0_B', '_T_IB0_E', '_T_T2C0_B', '_T_T2C0_E']
 
+        # rest = rest, rea = reach, t = transport, ret = retract, i = idle, s = stabilize, st = stabilize transport,
+        # sm = stabilize manipulation, m = manipulation, mc = manipulation cyclical, thm = hand to mouth, tc = transport
+        # cyclical
         self.compact_list = ['REST', 'REA', 'T', 'RET', 'I', 'S', 'ST', 'SM', 'M', 'MC', 'THM', 'TC']
 
         self.jointUsed = ['']
@@ -90,3 +93,14 @@ class MatlabLabels(object):
         #                  'jRightShoulder','jRightElbow','jRightWrist','jLeftC7Shoulder','jLeftShoulder',    \
         #                  'jLeftElbow','jLeftWrist','jRightHip','jRightKnee','jRightAnkle','jRightBallFoot', \
         #                  'jLeftHip','jLeftKnee','jLeftAnkle','jLeftBallFoot']
+
+    def get_labels(self, label_indices):
+        """
+        :param label_indices: a list or array of index of specific labels
+        :return: labels: the label index converted to the actual labels
+        """
+        labels = list()
+        for li in label_indices:
+            labels.append(self.compact_list[int(li)])
+
+        return set(labels)

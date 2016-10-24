@@ -21,3 +21,4 @@ data/
 *.pyc
 *.log
 runs/
+getdata*

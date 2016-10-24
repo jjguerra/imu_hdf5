@@ -1,11 +1,12 @@
 from datafunctions import preprocessing_logistic_regression
-from utils.output import printout
 from hmmlearn import hmm
 from sklearn.linear_model import LogisticRegression
 from sklearn.externals import joblib
 import numpy as np
 import os
 from datetime import datetime
+from sklearn.metrics import classification_report
+from utils.matlablabels import MatlabLabels
 
 np.random.seed(0)
 
@@ -28,8 +29,23 @@ def results(train_predictions='', traininglabels='', test_predictions='', testin
     train_score = logistic_regression_model.score(logreg_train_data, logreg_train_labels)
     test_score = logistic_regression_model.score(logreg_test_data, logreg_test_labels)
 
+    log_train_predictions = logistic_regression_model.predict(logreg_train_data)
+    log_test_predictions = logistic_regression_model.predict(logreg_test_data)
+
     logger.getLogger('tab.regular').info('final training data prediction score: {0}'.format(train_score))
     logger.getLogger('tab.regular.line').info('final testing data prediction score: {0}'.format(test_score))
+
+    # label class
+    label_class = MatlabLabels()
+    target_names = label_class.compact_list
+
+    logger.getLogger('line.tab.regular').info('training classification report')
+    logger.getLogger('tab.regular.line').info(classification_report(log_train_predictions, logreg_train_labels,
+                                                                    target_names=target_names))
+
+    logger.getLogger('line.tab.regular').info('testing classification report')
+    logger.getLogger('tab.regular.line').info(classification_report(log_test_predictions, logreg_test_labels,
+                                                                        target_names=target_names))
 
 
 def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testinglabels='',
@@ -67,7 +83,7 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
             logger.getLogger('tab.regular.time').info('starting training Hidden Markov Model.')
             hmm_model = hmm.GaussianHMM(n_components=8, covariance_type='diag', n_iter=10, verbose=True)
             hmm_model.fit(X=trainingdataset[:], user=user, activity=activity, data_dir=data_dir, lengths=lengths,
-                          quickrun=quickrun)
+                          quickrun=quickrun, logger=logger)
             logger.getLogger('tab.regular.time').info('finished training Hidden Markov Model.')
 
             # create a name for a file based on the user, activity and the time

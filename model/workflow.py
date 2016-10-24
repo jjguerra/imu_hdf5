@@ -108,7 +108,7 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
             n_inner_column -= 1
 
             # make sure its not the same user doing the same activity during a different time
-            if (user != inner_user) and (activity == inner_activity) and (user_info_inner not in excluded_labels):
+            if (user != inner_user) or (activity != inner_activity):
 
                 # get the size of the dataset because it will be passed as an parameter to the hmm
                 total_inner_row += h5_file_object[user_info_inner].shape[0]
