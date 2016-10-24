@@ -484,21 +484,22 @@ def add_attributes(outfile_object, current_file_name):
 
     # add attributes to files
     if 'paretic' in current_file_name:
-        user, paretic_nonparetic, active_nonactive, activity = file_information(current_file_name)
-
+        user, paretic_nonparetic, active_nonactive, activity, time = file_information(current_file_name)
         # adding attributes or descriptions to the hdf5 files
         outfile_object.attrs['user'] = user
         outfile_object.attrs['activity'] = activity
         outfile_object.attrs['paretic_nonparetic'] = paretic_nonparetic
         outfile_object.attrs['active_nonactive'] = active_nonactive
+        outfile_object.attrs['time'] = time
 
     else:
-        user, rightleft, activity = file_information(current_file_name)
+        user, rightleft, activity, time = file_information(current_file_name)
 
         # adding attributes or descriptions to the hdf5 files
         outfile_object.attrs['user'] = user
         outfile_object.attrs['activity'] = activity
         outfile_object.attrs['leftright'] = rightleft
+        outfile_object.attrs['time'] = time
 
 
 def extract_data_and_save_to_file(labels_array='', ignored_indices='', dataset='', motion_class='', outfile_object='',
