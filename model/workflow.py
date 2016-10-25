@@ -16,7 +16,7 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
 
     # list all the files where the sensordata is stored
     # dataset_files = os.listdir(dataset_directory)
-    dataset_files = ['processed_sensordata_merged.hdf5']
+    dataset_files = ['processed_sensordata.hdf5']
 
     # need to put all the files in the same h5py file
     if len(dataset_files) < 1:

@@ -82,8 +82,11 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
             # train model
             logger.getLogger('tab.regular.time').info('starting training Hidden Markov Model.')
             hmm_model = hmm.GaussianHMM(n_components=8, covariance_type='diag', n_iter=10, verbose=True)
+            # hmm_model = hmm.GMMHMM(n_components=8, n_mix=6)
+            # hmm_model.fit(X=trainingdataset, user=user, activity=activity, data_dir=data_dir, lengths=lengths,
+            #              quickrun=quickrun, logger=logger)
             hmm_model.fit(X=trainingdataset, user=user, activity=activity, data_dir=data_dir, lengths=lengths,
-                          quickrun=quickrun, logger=logger)
+                           quickrun=quickrun, logger=logger)
             logger.getLogger('tab.regular.time').info('finished training Hidden Markov Model.')
 
             # create a name for a file based on the user, activity and the time
@@ -101,7 +104,7 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
             joblib.dump(hmm_model, data_path)
 
         logger.getLogger('tab.regular.time').info('calculating predictions')
-        train_predictions = hmm_model.predict_proba(trainingdataset[:])
+        train_predictions = hmm_model.predict_proba(trainingdataset, lengths=lengths)
         test_predictions = hmm_model.predict_proba(testingdataset[:])
 
         # using the model, run algorithms

@@ -10,6 +10,9 @@ class MatlabLabels(object):
         if 'high' in activity or 'low' in activity:
             activity = re.sub('_low', '', activity)
             activity = re.sub('_high', '', activity)
+        if 'h' in activity or 'l' in activity:
+            activity = re.sub('_l', '', activity)
+            activity = re.sub('_h', '', activity)
 
         for key, activity_list in self.type_activity.iteritems():
             if activity in activity_list:
