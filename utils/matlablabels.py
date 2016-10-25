@@ -1,6 +1,22 @@
+import re
 
 
 class MatlabLabels(object):
+    def check_type_activity(self, activity):
+        """
+        :param activity: activity being performed by the user i.e. radialcan, tp, book
+        :return type_activity: whether its a vertical, horizontal or freedly activity
+        """
+        if 'high' in activity or 'low' in activity:
+            activity = re.sub('_low', '', activity)
+            activity = re.sub('_high', '', activity)
+
+        for key, activity_list in self.type_activity.iteritems():
+            if activity in activity_list:
+                return key
+
+        print 'error activity {0} is not in the \'activity_types\' list'.format(activity)
+        exit(1)
 
     def __init__(self):
         self.excluded_users = ['Q445_paretic_active_radialcan_t1.mvnx.mat',
@@ -66,6 +82,10 @@ class MatlabLabels(object):
         # cyclical
         self.compact_list = ['REST', 'REA', 'T', 'RET', 'I', 'S', 'ST', 'SM', 'M', 'MC', 'THM', 'TC']
 
+        self.type_activity = {'vertical': ['heavycan', 'lightcan', 'book', 'tp', 'detergent'],
+                              'horizontal': ['radialcan', 'radialtp'],
+                              'freedly': ['feeding']}
+
         self.jointUsed = ['']
 
         self.segmentUsed = ['RightHand']
@@ -94,13 +114,4 @@ class MatlabLabels(object):
         #                  'jLeftElbow','jLeftWrist','jRightHip','jRightKnee','jRightAnkle','jRightBallFoot', \
         #                  'jLeftHip','jLeftKnee','jLeftAnkle','jLeftBallFoot']
 
-    def get_labels(self, label_indices):
-        """
-        :param label_indices: a list or array of index of specific labels
-        :return: labels: the label index converted to the actual labels
-        """
-        labels = list()
-        for li in label_indices:
-            labels.append(self.compact_list[int(li)])
 
-        return set(labels)

@@ -346,5 +346,5 @@ if __name__ == '__main__':
             else:
                 printout(message='Wrong option selected.', verbose=True)
 
-        except ValueError:
-            printout(message='Invalid number.', verbose=True)
+        except ValueError as error_message:
+            logging.getLogger('regular').error(error_message)
