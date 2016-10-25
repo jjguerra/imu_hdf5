@@ -82,7 +82,7 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
             # train model
             logger.getLogger('tab.regular.time').info('starting training Hidden Markov Model.')
             hmm_model = hmm.GaussianHMM(n_components=8, covariance_type='diag', n_iter=10, verbose=True)
-            hmm_model.fit(X=trainingdataset[:], user=user, activity=activity, data_dir=data_dir, lengths=lengths,
+            hmm_model.fit(X=trainingdataset, user=user, activity=activity, data_dir=data_dir, lengths=lengths,
                           quickrun=quickrun, logger=logger)
             logger.getLogger('tab.regular.time').info('finished training Hidden Markov Model.')
 
@@ -130,7 +130,7 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
 
                         hmm_model = hmm.GaussianHMM(n_components=nc, covariance_type=ct, n_iter=ni, verbose=True,
                                                     tol=t)
-                        hmm_model.fit(X=trainingdataset[:], user=user, activity=activity, data_dir='', lengths=lengths,
+                        hmm_model.fit(X=trainingdataset, user=user, activity=activity, data_dir='', lengths=lengths,
                                       quickrun=quickrun)
                         logger.getLogger('tab.regular.time').info('finished training Hidden Markov Model.')
 
