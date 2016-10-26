@@ -45,7 +45,7 @@ def results(train_predictions='', traininglabels='', test_predictions='', testin
 
     logger.getLogger('line.tab.regular').info('testing classification report')
     logger.getLogger('tab.regular.line').info(classification_report(log_test_predictions, logreg_test_labels,
-                                                                        target_names=target_names))
+                                                                    target_names=target_names))
 
 
 def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testinglabels='',

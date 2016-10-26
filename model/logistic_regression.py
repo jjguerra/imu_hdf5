@@ -3,34 +3,34 @@ from sklearn.linear_model import LogisticRegression
 
 
 def results(logreg_model='', trainingdataset='', traininglabels='', testingdataset='',
-            testinglabels=''):
+            testinglabels='', logger=''):
 
-    printout(message='Finished training Logistic Regression Model.', time=True, verbose=True)
+    logger.getLogger('tab.regular.time').info('starting training Logistic Regression Model.')
 
-    printout(message='calculating Predictions', verbose=True)
-    training_score = logreg_model.score(trainingdataset[:], traininglabels[:])
-    testing_score = logreg_model.score(testingdataset[:], testinglabels[:])
+    logger.getLogger('tab.regular.time').info('calculating Predictions')
+    training_score = logreg_model.score(trainingdataset[:], traininglabels[:].ravel())
+    testing_score = logreg_model.score(testingdataset[:], testinglabels[:].ravel())
 
-    printout(message='Final training data prediction score: {0}'.format(training_score), verbose=True)
-    printout(message='Final testing data prediction score: {0}'.format(testing_score), verbose=True)
+    logger.getLogger('tab.regular').info('final training data prediction score: {0}'.format(training_score))
+    logger.getLogger('tab.regular.line').info('final testing data prediction score: {0}'.format(testing_score))
 
 
-def logreg_algo(trainingdataset='', traininglabels='', testingdataset='', testinglabels='', quickrun=True):
+def logreg_algo(trainingdataset='', traininglabels='', testingdataset='', testinglabels='', logger='', quickrun=True):
 
     if quickrun:
 
-        printout(message='Training Logistic Regression Model.', time=True, verbose=True)
-        logreg_model = LogisticRegression()
-        logreg_model = logreg_model.fit(trainingdataset[:], traininglabels[:])
+        logger.getLogger('tab.regular.time').info('starting training Logistic Regression Model.')
+        logreg_model = LogisticRegression(n_jobs=-1, verbose=True)
+        logreg_model = logreg_model.fit(trainingdataset, traininglabels[:].ravel())
 
         results(logreg_model=logreg_model, trainingdataset=trainingdataset, traininglabels=traininglabels,
-                testingdataset=testingdataset, testinglabels=testinglabels)
+                testingdataset=testingdataset, testinglabels=testinglabels, logger=logger)
 
     else:
 
         for t in [0.0001, 0.00001, 0.000001, 0.0000001]:
             for c in [10, 100]:
-                printout(message='Training Logistic Regression Model', time=True, verbose=True)
+                logger.getLogger('tab.regular.time').info('starting training Logistic Regression Model.')
                 msg = '\tmodel parameters: \n ' \
                       '\t\tInverse of regularization strength:{0}' \
                       '\t\ttolerance:{1}' \
