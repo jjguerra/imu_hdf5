@@ -43,4 +43,3 @@ def feature_extraction(h5_directory='', folder_name='', program_path='', action=
         imu_algorithm(dataset_directory=file_info.data_path, algorithm=algorithm, quickrun=quickrun,
                       program_path=program_path, logger=logger)
 
-

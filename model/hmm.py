@@ -21,7 +21,7 @@ def results(train_predictions='', traininglabels='', test_predictions='', testin
     logger.getLogger('tab.regular.time').info('finished processing results for logistic regression algorithm')
 
     # mapping hmm labels to true labels
-    logistic_regression_model = LogisticRegression()
+    logistic_regression_model = LogisticRegression(n_jobs=-1)
 
     logger.getLogger('tab.regular.time').info('starting training logistic regression mapper')
     logistic_regression_model.fit(logreg_train_data, logreg_train_labels)
@@ -81,12 +81,10 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
         if not loaded_model:
             # train model
             logger.getLogger('tab.regular.time').info('starting training Hidden Markov Model.')
-            hmm_model = hmm.GaussianHMM(n_components=8, covariance_type='diag', n_iter=10, verbose=True)
-            # hmm_model = hmm.GMMHMM(n_components=8, n_mix=6)
-            # hmm_model.fit(X=trainingdataset, user=user, activity=activity, data_dir=data_dir, lengths=lengths,
-            #              quickrun=quickrun, logger=logger)
+            # hmm_model = hmm.GaussianHMM(n_components=8, covariance_type='diag', n_iter=10, verbose=True)
+            hmm_model = hmm.GMMHMM(n_components=8, n_mix=6)
             hmm_model.fit(X=trainingdataset, user=user, activity=activity, data_dir=data_dir, lengths=lengths,
-                           quickrun=quickrun, logger=logger)
+                          quickrun=quickrun, logger=logger)
             logger.getLogger('tab.regular.time').info('finished training Hidden Markov Model.')
 
             # create a name for a file based on the user, activity and the time
