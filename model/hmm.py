@@ -80,8 +80,9 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
         # check if flag is on
         if not loaded_model:
             # train model
-            logger.getLogger('tab.regular.time').info('starting training Hidden Markov Model.')
+            # logger.getLogger('tab.regular.time').info('starting training Gaussian Hidden Markov Model.')
             # hmm_model = hmm.GaussianHMM(n_components=8, covariance_type='diag', n_iter=10, verbose=True)
+            logger.getLogger('tab.regular.time').info('starting training GMM Hidden Markov Model.')
             hmm_model = hmm.GMMHMM(n_components=8, n_mix=6)
             hmm_model.fit(X=trainingdataset, user=user, activity=activity, data_dir=data_dir, lengths=lengths,
                           quickrun=quickrun, logger=logger)
