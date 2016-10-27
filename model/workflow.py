@@ -60,8 +60,8 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
 
     for user_index, user_info in enumerate(h5_file_object.iterkeys()):
 
-        # checking on experimental users
-        if 'paretic' in user_info:
+        # run test on control users only
+        if 'pilot' in user_info:
             # defining train dataset and labels array
             c_filename = 'training_testing_file_' + str(user_info) + '_' + datetime.now().strftime('%Y%m%d%H%M%S')\
                          + '.hdf5'
@@ -127,6 +127,10 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
                 # feeding activity
                 elif (type_activity != 'freedly') and (type_activity == inner_type_activity) and (user != inner_user):
                     adding = True
+
+                # only add control users
+                if 'paretic' in inner_user:
+                    adding = False
 
                 if adding:
                     # get the size of the dataset because it will be passed as an parameter to the hmm
