@@ -111,36 +111,44 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
                 test_predictions=test_predictions, testinglabels=testinglabels[:], logger=logger)
 
     else:
-        n_iterations = [10, 50, 100, 1000]
+        n_iterations = [10, 50]
         components = [5, 8, 10, 15, 20]
+        mixes = [3, 6, 9]
         tolerance = [0.01, 0.001]
         covariance_types = ['spherical', 'diag', 'full', 'tied']
-        for ct in covariance_types:
-            for nc in components:
-                for t in tolerance:
-                    for ni in n_iterations:
-                        logger.getLogger('tab.regular.time').info('starting training Hidden Markov Model.')
-                        logger.getLogger('tab.regular').info('\tmodel parameters')
-                        msg = '\t\tnumber of states:{0}'.format(nc)
-                        logger.getLogger('tab.regular').info(msg)
-                        msg = '\t\tnumber of iterations:{0}'.format(ni)
-                        logger.getLogger('tab.regular').info(msg)
-                        msg = '\t\ttolerance:{0}'.format(t)
-                        logger.getLogger('tab.regular').info(msg)
-                        msg = '\t\tcovariance type:{0}'.format(ct)
-                        logger.getLogger('tab.regular').info(msg)
+        for nc in components:
+            for nm in mixes:
+                for ct in covariance_types:
+                    for t in tolerance:
+                        for ni in n_iterations:
+                            logger.getLogger('tab.regular.time').info('starting training GMM Hidden Markov Model.')
+                            logger.getLogger('tab.regular').info('\tmodel parameters')
+                            msg = '\t\tnumber of states:{0}'.format(nc)
+                            logger.getLogger('tab.regular').info(msg)
+                            msg = '\t\tnumber of mixtures:{0}'.format(nm)
+                            logger.getLogger('tab.regular').info(msg)
+                            msg = '\t\tnumber of iterations:{0}'.format(ni)
+                            logger.getLogger('tab.regular').info(msg)
+                            msg = '\t\ttolerance:{0}'.format(t)
+                            logger.getLogger('tab.regular').info(msg)
+                            msg = '\t\tcovariance type:{0}'.format(ct)
+                            logger.getLogger('tab.regular').info(msg)
 
-                        hmm_model = hmm.GaussianHMM(n_components=nc, covariance_type=ct, n_iter=ni, verbose=True,
-                                                    tol=t)
-                        hmm_model.fit(X=trainingdataset, user=user, activity=activity, data_dir='', lengths=lengths,
-                                      quickrun=quickrun)
-                        logger.getLogger('tab.regular.time').info('finished training Hidden Markov Model.')
+                            # logger.getLogger('tab.regular.time').info(
+                            # 'starting training Gaussian Hidden Markov Model.')
+                            # hmm_model = hmm.GaussianHMM(n_components=nc, covariance_type=ct, n_iter=ni, verbose=True,
+                            # tol=t)
+                            logger.getLogger('tab.regular.time').info('starting training GMM Hidden Markov Model.')
+                            hmm_model = hmm.GMMHMM(n_components=nc, n_mix=nm, covariance_type=ct, n_iter=ni, tol=t)
+                            hmm_model.fit(X=trainingdataset, user=user, activity=activity, data_dir='', lengths=lengths,
+                                          quickrun=quickrun, logger=logger)
+                            logger.getLogger('tab.regular.time').info('finished training Hidden Markov Model.')
 
-                        logger.getLogger('tab.regular.time').info('calculating predictions')
-                        train_predictions = hmm_model.predict_proba(trainingdataset[:])
-                        test_predictions = hmm_model.predict_proba(testingdataset[:])
+                            logger.getLogger('tab.regular.time').info('calculating predictions')
+                            train_predictions = hmm_model.predict_proba(trainingdataset[:])
+                            test_predictions = hmm_model.predict_proba(testingdataset[:])
 
-                        # using the model, run algorithms
-                        results(train_predictions=train_predictions, traininglabels=traininglabels[:],
-                                test_predictions=test_predictions, testinglabels=testinglabels[:], logger=logger)
+                            # using the model, run algorithms
+                            results(train_predictions=train_predictions, traininglabels=traininglabels[:],
+                                    test_predictions=test_predictions, testinglabels=testinglabels[:], logger=logger)
 
