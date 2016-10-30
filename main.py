@@ -314,34 +314,40 @@ if __name__ == '__main__':
         # options
         print ''
         print 'Program Menu:\n'
-        print '1: HMM program'
-        print '2: Check Matlab files'
-        print '3: Convert Matlab files to HMM format file'
-        print '4: Process matlab files i.e. featurize'
-        print '5: Move Matlab files from Dropbox to Working Directory'
-        print '6: Perform Logistic Regression'
-        print '7: Perform LSTM'
-        print '8: Exit'
+        print '1: Gaussian-HMM program'
+        print '2: GMM-HMM program'
+        print '3: Check Matlab files'
+        print '4: Convert Matlab files to HMM format file'
+        print '5: Process matlab files with basic features'
+        print '6: Process matlab files with complex features'
+        print '7: Move Matlab files from Dropbox to Working Directory'
+        print '8: Perform Logistic Regression'
+        print '9: Perform LSTM'
+        print '10: Exit'
         print ''
 
         try:
             selected_option = int(raw_input('Select an option: '))
 
             if selected_option == 1:
-                ml_algorithm('HMM')
-            elif selected_option == 2:
-                check_matlab()
+                ml_algorithm('GHMM')
+            if selected_option == 2:
+                ml_algorithm('GMMHMM')
             elif selected_option == 3:
-                convert_featurize_matlab('extract')
+                check_matlab()
             elif selected_option == 4:
-                convert_featurize_matlab('featurize')
+                convert_featurize_matlab('extract')
             elif selected_option == 5:
-                move_matlab()
+                convert_featurize_matlab('bfeaturize')
             elif selected_option == 6:
-                ml_algorithm('Logistic Regression')
+                convert_featurize_matlab('cfeaturize')
             elif selected_option == 7:
-                ml_algorithm('LSTM')
+                move_matlab()
             elif selected_option == 8:
+                ml_algorithm('Logistic Regression')
+            elif selected_option == 9:
+                ml_algorithm('LSTM')
+            elif selected_option == 10:
                 exit_program()
             else:
                 printout(message='Wrong option selected.', verbose=True)

@@ -197,10 +197,10 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
             logger.getLogger('tab.regular.line').info(msg)
 
             try:
-                if algorithm == 'HMM':
+                if algorithm == 'GHMM' or algorithm == 'GMMHMM':
                     hmm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
                              quickrun=quickrun, testingdataset=testing_data_object, testinglabels=testing_label_object,
-                             lengths=training_dataset_lengths,
+                             lengths=training_dataset_lengths, algorithm=algorithm,
                              user=user, activity=activity, program_path=program_path, logger=logger)
 
                 elif algorithm == 'Logistic Regression':
