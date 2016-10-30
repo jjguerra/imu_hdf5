@@ -338,16 +338,14 @@ if __name__ == '__main__':
             elif selected_option == 4:
                 convert_featurize_matlab('extract')
             elif selected_option == 5:
-                convert_featurize_matlab('bfeaturize')
+                convert_featurize_matlab('featurize')
             elif selected_option == 6:
-                convert_featurize_matlab('cfeaturize')
-            elif selected_option == 7:
                 move_matlab()
-            elif selected_option == 8:
+            elif selected_option == 7:
                 ml_algorithm('Logistic Regression')
-            elif selected_option == 9:
+            elif selected_option == 8:
                 ml_algorithm('LSTM')
-            elif selected_option == 10:
+            elif selected_option == 9:
                 exit_program()
             else:
                 printout(message='Wrong option selected.', verbose=True)
