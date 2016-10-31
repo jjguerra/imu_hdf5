@@ -185,7 +185,7 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
                                                             verbose=True, tol=t)
 
                                 first_run = True
-                                total_batches, batched_lengths = batch(lengths, 50)
+                                total_batches, batched_lengths = batch(lengths, 90)
 
                                 last_batch_index = 0
                                 end = 0
@@ -237,7 +237,6 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
                                         test_predictions=test_predictions, testinglabels=testinglabels[:],
                                         logger=logger)
 
-                                exit(0)
                             except ValueError as error_message:
                                 logger.getLogger('tab.regular.time').error(error_message)
 
