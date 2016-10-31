@@ -132,10 +132,6 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
                             (user != inner_user):
                         adding = True
 
-                    # only add control users
-                    if 'pilot' in user_info_inner:
-                        adding = True
-
                 if adding:
                     # get the size of the dataset because it will be passed as an parameter to the hmm
                     total_inner_row += h5_file_object[user_info_inner].shape[0]
