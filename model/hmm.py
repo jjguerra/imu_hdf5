@@ -157,7 +157,7 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
                                     logger.getLogger('tab.regular.time').error(error_message)
         else:
             n_iterations = [10, 50]
-            components = [8, 10, 15, 20]
+            components = [8, 10, 15]
             tolerance = [0.01]
             covariance_types = ['spherical', 'diag', 'full', 'tied']
             for nc in components:
