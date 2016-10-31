@@ -131,7 +131,7 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
                     #     adding = True
 
                     # only add control users
-                    if 'pilot' in inner_user:
+                    if 'pilot' in user_info_inner:
                         adding = True
 
                 if adding:
