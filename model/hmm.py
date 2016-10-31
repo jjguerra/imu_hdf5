@@ -203,7 +203,7 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
                                 joblib.dump(hmm_model, data_path)
 
                                 logger.getLogger('tab.regular.time').info('calculating predictions')
-                                train_predictions = hmm_model.predict_proba(trainingdataset[:])
+                                train_predictions = hmm_model.predict_proba(trainingdataset, lengths=lengths)
                                 test_predictions = hmm_model.predict_proba(testingdataset[:])
 
                                 # using the model, run algorithms

@@ -317,13 +317,12 @@ if __name__ == '__main__':
         print '1: Gaussian-HMM program'
         print '2: GMM-HMM program'
         print '3: Check Matlab files'
-        print '4: Convert Matlab files to HMM format file'
+        print '4: Convert Matlab files to hdf5 format file'
         print '5: Process matlab files with basic features'
-        print '6: Process matlab files with complex features'
-        print '7: Move Matlab files from Dropbox to Working Directory'
-        print '8: Perform Logistic Regression'
-        print '9: Perform LSTM'
-        print '10: Exit'
+        print '6: Move Matlab files from Dropbox to Working Directory'
+        print '7: Perform Logistic Regression'
+        print '8: Perform LSTM'
+        print '9: Exit'
         print ''
 
         try:
