@@ -29,7 +29,7 @@ def extract_h5_information(doc='', h5_directory='', forward_folder='', script_pa
 
 
 def feature_extraction(h5_directory='', folder_name='', program_path='', action='', algorithm='', quickrun='',
-                       logger=''):
+                       logger='', kmeans=''):
 
     file_info = Document()
 
@@ -41,5 +41,5 @@ def feature_extraction(h5_directory='', folder_name='', program_path='', action=
 
     elif action == 'imu':
         imu_algorithm(dataset_directory=file_info.data_path, algorithm=algorithm, quickrun=quickrun,
-                      program_path=program_path, logger=logger)
+                      program_path=program_path, logger=logger, kmeans=kmeans)
 

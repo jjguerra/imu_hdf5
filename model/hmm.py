@@ -7,6 +7,7 @@ import os
 from datetime import datetime
 from sklearn.metrics import classification_report
 from utils.matlablabels import MatlabLabels
+from utils.misc import batch
 
 np.random.seed(0)
 
@@ -49,7 +50,7 @@ def results(train_predictions='', traininglabels='', test_predictions='', testin
 
 
 def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testinglabels='',
-             quickrun='', lengths=0, user='', activity='', program_path='', logger='', algorithm=''):
+             quickrun='', lengths=0, user='', activity='', program_path='', logger='', algorithm='', kmeans=''):
 
     if quickrun:
 
@@ -168,7 +169,8 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
                 for ct in covariance_types:
                     for t in tolerance:
                         for ni in n_iterations:
-                            logger.getLogger('tab.regular').info('\tmodel parameters')
+                            logger.getLogger('tab.regular.time').info(
+                                'running Gaussian Hidden Markov Model with the following model parameters:')
                             msg = '\t\tnumber of states:{0}'.format(nc)
                             logger.getLogger('tab.regular').info(msg)
                             msg = '\t\tnumber of iterations:{0}'.format(ni)
@@ -179,12 +181,36 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
                             logger.getLogger('tab.regular').info(msg)
 
                             try:
-                                logger.getLogger('tab.regular.time').info(
-                                    'starting training Gaussian Hidden Markov Model.')
                                 hmm_model = hmm.GaussianHMM(n_components=nc, covariance_type=ct, n_iter=ni,
                                                             verbose=True, tol=t)
-                                hmm_model.fit(X=trainingdataset, user=user, activity=activity, data_dir='',
-                                              lengths=lengths, quickrun=quickrun, logger=logger)
+
+                                first_run = True
+                                total_batches, batched_lengths = batch(lengths, 50)
+
+                                last_batch_index = 0
+                                end = 0
+                                for index, sliced_length in enumerate(batched_lengths):
+
+                                    msg = 'starting training Gaussian Hidden Markov Model on batch {0} out of {1}'.\
+                                        format(index, total_batches)
+                                    logger.getLogger('tab.regular.time').info(msg)
+
+                                    end += np.sum(sliced_length).astype(np.int32)
+                                    if first_run:
+                                        hmm_model.fit(X=trainingdataset[last_batch_index:end], user=user,
+                                                      activity=activity, data_dir='', lengths=sliced_length,
+                                                      quickrun=quickrun, logger=logger, kmeans_opt=kmeans)
+                                        first_run = False
+                                    else:
+                                        # by setting init_params='', we will be able to cascaded the training results
+                                        # from the previous fitting runs
+                                        hmm_model.init_params = ''
+                                        hmm_model.fit(X=trainingdataset[last_batch_index:end], user=user,
+                                                      activity=activity, data_dir='', lengths=sliced_length,
+                                                      quickrun=quickrun, logger=logger, kmeans_opt=kmeans)
+
+                                    last_batch_index = end
+
                                 logger.getLogger('tab.regular.time').info('finished training Hidden Markov Model.')
 
                                 # create a name for a file based on the user, activity and the time
@@ -192,8 +218,8 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
                                            str(t) + '_' + str(ni) + '_' + str(datetime.now().strftime('%Y%m%d%H%M%S'))
                                 # calculate the whole path
                                 data_path = os.path.join(data_dir, filename)
-                                logger.getLogger('tab.regular').debug('hmm model stored as {0}'.format(filename))
-                                logger.getLogger('tab.regular').debug('location {0}'.format(data_dir))
+                                logger.getLogger('tab.regular').info('hmm model stored as {0}'.format(filename))
+                                logger.getLogger('tab.regular').info('location {0}'.format(data_dir))
 
                                 # if data folder does not exists, make it
                                 if not os.path.exists(root_folder):
@@ -210,6 +236,8 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
                                 results(train_predictions=train_predictions, traininglabels=traininglabels[:],
                                         test_predictions=test_predictions, testinglabels=testinglabels[:],
                                         logger=logger)
+
+                                exit(0)
                             except ValueError as error_message:
                                 logger.getLogger('tab.regular.time').error(error_message)
 

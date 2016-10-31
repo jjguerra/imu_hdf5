@@ -10,7 +10,7 @@ import os
 from datetime import datetime
 
 
-def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path='', logger=''):
+def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path='', logger='', kmeans=''):
 
     label_object = MatlabLabels()
 
@@ -168,7 +168,8 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
                     index_start_appending = total_inner_row
 
                     training_dataset_lengths.append(n_inner_row)
-                    msg = 'Including {0} (user index {1} of {2})'.format(user_info_inner, u_index, total_inner_users)
+                    msg = 'Including {0} (user index {1} of {2} length:{3})'.format(user_info_inner, u_index,
+                                                                                    total_inner_users, n_inner_row)
                     logger.getLogger('tab.regular').info(msg)
 
                     # reset adding
@@ -205,7 +206,7 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
                     hmm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
                              quickrun=quickrun, testingdataset=testing_data_object, testinglabels=testing_label_object,
                              lengths=training_dataset_lengths, algorithm=algorithm,
-                             user=user, activity=activity, program_path=program_path, logger=logger)
+                             user=user, activity=activity, program_path=program_path, logger=logger, kmeans=kmeans)
 
                 elif algorithm == 'Logistic Regression':
                     logreg_algo(trainingdataset=training_data_object, traininglabels=training_label_object,

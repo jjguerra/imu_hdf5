@@ -157,7 +157,7 @@ def check_location(matlab_or_dataset, default_folder):
 
 
 # get the dataset directory and the quickrun option
-def select_dataset_quickrun():
+def select_dataset_quickrun(algorithm=''):
 
     # get the right dataset location
     file_path = check_location(matlab_or_dataset='Dataset', default_folder='sensordata')
@@ -181,19 +181,25 @@ def select_dataset_quickrun():
             msg = 'Error. Wrong option for quickrun selected.'
             printout(message=msg, verbose=True)
 
-    return file_path, quickrun
+    if algorithm == 'GHMM' or algorithm == 'GMMHMM':
+        kmeans = raw_input('kmeans (regular or mini): ').upper()
+
+        return file_path, quickrun, kmeans
+
+    else:
+        return file_path, quickrun
 
 
 # run specific ML model
 def ml_algorithm(algorithm=''):
 
     # get dataset directory
-    dataset_location, quickrun = select_dataset_quickrun()
+    dataset_location, quickrun, kmeans = select_dataset_quickrun(algorithm)
 
     logging.getLogger('regular.time.line').info('Running {0} Model'.format(algorithm))
 
     feature_extraction(h5_directory=dataset_location, algorithm=algorithm, quickrun=quickrun, action='imu',
-                       program_path=program_path, logger=logging)
+                       program_path=program_path, logger=logging, kmeans=kmeans)
 
 
 # go through all the matlab files and make sure there are not data or labels mistakes
