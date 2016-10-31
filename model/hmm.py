@@ -139,7 +139,7 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
                                 logger.getLogger('tab.regular').info(msg)
 
                                 try:
-                                    logger.getLogger('tab.regular.time').info('starting training GMM Hidden Markov Model.')
+                                    logger.getLogger('tab.regular.time').info('starting training GMM-HMM.')
                                     hmm_model = hmm.GMMHMM(n_components=nc, n_mix=nm, covariance_type=ct, n_iter=ni, tol=t)
                                     hmm_model.fit(X=trainingdataset, user=user, activity=activity, data_dir='',
                                                   lengths=lengths, quickrun=quickrun, logger=logger)

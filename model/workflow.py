@@ -111,26 +111,28 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
                 # removing label columns
                 n_inner_column -= 1
 
-                # get type of activity i.e. horizontal, vertical or freedly
-                type_activity = label_object.check_type_activity(str(activity))
-                inner_type_activity = label_object.check_type_activity(str(inner_activity))
+                if inner_user != user:
+                    # # get type of activity i.e. horizontal, vertical or freedly
+                    # type_activity = label_object.check_type_activity(str(activity))
+                    # inner_type_activity = label_object.check_type_activity(str(inner_activity))
+                    #
+                    # # if testing on the feeding activity or 'freedly' activities, always add other training activities
+                    # # TO DO: I can add training on the same user but different activities to see if that improves the
+                    # # feeding activity
+                    # if (type_activity == 'freedly') and (user != inner_user):
+                    #     adding = True
+                    #
+                    # # removing all the users with the freedly activities, check if they have the same type of activity
+                    # # and add other users
+                    # # TO DO: I can add training on the same user but different activities to see if that improves the
+                    # # feeding activity
+                    # elif (type_activity != 'freedly') and (type_activity == inner_type_activity) and
+                    # (user != inner_user):
+                    #     adding = True
 
-                # if testing on the feeding activity or 'freedly' activities, always add other training activities
-                # TO DO: I can add training on the same user but different activities to see if that improves the
-                # feeding activity
-                if (type_activity == 'freedly') and (user != inner_user):
-                    adding = True
-
-                # removing all the users with the freedly activities, check if they have the same type of activity
-                # and add other users
-                # TO DO: I can add training on the same user but different activities to see if that improves the
-                # feeding activity
-                elif (type_activity != 'freedly') and (type_activity == inner_type_activity) and (user != inner_user):
-                    adding = True
-
-                # only add control users
-                if 'paretic' in inner_user:
-                    adding = False
+                    # only add control users
+                    if 'paretic' not in inner_user:
+                        adding = True
 
                 if adding:
                     # get the size of the dataset because it will be passed as an parameter to the hmm
