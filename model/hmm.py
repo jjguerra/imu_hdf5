@@ -188,8 +188,8 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
                                 logger.getLogger('tab.regular.time').info('finished training Hidden Markov Model.')
 
                                 # create a name for a file based on the user, activity and the time
-                                filename = 'hmm_' + user + '_' + activity + '_' + str(nc) + '_' + str(ct) + '_' + str(t)\
-                                           + '_' + str(ni) + '_' + str(datetime.now().strftime('%Y%m%d%H%M%S'))
+                                filename = 'hmm_' + user + '_' + activity + '_' + str(nc) + '_' + str(ct) + '_' + \
+                                           str(t) + '_' + str(ni) + '_' + str(datetime.now().strftime('%Y%m%d%H%M%S'))
                                 # calculate the whole path
                                 data_path = os.path.join(data_dir, filename)
                                 logger.getLogger('tab.regular').debug('hmm model stored as {0}'.format(filename))
