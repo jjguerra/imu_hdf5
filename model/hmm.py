@@ -156,15 +156,18 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
                                 except ValueError as error_message:
                                     logger.getLogger('tab.regular.time').error(error_message)
         else:
+
+            root_folder = '/'.join(program_path.split('/')[:-1])
+            data_dir = os.path.join(root_folder, 'data')
+
             n_iterations = [10, 50]
             components = [8, 10, 15]
             tolerance = [0.01]
-            covariance_types = ['spherical', 'diag', 'full', 'tied']
+            covariance_types = ['spherical', 'diag', 'full']
             for nc in components:
                 for ct in covariance_types:
                     for t in tolerance:
                         for ni in n_iterations:
-                            logger.getLogger('tab.regular.time').info('starting training GMM Hidden Markov Model.')
                             logger.getLogger('tab.regular').info('\tmodel parameters')
                             msg = '\t\tnumber of states:{0}'.format(nc)
                             logger.getLogger('tab.regular').info(msg)
@@ -183,6 +186,21 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
                                 hmm_model.fit(X=trainingdataset, user=user, activity=activity, data_dir='',
                                               lengths=lengths, quickrun=quickrun, logger=logger)
                                 logger.getLogger('tab.regular.time').info('finished training Hidden Markov Model.')
+
+                                # create a name for a file based on the user, activity and the time
+                                filename = 'hmm_' + user + '_' + activity + '_' + nc + '_' + ct + '_' + t + '_' + ni + \
+                                           '_' + str(datetime.now().strftime('%Y%m%d%H%M%S'))
+                                # calculate the whole path
+                                data_path = os.path.join(data_dir, filename)
+                                logger.getLogger('tab.regular').debug('hmm model stored as {0}'.format(filename))
+                                logger.getLogger('tab.regular').debug('location {0}'.format(data_dir))
+
+                                # if data folder does not exists, make it
+                                if not os.path.exists(root_folder):
+                                    os.mkdir(root_folder)
+
+                                    # store the model so its not needed to re-train it
+                                joblib.dump(hmm_model, data_path)
 
                                 logger.getLogger('tab.regular.time').info('calculating predictions')
                                 train_predictions = hmm_model.predict_proba(trainingdataset[:])
