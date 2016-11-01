@@ -49,8 +49,8 @@ def results(train_predictions='', traininglabels='', test_predictions='', testin
                                                                     target_names=target_names))
 
 
-def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testinglabels='',
-             quickrun='', lengths=0, user='', activity='', program_path='', logger='', algorithm='', kmeans=''):
+def hmm_algo(trainingdataset, traininglabels, testingdataset, testinglabels, quickrun, batched_setting, user, activity,
+             program_path, logger, algorithm, kmeans, lengths=''):
 
     if quickrun:
 
@@ -184,32 +184,40 @@ def hmm_algo(trainingdataset='', traininglabels='', testingdataset='', testingla
                                 hmm_model = hmm.GaussianHMM(n_components=nc, covariance_type=ct, n_iter=ni,
                                                             verbose=True, tol=t)
 
-                                first_run = True
-                                total_batches, batched_lengths = batch(lengths, 90)
+                                if batched_setting:
+                                    first_run = True
+                                    total_batches, batched_lengths = batch(lengths, 90)
 
-                                last_batch_index = 0
-                                end = 0
-                                for index, sliced_length in enumerate(batched_lengths):
+                                    last_batch_index = 0
+                                    end = 0
+                                    for index, sliced_length in enumerate(batched_lengths):
 
-                                    msg = 'starting training Gaussian Hidden Markov Model on batch {0} out of {1}'.\
-                                        format(index, total_batches)
+                                        msg = 'starting training Gaussian Hidden Markov Model on batch {0} out of {1}'.\
+                                            format(index, total_batches)
+                                        logger.getLogger('tab.regular.time').info(msg)
+
+                                        end += np.sum(sliced_length).astype(np.int32)
+                                        if first_run:
+                                            hmm_model.fit(X=trainingdataset[last_batch_index:end], user=user,
+                                                          activity=activity, data_dir='', lengths=sliced_length,
+                                                          quickrun=quickrun, logger=logger, kmeans_opt=kmeans)
+                                            first_run = False
+                                        else:
+                                            # by setting init_params='', we will be able to cascaded the training
+                                            # results from the previous fitting runs
+                                            hmm_model.init_params = ''
+                                            hmm_model.fit(X=trainingdataset[last_batch_index:end], user=user,
+                                                          activity=activity, data_dir='', lengths=sliced_length,
+                                                          quickrun=quickrun, logger=logger, kmeans_opt=kmeans)
+
+                                        last_batch_index = end
+                                else:
+                                    msg = 'starting training Gaussian Hidden Markov Model'
                                     logger.getLogger('tab.regular.time').info(msg)
 
-                                    end += np.sum(sliced_length).astype(np.int32)
-                                    if first_run:
-                                        hmm_model.fit(X=trainingdataset[last_batch_index:end], user=user,
-                                                      activity=activity, data_dir='', lengths=sliced_length,
-                                                      quickrun=quickrun, logger=logger, kmeans_opt=kmeans)
-                                        first_run = False
-                                    else:
-                                        # by setting init_params='', we will be able to cascaded the training results
-                                        # from the previous fitting runs
-                                        hmm_model.init_params = ''
-                                        hmm_model.fit(X=trainingdataset[last_batch_index:end], user=user,
-                                                      activity=activity, data_dir='', lengths=sliced_length,
-                                                      quickrun=quickrun, logger=logger, kmeans_opt=kmeans)
-
-                                    last_batch_index = end
+                                    hmm_model.fit(X=trainingdataset, user=user,
+                                                  activity=activity, data_dir='', lengths=lengths,
+                                                  quickrun=quickrun, logger=logger, kmeans_opt=kmeans)
 
                                 logger.getLogger('tab.regular.time').info('finished training Hidden Markov Model.')
 

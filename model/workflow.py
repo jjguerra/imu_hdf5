@@ -10,7 +10,8 @@ import os
 from datetime import datetime
 
 
-def imu_algorithm(dataset_path_name, algorithm='', quickrun='', program_path='', logger='', kmeans=''):
+def imu_algorithm(dataset_path_name, algorithm='', quickrun='', program_path='', logger='', kmeans='',
+                  batched_setting=False):
 
     label_object = MatlabLabels()
 
@@ -167,7 +168,7 @@ def imu_algorithm(dataset_path_name, algorithm='', quickrun='', program_path='',
                 if algorithm == 'GHMM' or algorithm == 'GMMHMM':
                     hmm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
                              quickrun=quickrun, testingdataset=testing_data_object, testinglabels=testing_label_object,
-                             lengths=training_dataset_lengths, algorithm=algorithm,
+                             lengths=training_dataset_lengths, algorithm=algorithm, batched_setting=batched_setting,
                              user=user, activity=activity, program_path=program_path, logger=logger, kmeans=kmeans)
 
                 elif algorithm == 'Logistic Regression':

@@ -210,7 +210,12 @@ def select_dataset_quickrun(algorithm=''):
         if kmeans == '':
             kmeans = 'REGULAR'
 
-        return file_path, quickrun, kmeans
+        batch = raw_input('batch setting: ').upper()
+
+        if batch == '':
+            batch = False
+
+        return file_path, quickrun, kmeans, batch
 
     else:
         return file_path, quickrun
@@ -220,12 +225,12 @@ def select_dataset_quickrun(algorithm=''):
 def ml_algorithm(algorithm=''):
 
     # get dataset directory
-    dataset_location, quickrun, kmeans = select_dataset_quickrun(algorithm)
+    dataset_location, quickrun, kmeans, batched_setting = select_dataset_quickrun(algorithm)
 
     logging.getLogger('regular.time.line').info('Running {0} Model'.format(algorithm))
 
     feature_extraction(h5_directory=dataset_location, algorithm=algorithm, quickrun=quickrun, action='imu',
-                       program_path=program_path, logger=logging, kmeans=kmeans)
+                       program_path=program_path, logger=logging, kmeans=kmeans, batched_setting=batched_setting)
 
 
 # go through all the matlab files and make sure there are not data or labels mistakes
