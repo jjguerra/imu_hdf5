@@ -598,16 +598,13 @@ def extract_mat_information(doc, matlab_directory, action, leftright_arm, forwar
         printout(message=msg, verbose=True)
         exit(1)
 
-    # used the name of the folder where the matlab files are located
-    file_name = doc.data_path.split('/')[-1]
-
     if action == 'extract':
-        doc.dataset_path = os.path.join(working_path, forward_folder)
+        doc.dataset_path = os.path.join(working_path, 'converted_dataset')
 
         if not os.path.exists(doc.dataset_path):
             os.makedirs(doc.dataset_path)
 
-        doc.dataset_path_name = doc.dataset_path + '/' + file_name + '.hdf5'
+        doc.dataset_path_name = forward_folder
 
     else:
         doc.log_file = os.path.join(working_path, error_file_name)

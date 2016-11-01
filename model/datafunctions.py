@@ -18,9 +18,11 @@ class UserInfo:
 
 
 def sliding_window(sequence, window_size, step=1):
-    """Returns a generator that will iterate through
+    """
+    Returns a generator that will iterate through
     the defined chunks of input sequence. Input sequence
-    must be sliceable."""
+    must be sliceable.
+    """
 
     # Verify the inputs
     if not isinstance(type(window_size), type(0)) and isinstance(type(step), type(0)):
@@ -53,14 +55,17 @@ def most_common(lst):
         return m_frequent[0][0]
 
 
-def preprocessing_data(dataset_object):
+def preprocessing_data(dataset_object, window_step_size, logger):
 
         preprocessed_dataset_object = dataset_object[0]
         postprocessed_dataset_object = dataset_object[1]
 
+        msg = 'original data size: {0}'.format(preprocessed_dataset_object[:].shape)
+        logger.getLogger('tab.tab.regular').info(msg)
+
         # sliding window properties
-        window_size = 60
-        step = 1
+        window_size = window_step_size[0]
+        step = window_step_size[1]
         chunks = sliding_window(preprocessed_dataset_object[:], window_size, step)
 
         label_list = list()
@@ -112,6 +117,9 @@ def preprocessing_data(dataset_object):
 
         add_attributes(postprocessed_dataset_object[preprocessed_dataset_object.name],
                        str(preprocessed_dataset_object.name)[1:])
+
+        msg = 'resulting data size: {0}'.format(postprocessed_dataset_object[preprocessed_dataset_object.name].shape)
+        logger.getLogger('tab.tab.regular').info(msg)
 
 
 def file_information(python_file):
@@ -210,7 +218,7 @@ def append_array(o_array, array_to_add):
 
 
 # getting the statistical descriptors
-def featurize(file_properties=''):
+def featurize(window_step_size, file_properties, logger):
 
     # processed dataset file
     processed_file_object = h5py.File(name=file_properties.dataset_path_name, mode='w')
@@ -224,7 +232,7 @@ def featurize(file_properties=''):
         h5_file_object = h5py.File(dataset_path, 'r')
 
         msg = 'Starting pre-processing dataset {0}'.format(h5_file_object.filename)
-        printout(message=msg, verbose=True, time=True)
+        logger.getLogger('tab.regular.time').info(msg)
 
         last_dataset = len(h5_file_object) - 1
         for dataset_index, dataset_key in enumerate(h5_file_object.iterkeys()):
@@ -236,13 +244,15 @@ def featurize(file_properties=''):
             # function used to call the statistical descriptor function
 
             msg = 'Pre-processing {0}'.format(global_msg)
-            printout(message=msg, verbose=True, time=True)
-            preprocessing_data(dataset_object=[h5_file_object[dataset_key], processed_file_object])
-            msg = 'Finished pre-processing {0}.'.format(global_msg)
-            printout(message=msg, verbose=True, time=True)
+            logger.getLogger('tab.tab.regular').info(msg)
+            preprocessing_data(dataset_object=[h5_file_object[dataset_key], processed_file_object],
+                               window_step_size=window_step_size, logger=logger)
 
-        msg = 'Finished pre-processing dataset {0}'.format(h5_file_object.name)
-        printout(message=msg, verbose=True, time=True, extraspaces=2)
+        msg = 'Finished pre-processing dataset {0}'.format(h5_file_object.filename)
+        logger.getLogger('tab.regular.time').info(msg)
+
+        msg = 'Dataset filename location:'.format(file_properties.dataset_path_name)
+        logger.getLogger('tab.regular').info(msg)
 
     processed_file_object.close()
 

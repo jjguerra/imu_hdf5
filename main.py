@@ -18,35 +18,49 @@ from utils.output import printout
 program_path = '/'.join(os.path.realpath(__file__).split('/')[:-1])
 
 
-def forwarding_folder(action):
-    output_error = True
-    while output_error:
-        # get the folder where all the processed matlab files will be stored
-        dataset_folder_name = raw_input('Output folder\'s name: ')
+def window_step_properties():
 
-        if dataset_folder_name == '' and action == 'extract':
-            file_path = os.path.join(program_path, 'converted_dataset')
-        elif dataset_folder_name == '' and action == 'featurize':
-            file_path = os.path.join(program_path, 'processed_dataset')
-        else:
-            if os.path.isdir(dataset_folder_name):
-                file_path = dataset_folder_name
-            else:
-                file_path = os.path.join(program_path, dataset_folder_name)
+    window_size_errors = True
+
+    while window_size_errors:
+        window_size = raw_input('window size: ')
+
+        # default
+        if window_size == '':
+            window_size_errors = False
+            window_size = 60
+
         try:
-            # if does not exists, create it
-            if not os.path.exists(file_path):
-                os.makedirs(file_path)
-        except OSError:
-            msg = 'Error. {0} directory cannot be created.'.format(file_path)
-            printout(message=msg, verbose=True)
-            msg = 'Chose a different forwarding directory.'
-            printout(message=msg, verbose=True)
+            window_size = int(window_size)
+            if window_size == 30 or window_size == 60 or window_size == 120:
+                window_size_errors = False
+            else:
+                printout('Wrong number of window size. Options:30,60 or 120')
+        except ValueError as err_message:
+            printout(message=err_message)
 
-        else:
-            output_error = False
+    step_size_errors = True
+    while step_size_errors:
+        step_size = raw_input('step size: ').upper()
 
-    return file_path
+        if step_size == '':
+            step_size_errors = False
+            step_size = 1
+
+        try:
+            step_size = int(step_size)
+            if step_size > 0:
+                step_size_errors = False
+            # default
+
+            else:
+                printout('Wrong number of step size. Select step size greater than 0')
+        except ValueError as err_message:
+            printout(message=err_message)
+
+    window_step_size = [window_size, step_size]
+
+    return window_step_size
 
 
 def forwarding_filters():
@@ -116,51 +130,60 @@ def forwarding_filters():
     return leftright_arm, specific_side
 
 
-# make sure all the directory information is correct
-def check_location(matlab_or_dataset, default_folder):
+def get_set_dataset_location(matlab_or_dataset, default_folder='', action=''):
+    """
+    Gets the filename of the datasets or the directory of the matlab files
+    :return:
+        if dataset: filename
+        if matlab: directory
+    """
 
     not_correct_dataset_location = True
     while not_correct_dataset_location:
 
-        dataset_location = raw_input(
-            matlab_or_dataset + ' directory/folder (default folder {0}): '.format(default_folder))
+        if matlab_or_dataset == 'matlab':
+            file_directory = raw_input('Matlab directory: ')
 
-        # get location of program
-        if dataset_location == "":
-            if os.path.isfile(default_folder):
-                file_path = os.path.join(program_path, default_folder)
-            else:
-                # use for the dropbox option
-                file_path = default_folder
-        else:
-            if os.path.isdir(dataset_location):
-                file_path = dataset_location
-            elif os.path.isfile(dataset_location):
-                file_path = os.path.join(program_path, dataset_location)
-            else:
-                msg = 'Error. input is not a folder or a directory.'
-                printout(message=msg, verbose=True)
-                msg = 'Please chose a correct folder or directory.'
+            if not os.path.isdir(file_directory) or not os.path.exists(file_directory):
+                msg = 'Error. Wrong directory provided. Please, provide correct directory.'
                 printout(message=msg, verbose=True)
                 continue
 
-        if not os.path.exists(file_path):
-            msg = 'Error. {0} directory {1} does not exists.'.format(matlab_or_dataset, file_path)
-            printout(message=msg, verbose=True)
-            msg = 'Please chose a different dataset directory.'
-            printout(message=msg, verbose=True)
+            else:
+                file_path = file_directory
+                not_correct_dataset_location = False
+
         else:
-            # right dataset directory was provided
-            not_correct_dataset_location = False
+            if action == 'get':
+                filename = raw_input('Input dataset filename: ')
+            else:
+                filename = raw_input('Output dataset filename: ')
+
+            # get location of program
+            if filename == "":
+                msg = 'Error. No filename provided. Please, insert filename.'
+                printout(message=msg, verbose=True)
+                continue
+            else:
+                if default_folder:
+
+                    folder_filename = os.path.join(default_folder, filename + '.hdf5')
+                    file_path = os.path.join(program_path, folder_filename)
+                    # right dataset directory was provided
+                    not_correct_dataset_location = False
 
     return file_path
 
 
-# get the dataset directory and the quickrun option
 def select_dataset_quickrun(algorithm=''):
-
+    """
+    get the dataset directory and the quickrun option
+    @:return
+        if *HMM: filename, quickrun option and kmeans option
+        else: filename, quickrun option
+    """
     # get the right dataset location
-    file_path = check_location(matlab_or_dataset='Dataset', default_folder='sensordata')
+    file_path = get_set_dataset_location(matlab_or_dataset='dataset', default_folder='processed_dataset', action='get')
 
     quickrun = ''
     while quickrun == '':
@@ -184,6 +207,9 @@ def select_dataset_quickrun(algorithm=''):
     if algorithm == 'GHMM' or algorithm == 'GMMHMM':
         kmeans = raw_input('kmeans (regular or mini): ').upper()
 
+        if kmeans == '':
+            kmeans = 'REGULAR'
+
         return file_path, quickrun, kmeans
 
     else:
@@ -206,7 +232,7 @@ def ml_algorithm(algorithm=''):
 def check_matlab():
 
     # get the right dataset directory to check matlab files
-    checking_location = check_location(matlab_or_dataset='Matlab', default_folder='sensordata')
+    checking_location = get_set_dataset_location(matlab_or_dataset='matlab')
 
     # name of the log file
     error_file_name = raw_input('Error log file name: ')
@@ -232,13 +258,14 @@ def check_matlab():
 # or obtain statistical descriptors of the time series dataset
 def convert_featurize_matlab(action):
 
-    # get the right dataset location
-    dataset_location = check_location(matlab_or_dataset='Matlab', default_folder='sensordata')
-    # get output folder
-    file_path = forwarding_folder(action=action)
-
     if action == 'extract':
+        # get the right dataset location
+        dataset_location = get_set_dataset_location(matlab_or_dataset='matlab')
         leftright_arm, specific_side = forwarding_filters()
+
+        # get output folder
+        file_path = get_set_dataset_location(matlab_or_dataset='dataset', default_folder='converted_dataset',
+                                             action='set')
         msg = 'starting extracting matlab files'
         logging.getLogger('regular.time').info(msg)
         matlab_labels_data(action=action, matlab_directory=dataset_location, program_path=program_path,
@@ -247,10 +274,15 @@ def convert_featurize_matlab(action):
         logging.getLogger('regular.time').info(msg)
 
     else:
+        # get the right dataset location
+        dataset_location = get_set_dataset_location(matlab_or_dataset='dataset', default_folder='converted_dataset',
+                                                    action='get')
+
+        window_step_size = window_step_properties()
         msg = 'starting \'featurization\' of the files'
         logging.getLogger('regular.time').info(msg)
-        feature_extraction(h5_directory=dataset_location, folder_name=file_path, program_path=program_path,
-                           action='featurize')
+        feature_extraction(h5_directory=dataset_location, action='featurize', window_step_size=window_step_size,
+                           logger=logging, program_path=program_path)
         msg = 'finished \'featurization\' of the files'
         logging.getLogger('regular.time').info(msg)
 
@@ -259,7 +291,8 @@ def convert_featurize_matlab(action):
 def move_matlab():
 
     # default option is the dropbox directory
-    initial_path = check_location(matlab_or_dataset='Matlab', default_folder='/Users/jguerra/Dropbox/SensorJorge')
+    initial_path = get_set_dataset_location(matlab_or_dataset='matlab',
+                                            default_folder='/Users/jguerra/Dropbox/SensorJorge')
 
     forwarding_error = True
     while forwarding_error:
@@ -315,7 +348,7 @@ if __name__ == '__main__':
     logger_initialization(parser=parser)
 
     selected_option = -1
-    while selected_option != 5:
+    while selected_option != 9:
 
         # options
         print ''

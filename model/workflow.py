@@ -10,50 +10,12 @@ import os
 from datetime import datetime
 
 
-def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path='', logger='', kmeans=''):
+def imu_algorithm(dataset_path_name, algorithm='', quickrun='', program_path='', logger='', kmeans=''):
 
     label_object = MatlabLabels()
 
-    # list all the files where the sensordata is stored
-    # dataset_files = os.listdir(dataset_directory)
-    dataset_files = ['processed_sensordata_merged.hdf5']
-
-    # need to put all the files in the same h5py file
-    if len(dataset_files) < 1:
-        msg = 'Error no files in the directory:{0}'.format(dataset_directory)
-        printout(message=msg, verbose=True)
-
-    if len(dataset_files) > 1:
-
-        file_name = 'merged_' + dataset_directory.split('/')[-1] + '.hdf5'
-        file_path = os.path.join(dataset_directory, file_name)
-        integrated_datasets_file = h5py.File(name=file_path, mode='w')
-
-        printout(message='more than one file in the directory', verbose=True)
-        msg = 'merging files into {0}'.format(file_name)
-        printout(message=msg, verbose=True)
-        for s_file in dataset_files:
-            if '.hdf5' in s_file and 'merged' not in s_file:
-                dataset_path = os.path.join(dataset_directory, s_file)
-                h5_file_object = h5py.File(dataset_path, 'r')
-
-                for key, value in h5_file_object.iteritems():
-                    msg = '\tadding file:{0}'.format(key)
-                    printout(message=msg, verbose=True)
-                    integrated_datasets_file.create_dataset(name=key, data=value)
-                    add_attributes(integrated_datasets_file[key], key)
-
-                h5_file_object.close()
-
-        integrated_datasets_file.close()
-
-        printout(message='finished merging files')
-
-    else:
-        file_name = dataset_files[0]
-
-    dataset_path = os.path.join(dataset_directory, file_name)
-    h5_file_object = h5py.File(dataset_path, 'r')
+    dataset_path = '/'.join(dataset_path_name.split('/')[:-1])
+    h5_file_object = h5py.File(dataset_path_name, 'r')
 
     # printing a line for style and visibility
     printout(message='', verbose=True)
@@ -71,7 +33,7 @@ def imu_algorithm(dataset_directory='', algorithm='', quickrun='', program_path=
             # defining train dataset and labels array
             c_filename = 'training_testing_file_' + str(user_info) + '_' + datetime.now().strftime('%Y%m%d%H%M%S')\
                          + '.hdf5'
-            training_file_name = os.path.join(dataset_directory, c_filename)
+            training_file_name = os.path.join(dataset_path, c_filename)
             training_testing_dataset_object = h5py.File(training_file_name, 'w')
 
             user = h5_file_object[user_info].attrs['user']

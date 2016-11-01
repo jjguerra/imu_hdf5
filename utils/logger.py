@@ -34,6 +34,7 @@ def logger_initialization(parser):
         'regular.line': logging.Formatter("%(message)s\n"),
         'line.msg': logging.Formatter("\n%(message)s"),
         'tab.regular': logging.Formatter("\t%(message)s"),
+        'tab.tab.regular': logging.Formatter("\t\t%(message)s"),
         'tab.regular.line': logging.Formatter("\t%(message)s\n"),
         'tab.tab.regular.line': logging.Formatter("\t\t%(message)s\n"),
         'line.tab.regular': logging.Formatter("\n\t%(message)s"),
