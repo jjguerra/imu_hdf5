@@ -24,13 +24,13 @@ def imu_algorithm(dataset_path_name, algorithm='', quickrun='', program_path='',
     for user_index, user_info in enumerate(h5_file_object.iterkeys()):
 
         # run test on control users only
-        # if 'pilot' in user_info and \
-        #        ('HS00' in user_info or 'N537' in user_info or 'Q130' in user_info or 'Q430' in user_info or 'Q435' in
-        #            user_info):
-
         if 'pilot' in user_info and \
-                ('Q439' in user_info or 'Q568' in user_info or 'Q615' in user_info or 'Q616' in user_info or 'Q617' in
-                    user_info):
+               ('HS00' in user_info or 'N537' in user_info or 'Q130' in user_info or 'Q430' in user_info or 'Q435' in
+                   user_info):
+
+        # if 'pilot' in user_info and \
+        #         ('Q439' in user_info or 'Q568' in user_info or 'Q615' in user_info or 'Q616' in user_info or 'Q617' in
+        #             user_info):
             # defining train dataset and labels array
             c_filename = 'training_testing_file_' + str(user_info) + '_' + datetime.now().strftime('%Y%m%d%H%M%S')\
                          + '.hdf5'

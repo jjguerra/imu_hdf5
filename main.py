@@ -212,8 +212,10 @@ def select_dataset_quickrun(algorithm=''):
 
         batch = raw_input('batch setting: ').upper()
 
-        if batch == '':
+        if batch == '' or batch == 'FALSE':
             batch = False
+        else:
+            batch = True
 
         return file_path, quickrun, kmeans, batch
 

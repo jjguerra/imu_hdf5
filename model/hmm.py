@@ -8,6 +8,7 @@ from datetime import datetime
 from sklearn.metrics import classification_report
 from utils.matlablabels import MatlabLabels
 from utils.misc import batch
+import math
 
 np.random.seed(0)
 
@@ -186,7 +187,12 @@ def hmm_algo(trainingdataset, traininglabels, testingdataset, testinglabels, qui
 
                                 if batched_setting:
                                     first_run = True
-                                    total_batches, batched_lengths = batch(lengths, 90)
+                                    half_datasets = int(math.ceil(lengths.shape[0] / 2.0))
+                                    msg = 'size of lengths: {0}'.format(lengths.shape)
+                                    logger.getLogger('tab.regular').debug(msg)
+                                    msg = 'size of batchs: {0}'.format(half_datasets)
+                                    logger.getLogger('tab.regular').debug(msg)
+                                    total_batches, batched_lengths = batch(lengths, half_datasets)
 
                                     last_batch_index = 0
                                     end = 0
@@ -197,6 +203,8 @@ def hmm_algo(trainingdataset, traininglabels, testingdataset, testinglabels, qui
                                         logger.getLogger('tab.regular.time').info(msg)
 
                                         end += np.sum(sliced_length).astype(np.int32)
+                                        msg = 'size of dataset: {0}'.format(trainingdataset[last_batch_index:end].shape)
+                                        logger.getLogger('tab.regular').debug(msg)
                                         if first_run:
                                             hmm_model.fit(X=trainingdataset[last_batch_index:end], user=user,
                                                           activity=activity, data_dir='', lengths=sliced_length,
@@ -215,7 +223,7 @@ def hmm_algo(trainingdataset, traininglabels, testingdataset, testinglabels, qui
                                     msg = 'starting training Gaussian Hidden Markov Model'
                                     logger.getLogger('tab.regular.time').info(msg)
 
-                                    hmm_model.fit(X=trainingdataset, user=user,
+                                    hmm_model.fit(X=trainingdataset[:], user=user,
                                                   activity=activity, data_dir='', lengths=lengths,
                                                   quickrun=quickrun, logger=logger, kmeans_opt=kmeans)
 
@@ -237,7 +245,7 @@ def hmm_algo(trainingdataset, traininglabels, testingdataset, testinglabels, qui
                                 joblib.dump(hmm_model, data_path)
 
                                 logger.getLogger('tab.regular.time').info('calculating predictions')
-                                train_predictions = hmm_model.predict_proba(trainingdataset, lengths=lengths)
+                                train_predictions = hmm_model.predict_proba(trainingdataset[:], lengths=lengths)
                                 test_predictions = hmm_model.predict_proba(testingdataset[:])
 
                                 # using the model, run algorithms
