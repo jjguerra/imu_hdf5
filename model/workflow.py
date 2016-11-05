@@ -2,21 +2,21 @@ from utils.output import printout
 from model.hmm import hmm_algo
 from model.logistic_regression import logreg_algo
 from model.lstm import lstm_algo
-from utils.matlabfunctions import add_attributes
 from utils.matlablabels import MatlabLabels
 import numpy as np
 import h5py
 import os
 from datetime import datetime
+from sklearn.decomposition import PCA, IncrementalPCA
 
 
-def imu_algorithm(dataset_path_name, algorithm='', quickrun='', program_path='', logger='', kmeans='',
+def imu_algorithm(doc, algorithm='', quickrun='', program_path='', logger='', kmeans='',
                   batched_setting=False):
+    # type: (object, str, boolean, str, object, str, bool) -> object
 
     label_object = MatlabLabels()
 
-    dataset_path = '/'.join(dataset_path_name.split('/')[:-1])
-    h5_file_object = h5py.File(dataset_path_name, 'r')
+    h5_file_object = h5py.File(doc.input_path_filename, 'r')
 
     # printing a line for style and visibility
     printout(message='', verbose=True)
@@ -34,7 +34,7 @@ def imu_algorithm(dataset_path_name, algorithm='', quickrun='', program_path='',
             # defining train dataset and labels array
             c_filename = 'training_testing_file_' + str(user_info) + '_' + datetime.now().strftime('%Y%m%d%H%M%S')\
                          + '.hdf5'
-            training_file_name = os.path.join(dataset_path, c_filename)
+            training_file_name = os.path.join(doc.input_path, c_filename)
             training_testing_dataset_object = h5py.File(training_file_name, 'w')
 
             user = h5_file_object[user_info].attrs['user']
@@ -64,42 +64,54 @@ def imu_algorithm(dataset_path_name, algorithm='', quickrun='', program_path='',
             # adding user's flag
             adding = False
 
+            total_dataset_included = 0
+            user_included = list()
+
             total_inner_users = len(h5_file_object) - 1
             # fetch training data from the objects without :
             #   1. the testing data i.e. the data of user_index
             #   2. other dataset with the same user and activity but different repetition
             for u_index, user_info_inner in enumerate(h5_file_object.iterkeys()):
 
-                # get the attributes of the training example
-                inner_user = h5_file_object[user_info_inner].attrs['user']
-                inner_activity = h5_file_object[user_info_inner].attrs['activity']
+                if total_dataset_included < 5:
 
-                # shape of the current dataset
-                n_inner_row, n_inner_column = h5_file_object[user_info_inner].shape
+                    # get the attributes of the training example
+                    inner_user = h5_file_object[user_info_inner].attrs['user']
+                    inner_activity = h5_file_object[user_info_inner].attrs['activity']
 
-                # removing label columns
-                n_inner_column -= 1
+                    # shape of the current dataset
+                    n_inner_row, n_inner_column = h5_file_object[user_info_inner].shape
 
-                if inner_user != user and 'paretic' not in user_info_inner:
-                #    # get type of activity i.e. horizontal, vertical or freedly
-                #    type_activity = label_object.check_type_activity(str(activity))
-                #    inner_type_activity = label_object.check_type_activity(str(inner_activity))
+                    # removing label columns
+                    n_inner_column -= 1
 
-                #    # if testing on the feeding activity or 'freedly' activities, always add other training activities
-                #    # TO DO: I can add training on the same user but different activities to see if that improves the
-                #    # feeding activity
-                #    if (type_activity == 'freedly') and (user != inner_user):
-                #        adding = True
+                    if inner_user != user and 'paretic' not in user_info_inner:
+                        # get type of activity i.e. horizontal, vertical or freedly
+                        type_activity = label_object.check_type_activity(str(activity))
+                        inner_type_activity = label_object.check_type_activity(str(inner_activity))
 
-                #    # removing all the users with the freedly activities, check if they have the same type of activity
-                #    # and add other users
-                #    # TO DO: I can add training on the same user but different activities to see if that improves the
-                #    # feeding activity
-                #    if (type_activity != 'freedly') and (type_activity == inner_type_activity):
-                #        adding = True
-                    adding = True
+                        # if testing on the feeding activity or 'freedly' activities, always add other training activities
+                        # TO DO: I can add training on the same user but different activities to see if that improves the
+                        # feeding activity
+                        if (type_activity == 'freedly') and (user != inner_user):
+                            adding = True
+
+                        # removing all the users with the freedly activities, check if they have the same type of activity
+                        # and add other users
+                        # TO DO: I can add training on the same user but different activities to see if that improves the
+                        # feeding activity
+                        if (type_activity != 'freedly') and (type_activity == inner_type_activity):
+                            adding = True
+
+                        if inner_user in user_included:
+                            adding = False
 
                 if adding:
+
+                    user_included.append(inner_user)
+
+                    total_dataset_included += 1
+
                     # get the size of the dataset because it will be passed as an parameter to the hmm
                     total_inner_row += h5_file_object[user_info_inner].shape[0]
 
@@ -164,10 +176,23 @@ def imu_algorithm(dataset_path_name, algorithm='', quickrun='', program_path='',
             msg = 'Testing data size:{0}'.format(testing_label_object.shape)
             logger.getLogger('tab.regular.line').info(msg)
 
+            pca = IncrementalPCA()
+            n_training_data_object = pca.fit_transform(X=training_data_object[:], y=training_label_object[:])
+            training_testing_dataset_object.create_dataset(name='new training data', data=n_training_data_object)
+            logger.getLogger('tab.regular.line').info(pca.explained_variance_)
+
+            new_training_data_object = training_testing_dataset_object['new training data']
+            msg = 'new Training data size:{0}'.format(new_training_data_object.shape)
+            logger.getLogger('line.tab.regular').info(msg)
+
+            n_testing_data_object = pca.transform(X=testing_data_object[:])
+            training_testing_dataset_object.create_dataset(name='new testing data', data=n_testing_data_object)
+            new_testing_data_object = training_testing_dataset_object['new testing data']
+
             try:
                 if algorithm == 'GHMM' or algorithm == 'GMMHMM':
-                    hmm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
-                             quickrun=quickrun, testingdataset=testing_data_object, testinglabels=testing_label_object,
+                    hmm_algo(trainingdataset=new_training_data_object, traininglabels=training_label_object,
+                             quickrun=quickrun, testingdataset=new_testing_data_object, testinglabels=testing_label_object,
                              lengths=training_dataset_lengths, algorithm=algorithm, batched_setting=batched_setting,
                              user=user, activity=activity, program_path=program_path, logger=logger, kmeans=kmeans)
 

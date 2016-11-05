@@ -1,34 +1,31 @@
 from utils.logfileproperties import Document
 from model.datafunctions import featurize
 from model.workflow import imu_algorithm
-from output import printout
 import os
 
 
 def extract_h5_information(doc, h5_directory, program_path, action='', window_step_size=''):
 
-    # get the path of the file
-    doc.data_path = '/'.join(h5_directory.split('/')[:-1])
+    doc.input_path_filename = h5_directory
+    doc.input_path = '/'.join(h5_directory.split('/')[:-1])
+    temp_filename = h5_directory.split('/')[-1]
+    doc.input_filename = temp_filename.replace('.hdf5', '')
 
     # check data_path
-    if not os.path.exists(doc.data_path):
-        msg = "File " + doc.data_path + " does not exist"
-        printout(message=msg, verbose=True)
-        exit(1)
+    if not os.path.exists(doc.input_path):
+        msg = "File " + doc.input_path + " does not exist"
+        raise IOError(msg)
 
     if action == 'featurize':
 
         folder_name = 'processed_dataset'
-        doc.dataset_path = os.path.join(program_path, folder_name)
+        doc.output_path = os.path.join(program_path, folder_name)
 
-        if not os.path.exists(doc.dataset_path):
-            os.mkdir(doc.dataset_path)
+        if not os.path.exists(doc.output_path):
+            os.mkdir(doc.output_path)
 
-        doc.dataset_path_name = doc.dataset_path + '/' + folder_name + '_' + str(window_step_size[0]) + '_' + str(
-            window_step_size[1]) + '.hdf5'
-
-    else:
-        doc.dataset_path_name = h5_directory
+        doc.output_path_filename = doc.output_path + '/' + doc.input_filename + '_' + str(window_step_size[0]) + '_' \
+            + str(window_step_size[1]) + '.hdf5'
 
 
 def feature_extraction(h5_directory, action, logger, program_path, algorithm='', kmeans='', window_step_size='',
@@ -43,6 +40,6 @@ def feature_extraction(h5_directory, action, logger, program_path, algorithm='',
         featurize(file_properties=file_info, logger=logger, window_step_size=window_step_size)
 
     elif action == 'imu':
-        imu_algorithm(dataset_path_name=file_info.dataset_path_name, algorithm=algorithm, quickrun=quickrun,
-                      program_path=program_path, logger=logger, kmeans=kmeans, batched_setting=batched_setting)
+        imu_algorithm(doc=file_info, algorithm=algorithm, quickrun=quickrun, program_path=program_path, logger=logger,
+                      kmeans=kmeans, batched_setting=batched_setting)
 

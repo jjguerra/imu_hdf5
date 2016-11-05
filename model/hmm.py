@@ -90,7 +90,7 @@ def hmm_algo(trainingdataset, traininglabels, testingdataset, testinglabels, qui
                 hmm_model = hmm.GMMHMM(n_components=8, n_mix=6)
 
             hmm_model.fit(X=trainingdataset, user=user, activity=activity, data_dir=data_dir, lengths=lengths,
-                          quickrun=quickrun, logger=logger)
+                          quickrun=quickrun, logger=logger, kmeans_opt=kmeans)
             logger.getLogger('tab.regular.time').info('finished training Hidden Markov Model.')
 
             # create a name for a file based on the user, activity and the time
@@ -162,14 +162,14 @@ def hmm_algo(trainingdataset, traininglabels, testingdataset, testinglabels, qui
             root_folder = '/'.join(program_path.split('/')[:-1])
             data_dir = os.path.join(root_folder, 'data')
 
-            n_iterations = [10, 50]
+            n_iterations = [10, 20]
             components = [8, 10, 15]
             tolerance = [0.01]
-            covariance_types = ['spherical', 'diag', 'full']
-            for nc in components:
+            covariance_types = ['spherical', 'diag', 'full', 'tied']
+            for ni in n_iterations:
                 for ct in covariance_types:
-                    for t in tolerance:
-                        for ni in n_iterations:
+                    for nc in components:
+                        for t in tolerance:
                             logger.getLogger('tab.regular.time').info(
                                 'running Gaussian Hidden Markov Model with the following model parameters:')
                             msg = '\t\tnumber of states:{0}'.format(nc)
@@ -193,7 +193,7 @@ def hmm_algo(trainingdataset, traininglabels, testingdataset, testinglabels, qui
                                     end = 0
                                     for index, sliced_length in enumerate(batched_lengths):
 
-                                        msg = 'starting training Gaussian Hidden Markov Model on batch {0} out of {1}'.\
+                                        msg = 'starting training Gaussian Hidden Markov Model on batch {0} out of {1}'. \
                                             format(index, total_batches)
                                         logger.getLogger('tab.regular.time').info(msg)
 

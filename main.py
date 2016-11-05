@@ -19,6 +19,10 @@ program_path = '/'.join(os.path.realpath(__file__).split('/')[:-1])
 
 
 def window_step_properties():
+    """
+    get the window and step size for the featurization step
+    :return: (list) window, step size
+    """
 
     window_size_errors = True
 
@@ -64,6 +68,13 @@ def window_step_properties():
 
 
 def forwarding_filters():
+    """
+    obtain :
+        right or left arm
+        [paretic, nonparetic,(experimental group) or nothing (control group)
+        active or nonactive (experimental group)
+    :return: all the filters: leftright_arm, specific_side
+    """
 
     right_left_error = True
     while right_left_error:
@@ -223,8 +234,15 @@ def select_dataset_quickrun(algorithm=''):
         return file_path, quickrun
 
 
-# run specific ML model
 def ml_algorithm(algorithm=''):
+    """
+    run specific ML model
+    :param algorithm:
+                1. Gaussian HMM
+                2. GMM HMM
+                3. Logistic Regression
+                4. LSTM
+    """
 
     # get dataset directory
     dataset_location, quickrun, kmeans, batched_setting = select_dataset_quickrun(algorithm)
@@ -235,9 +253,10 @@ def ml_algorithm(algorithm=''):
                        program_path=program_path, logger=logging, kmeans=kmeans, batched_setting=batched_setting)
 
 
-# go through all the matlab files and make sure there are not data or labels mistakes
 def check_matlab():
-
+    """
+    go through all the matlab files and make sure there are not data or labels mistakes
+    """
     # get the right dataset directory to check matlab files
     checking_location = get_set_dataset_location(matlab_or_dataset='matlab')
 
@@ -261,9 +280,14 @@ def check_matlab():
     logging.getLogger('regular.time').info(msg)
 
 
-# convert the matlab files to .npy files so they can be used by the algorithm efficiently
-# or obtain statistical descriptors of the time series dataset
 def convert_featurize_matlab(action):
+    """
+    1. convert the matlab files to .npy files
+    2. obtain statistical descriptors of the time series dataset
+    :param action: whether its 'extract' i.e. converting to npy or 'featurize' which is to obtain
+     statistical descriptors
+    :return:
+    """
 
     if action == 'extract':
         # get the right dataset location
@@ -276,7 +300,8 @@ def convert_featurize_matlab(action):
         msg = 'starting extracting matlab files'
         logging.getLogger('regular.time').info(msg)
         matlab_labels_data(action=action, matlab_directory=dataset_location, program_path=program_path,
-                           leftright_arm=leftright_arm, pareticnonparetic=specific_side, folder_name=file_path)
+                           leftright_arm=leftright_arm, pareticnonparetic=specific_side, output_path_filename=file_path,
+                           logger=logging)
         msg = 'finished extracting matlab files'
         logging.getLogger('regular.time').info(msg)
 
@@ -294,8 +319,10 @@ def convert_featurize_matlab(action):
         logging.getLogger('regular.time').info(msg)
 
 
-# moves and organizes matlab files based on activity and then on users
 def move_matlab():
+    """
+    moves and organizes matlab files based on a hierarchical folder with the activity as parent and then on users
+    """
 
     # default option is the dropbox directory
     initial_path = get_set_dataset_location(matlab_or_dataset='matlab',
@@ -338,9 +365,11 @@ def move_matlab():
     logging.getLogger('').info(msg)
 
 
-# close
 def exit_program():
-
+    """
+    end program
+    return : exit 0
+    """
     msg = 'Program terminated.\n'
     logging.getLogger('').info(msg)
     exit(0)
@@ -397,3 +426,4 @@ if __name__ == '__main__':
 
         except ValueError as error_message:
             logging.getLogger('regular').error(error_message)
+            raise ValueError(error_message)

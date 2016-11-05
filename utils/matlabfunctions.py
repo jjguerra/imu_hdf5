@@ -8,7 +8,7 @@ import re
 import h5py
 
 
-def error_message_func(line='', label='', error_message='', debugging='', logger='', timestep=''):
+def error_message_func(logger, line='', label='', error_message='', debugging='', timestep=''):
 
     if label != '' and timestep != '':
         str_error = 'Line={0}  Label={1} Timestep={2} Error={3}'.format(line + 1, label, timestep + 3, error_message)
@@ -19,14 +19,13 @@ def error_message_func(line='', label='', error_message='', debugging='', logger
     else:
         str_error = 'Error={0}'.format(error_message)
 
-    print '\t\t' + str_error
-    logger.append('\t' + str_error + '\n')
+    logger.getLogger('tab.regular.line').error(str_error)
 
     if not debugging:
-        exit(1)
+        raise ValueError(str_error)
 
 
-def data_collection(file_properties, debugging, extract):
+def data_collection(file_properties, debugging, extract, logger):
 
     # set of motions and labels
     motion_class = MatlabLabels()
@@ -35,7 +34,7 @@ def data_collection(file_properties, debugging, extract):
     first_pass_ever = True
 
     if extract:
-        out_file = h5py.File(file_properties.dataset_path_name, 'w')
+        out_file = h5py.File(file_properties.output_path_filename, 'w')
 
     # loop through each activity
     for activity, matlab_file_list in file_properties.matlab_files_path_dict.iteritems():
@@ -49,15 +48,14 @@ def data_collection(file_properties, debugging, extract):
             # get name of matlab file
             matlab_file_name = file_properties.matlab_files_names_dict[activity][index_matlab_file]
             msg = 'On activity: {0}'.format(activity)
-            printout(message=msg, verbose=True)
+            logger.getLogger('regular').info(msg)
             msg = 'Accessing file: {0}'.format(matlab_file_name)
-            printout(message=msg, verbose=True)
+            logger.getLogger('regular').info(msg)
             if matlab_file_name not in matlab_file:
                 error_msg = 'Fatal Error. missing file={0} for activity={1}'.format(matlab_file_name, activity)
-                printout(message=error_msg, verbose=True)
-                file_properties.output_file_object.write('\t' + error_msg + '\n')
+                logger.getLogger('regular').error(error_msg)
                 if not debugging:
-                    exit(1)
+                    raise ValueError(error_msg)
 
             # keep track of error within specific files
             temp_log_file_content = list()
@@ -68,22 +66,21 @@ def data_collection(file_properties, debugging, extract):
             # load matlab file content
             try:
                 matlab_content = sio.loadmat(matlab_file)
-            except ValueError:
-                error_msg = ' File {0} cannot be accessed'.format(matlab_file_name)
-                printout(message='\t' + error_msg, verbose=True)
-                error_message_func(error_message=error_msg, debugging=debugging, logger=temp_log_file_content)
+            except ValueError as v_error_msg:
+                error_msg = 'File {0} cannot be accessed\n {1}'.format(matlab_file_name, v_error_msg)
+                error_message_func(logger=logger, error_message=error_msg, debugging=debugging)
                 matlab_access = False
 
             if matlab_access:
-                printout(message='\tMatlab content has been loaded', verbose=True)
+                msg = 'Matlab content has been loaded'
+                logger.getLogger('tab.regular').info(msg)
 
                 if not ('tree' in matlab_content):
                     error_msg = 'Fatal error. tree structure does not exists.'
-                    printout(message='\t' + error_msg, verbose=True)
-                    error_message_func(error_message=error_msg, debugging=debugging, logger=temp_log_file_content)
+                    error_message_func(error_message=error_msg, debugging=debugging, logger=logger)
 
                 else:
-                    print '\ttree structure exists'
+                    printout(message='\ttree structure exists', verbose=True)
 
                 # this is temporary because if the specific file has no errors then no information
                 # about the file will be written
@@ -93,23 +90,21 @@ def data_collection(file_properties, debugging, extract):
                 tree2 = True
                 if not ('tree2' in matlab_content):
                     error_msg = 'Fatal error. tree2 structure does not exists.'
-                    printout(message='\t' + error_msg, verbose=True)
-                    error_message_func(error_message=error_msg, debugging=debugging, logger=temp_log_file_content)
+                    error_message_func(error_message=error_msg, debugging=debugging, logger=logger)
                     tree2 = False
 
                 else:
-                    printout(message='\ttree2 structure exists', verbose=True)
+                    print '\ttree2 structure exists'
 
                 # markerExtract contains the label data
                 marker_extract = True
                 # check for marketExtract
                 if not ('markerExtract' in matlab_content):
-                    error_msg = 'Fatal error. MarkerExtract structure does not exists.'
-                    printout(message='\t' + error_msg, verbose=True)
-                    temp_log_file_content.append('\t' + error_msg + '\n')
+                    error_msg = 'Fatal error. MarkerExtract structure does not exists.\n'
+                    error_message_func(error_message=error_msg, debugging=debugging, logger=logger)
                     marker_extract = False
                     if not debugging:
-                        exit(1)
+                        raise ValueError(error_msg)
                 else:
                     printout(message='\tMarkerExtract structure exists', verbose=True)
 
@@ -263,8 +258,8 @@ def data_collection(file_properties, debugging, extract):
                                 end_flag = True
                             else:
                                 error_msg = 'Wrong label suffix'
-                                error_message_func(line=current_row_number, label=current_label, error_message=error_msg,
-                                                   debugging=debugging, logger=temp_log_file_content)
+                                error_message_func(line=current_row_number, label=current_label,
+                                                   error_message=error_msg, debugging=debugging, logger=logger)
 
                             wrong_begin_end_label = False
 
@@ -277,8 +272,8 @@ def data_collection(file_properties, debugging, extract):
                                                 previous_label + '\''
                                 else:
                                     error_msg = 'Expecting label ending in \'_B\''
-                                error_message_func(line=current_row_number, label=current_label, error_message=error_msg,
-                                                   debugging=debugging, logger=temp_log_file_content)
+                                error_message_func(line=current_row_number, label=current_label,
+                                                   error_message=error_msg, debugging=debugging, logger=logger)
                                 wrong_begin_end_label = True
 
                             else:
@@ -573,44 +568,39 @@ def extract_data_and_save_to_file(labels_array='', ignored_indices='', dataset='
     add_attributes(outfile_object[current_file_name], current_file_name)
 
 
-# extracting the file and users information
-def extract_mat_information(doc, matlab_directory, action, leftright_arm, forward_folder, error_file_name, script_path,
+def extract_mat_information(doc, matlab_directory, action, leftright_arm, script_path, output_path_filename='',
                             pareticnonparetic=''):
     """
     Extracts the relevant information about the directories of the matlab files being considered
     updates two variables:
         doct.matlab_files_names_dict[activity]: key is the activity and the value is the matlab file's name
         doc.matlab_files_path_dict[activity]: key is the activity and the value is the matlab file's path
-        :rtype: none
     """
 
     working_path = script_path
     # current working path
     if matlab_directory == "":
         # including folder SensorData where all the matlab files are located
-        doc.data_path = os.path.join(working_path, 'SensorData')
+        doc.input_path = os.path.join(working_path, 'SensorData')
     else:
-        doc.data_path = matlab_directory
+        doc.input_path = matlab_directory
 
     # check data_path
-    if not os.path.exists(doc.data_path):
+    if not os.path.exists(doc.input_path):
         msg = "File " + doc.data_path + " does not exist"
         printout(message=msg, verbose=True)
         exit(1)
 
     if action == 'extract':
-        doc.dataset_path = os.path.join(working_path, 'converted_dataset')
+        doc.output_path = os.path.join(working_path, 'converted_dataset')
 
-        if not os.path.exists(doc.dataset_path):
-            os.makedirs(doc.dataset_path)
+        if not os.path.exists(doc.output_path):
+            os.makedirs(doc.output_path)
 
-        doc.dataset_path_name = forward_folder
-
-    else:
-        doc.log_file = os.path.join(working_path, error_file_name)
+        doc.output_path_filename = output_path_filename
 
     # all the activities i.e. Shelf_High_Heavycan, Shelf_Low_Heavycan, etc...
-    doc.activity_list = next(os.walk(doc.data_path))[1]
+    doc.activity_list = next(os.walk(doc.input_path))[1]
 
     # used for experimental patients
     if pareticnonparetic:
@@ -627,7 +617,7 @@ def extract_mat_information(doc, matlab_directory, action, leftright_arm, forwar
         matlab_path_list = list()
         matlab_files_list = list()
         # obtain the path based on that activity
-        activity_path = os.path.join(doc.data_path, activity)
+        activity_path = os.path.join(doc.input_path, activity)
 
         # loop through each subject of the current activity
         for (subject_path, _, matlab_file_list) in os.walk(activity_path, topdown=False):

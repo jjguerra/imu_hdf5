@@ -374,3 +374,83 @@ def load_data(data_dir):
         printout(message='\tdata stored in dataframes\n', verbose=True)
 
     return sensordata_array, dataset_user_information
+
+
+from utils.matlablabels import MatlabLabels
+import numpy as np
+from utils.misc import check_sequence
+from hmmlearn import hmm
+
+
+def sliding_window(sequence1, sequence2, window_size, step=1):
+    """
+    Returns a generator that will iterate through
+    the defined chunks of input sequence. Input sequence
+    must be sliceable.
+    """
+
+    # Verify the inputs
+    if not isinstance(type(window_size), type(0)) and isinstance(type(step), type(0)):
+        raise Exception("**ERROR** type(window_size) and type(step) must be int.")
+    if step > window_size:
+        raise Exception("**ERROR** step must not be larger than window_size.")
+    if window_size > len(sequence1):
+        raise Exception("**ERROR** window_size must not be larger than sequence length.")
+
+    # Pre-compute number of chunks to emit
+    number_of_chunks = ((len(sequence1) - window_size) / step) + 1
+
+    # Do the work
+    for i in range(0, number_of_chunks * step, step):
+        yield sequence1[i: i + window_size], sequence2[i: i + window_size]
+
+
+def hmm_algo(trainingdataset, traininglabels, testingdataset, testinglabels, batched_setting, user, activity,
+             program_path, logger, algorithm, kmeans, lengths='', quickrun=True):
+    label_class = MatlabLabels()
+    # all labels used in the activities
+    possible_labels = label_class.compact_list
+
+    hmm_dict = dict()
+
+    # filter all the points in the dataset relevant to 'label'
+    # this will be used to train each HMM
+    for label_index, label in enumerate(possible_labels):
+        keep_indices = np.where(traininglabels[:] == label_index)
+
+        # obtain the lengths of the continuous sequences so the HMM trains on the right information
+        current_lengths = check_sequence(keep_indices)
+
+        hmm_model = hmm.GaussianHMM(n_components=8, verbose=True)
+        hmm_model.fit(X=trainingdataset[keep_indices], lengths=current_lengths)
+
+        hmm_dict[label] = hmm_model
+
+    window_size = 60
+    chunks = sliding_window(trainingdataset, traininglabels, window_size=window_size, step=60)
+    for segmented_data, segmented_labels in chunks:
+
+        best_prediction = ''
+
+        previous_accuracy = 0.0
+        for key, hmm_model in hmm_dict.iteritems():
+            accuracy = hmm_model.score(segmented_data)
+
+            if accuracy > previous_accuracy:
+                best_prediction = [key] * len(accuracy)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -218,41 +218,36 @@ def append_array(o_array, array_to_add):
 
 
 # getting the statistical descriptors
-def featurize(window_step_size, file_properties, logger):
+def featurize(file_properties, window_step_size, logger):
+
+    # converted file
+    h5_file_object = h5py.File(name=file_properties.input_path_filename, mode='r')
 
     # processed dataset file
-    processed_file_object = h5py.File(name=file_properties.dataset_path_name, mode='w')
+    processed_file_object = h5py.File(name=file_properties.output_path_filename, mode='w')
 
-    # list all the files where the sensordata is stored
-    dataset_files = os.listdir(file_properties.data_path)
+    msg = 'Starting pre-processing dataset {0}'.format(h5_file_object.filename)
+    logger.getLogger('tab.regular.time').info(msg)
 
-    # loop through the files in the folder
-    for s_file in dataset_files:
-        dataset_path = os.path.join(file_properties.data_path, s_file)
-        h5_file_object = h5py.File(dataset_path, 'r')
+    last_dataset = len(h5_file_object) - 1
+    for dataset_index, dataset_key in enumerate(h5_file_object.iterkeys()):
 
-        msg = 'Starting pre-processing dataset {0}'.format(h5_file_object.filename)
-        logger.getLogger('tab.regular.time').info(msg)
+        global_msg = 'dataset {0} out of {1} user:{2} activity:{3}'.\
+            format(dataset_index, last_dataset, h5_file_object[dataset_key].attrs['user'],
+                   h5_file_object[dataset_key].attrs['activity'])
 
-        last_dataset = len(h5_file_object) - 1
-        for dataset_index, dataset_key in enumerate(h5_file_object.iterkeys()):
+        # function used to call the statistical descriptor function
 
-            global_msg = 'dataset {0} out of {1} user:{2} activity:{3}'.\
-                format(dataset_index, last_dataset, h5_file_object[dataset_key].attrs['user'],
-                       h5_file_object[dataset_key].attrs['activity'])
+        msg = 'Pre-processing {0}'.format(global_msg)
+        logger.getLogger('tab.tab.regular').info(msg)
+        preprocessing_data(dataset_object=[h5_file_object[dataset_key], processed_file_object],
+                           window_step_size=window_step_size, logger=logger)
 
-            # function used to call the statistical descriptor function
+    msg = 'Finished pre-processing dataset {0}'.format(file_properties.input_filename)
+    logger.getLogger('tab.regular.time').info(msg)
 
-            msg = 'Pre-processing {0}'.format(global_msg)
-            logger.getLogger('tab.tab.regular').info(msg)
-            preprocessing_data(dataset_object=[h5_file_object[dataset_key], processed_file_object],
-                               window_step_size=window_step_size, logger=logger)
-
-        msg = 'Finished pre-processing dataset {0}'.format(h5_file_object.filename)
-        logger.getLogger('tab.regular.time').info(msg)
-
-        msg = 'Dataset filename location:'.format(file_properties.dataset_path_name)
-        logger.getLogger('tab.regular').info(msg)
+    msg = 'Dataset filename location: {0}'.format(file_properties.output_path_filename)
+    logger.getLogger('tab.regular').info(msg)
 
     processed_file_object.close()
 
