@@ -7,7 +7,7 @@ import numpy as np
 import h5py
 import os
 from datetime import datetime
-from sklearn.decomposition import PCA, IncrementalPCA
+from sklearn.decomposition import PCA, TruncatedSVD
 
 
 def imu_algorithm(doc, algorithm='', quickrun='', program_path='', logger='', kmeans='',
@@ -64,53 +64,41 @@ def imu_algorithm(doc, algorithm='', quickrun='', program_path='', logger='', km
             # adding user's flag
             adding = False
 
-            total_dataset_included = 0
-            user_included = list()
-
             total_inner_users = len(h5_file_object) - 1
             # fetch training data from the objects without :
             #   1. the testing data i.e. the data of user_index
             #   2. other dataset with the same user and activity but different repetition
             for u_index, user_info_inner in enumerate(h5_file_object.iterkeys()):
 
-                if total_dataset_included < 5:
+                # get the attributes of the training example
+                inner_user = h5_file_object[user_info_inner].attrs['user']
+                inner_activity = h5_file_object[user_info_inner].attrs['activity']
 
-                    # get the attributes of the training example
-                    inner_user = h5_file_object[user_info_inner].attrs['user']
-                    inner_activity = h5_file_object[user_info_inner].attrs['activity']
+                # shape of the current dataset
+                n_inner_row, n_inner_column = h5_file_object[user_info_inner].shape
 
-                    # shape of the current dataset
-                    n_inner_row, n_inner_column = h5_file_object[user_info_inner].shape
+                # removing label columns
+                n_inner_column -= 1
 
-                    # removing label columns
-                    n_inner_column -= 1
+                if inner_user != user and 'paretic' not in user_info_inner:
+                    # get type of activity i.e. horizontal, vertical or freedly
+                    type_activity = label_object.check_type_activity(str(activity))
+                    inner_type_activity = label_object.check_type_activity(str(inner_activity))
 
-                    if inner_user != user and 'paretic' not in user_info_inner:
-                        # get type of activity i.e. horizontal, vertical or freedly
-                        type_activity = label_object.check_type_activity(str(activity))
-                        inner_type_activity = label_object.check_type_activity(str(inner_activity))
+                    # if testing on the feeding activity or 'freedly' activities, always add other training activities
+                    # TO DO: I can add training on the same user but different activities to see if that improves the
+                    # feeding activity
+                    if (type_activity == 'freedly') and (user != inner_user):
+                        adding = True
 
-                        # if testing on the feeding activity or 'freedly' activities, always add other training activities
-                        # TO DO: I can add training on the same user but different activities to see if that improves the
-                        # feeding activity
-                        if (type_activity == 'freedly') and (user != inner_user):
-                            adding = True
-
-                        # removing all the users with the freedly activities, check if they have the same type of activity
-                        # and add other users
-                        # TO DO: I can add training on the same user but different activities to see if that improves the
-                        # feeding activity
-                        if (type_activity != 'freedly') and (type_activity == inner_type_activity):
-                            adding = True
-
-                        if inner_user in user_included:
-                            adding = False
+                    # removing all the users with the freedly activities, check if they have the same type of activity
+                    # and add other users
+                    # TO DO: I can add training on the same user but different activities to see if that improves the
+                    # feeding activity
+                    if (type_activity != 'freedly') and (type_activity == inner_type_activity):
+                        adding = True
 
                 if adding:
-
-                    user_included.append(inner_user)
-
-                    total_dataset_included += 1
 
                     # get the size of the dataset because it will be passed as an parameter to the hmm
                     total_inner_row += h5_file_object[user_info_inner].shape[0]
@@ -175,52 +163,122 @@ def imu_algorithm(doc, algorithm='', quickrun='', program_path='', logger='', km
             logger.getLogger('tab.regular').info(msg)
             msg = 'Testing data size:{0}'.format(testing_label_object.shape)
             logger.getLogger('tab.regular.line').info(msg)
+            
+            components = [350, 400, 450, 500]
+            for c in components:
 
-            pca = IncrementalPCA()
-            n_training_data_object = pca.fit_transform(X=training_data_object[:], y=training_label_object[:])
-            training_testing_dataset_object.create_dataset(name='new training data', data=n_training_data_object)
-            logger.getLogger('tab.regular.line').info(pca.explained_variance_)
+                msg = 'n_components:{0}'.format(c)
+                logger.getLogger('tab.regular.line').info(msg)
 
-            new_training_data_object = training_testing_dataset_object['new training data']
-            msg = 'new Training data size:{0}'.format(new_training_data_object.shape)
-            logger.getLogger('line.tab.regular').info(msg)
+                logger.getLogger('tab.regular.line').info('pca algo')
+                pca = PCA(n_components=c)
+    
+                n_training_data_object = pca.fit_transform(X=training_data_object[:])
+                training_testing_dataset_object.create_dataset(name='new training data', data=n_training_data_object)
+                logger.getLogger('tab.regular.line').info('variance explanation')
+                logger.getLogger('tab.regular.line').info(pca.explained_variance_)
+        
+                new_training_data_object = training_testing_dataset_object['new training data']
+                msg = 'new Training data size:{0}'.format(new_training_data_object.shape)
+                logger.getLogger('line.tab.regular').info(msg)
+        
+                n_testing_data_object = pca.transform(X=testing_data_object[:])
+                training_testing_dataset_object.create_dataset(name='new testing data', data=n_testing_data_object)
+                new_testing_data_object = training_testing_dataset_object['new testing data']
+    
+                msg = 'New training data size:{0}'.format(new_training_data_object.shape)
+                logger.getLogger('line.tab.regular').info(msg)
+                msg = 'New testing data size:{0}'.format(training_data_object.shape)
+                logger.getLogger('line.tab.regular').info(msg)
+                try:
+                    if algorithm == 'GHMM' or algorithm == 'GMMHMM':
+                        hmm_algo(trainingdataset=new_training_data_object, traininglabels=training_label_object,
+                                 quickrun=quickrun, testingdataset=new_testing_data_object, testinglabels=testing_label_object,
+                                 lengths=training_dataset_lengths, algorithm=algorithm, batched_setting=batched_setting,
+                                 user=user, activity=activity, program_path=program_path, logger=logger, kmeans=kmeans)
+        
+                    elif algorithm == 'Logistic Regression':
+                        logreg_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
+                                    quickrun=quickrun, testingdataset=testing_data_object, logger=logger,
+                                    testinglabels=testing_label_object)
+        
+                    elif algorithm == 'LSTM':
+                        lstm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
+                                  testingdataset=testing_data_object, testinglabels=testing_label_object,
+                                  lengths=training_dataset_lengths, logger=logger)
+        
+                    else:
+                        printout(message='Wrong algorithm provided.', verbose=True)
+        
+                    # closing h5py file
+                    # training_testing_dataset_object.close()
+        
+                    msg = 'Finished analysing {0}'.format(user_info)
+                    logger.getLogger('tab.regular.time.line').info(msg)
+        
+                except ValueError as error_message:
+                    msg = 'Error while analysing {0}'.format(user_info)
+                    logger.getLogger('tab.regular.time').error(msg)
+                    logger.getLogger('tab.regular.time.line').eror(error_message)
+        
+                # removing training dataset h5py file
+                # os.remove(training_file_name)
+        
+                # exit(0)
 
-            n_testing_data_object = pca.transform(X=testing_data_object[:])
-            training_testing_dataset_object.create_dataset(name='new testing data', data=n_testing_data_object)
-            new_testing_data_object = training_testing_dataset_object['new testing data']
+                logger.getLogger('tab.regular.line').info('lda algo')
 
-            try:
-                if algorithm == 'GHMM' or algorithm == 'GMMHMM':
-                    hmm_algo(trainingdataset=new_training_data_object, traininglabels=training_label_object,
-                             quickrun=quickrun, testingdataset=new_testing_data_object, testinglabels=testing_label_object,
-                             lengths=training_dataset_lengths, algorithm=algorithm, batched_setting=batched_setting,
-                             user=user, activity=activity, program_path=program_path, logger=logger, kmeans=kmeans)
-
-                elif algorithm == 'Logistic Regression':
-                    logreg_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
-                                quickrun=quickrun, testingdataset=testing_data_object, logger=logger,
-                                testinglabels=testing_label_object)
-
-                elif algorithm == 'LSTM':
-                    lstm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
-                              testingdataset=testing_data_object, testinglabels=testing_label_object,
-                              lengths=training_dataset_lengths, logger=logger)
-
-                else:
-                    printout(message='Wrong algorithm provided.', verbose=True)
-
-                # closing h5py file
-                training_testing_dataset_object.close()
-
-                msg = 'Finished analysing {0}'.format(user_info)
-                logger.getLogger('tab.regular.time.line').info(msg)
-
-            except ValueError as error_message:
-                msg = 'Error while analysing {0}'.format(user_info)
-                logger.getLogger('tab.regular.time').error(msg)
-                logger.getLogget('tab.regular.time.line').eror(error_message)
-
-            # removing training dataset h5py file
-            os.remove(training_file_name)
-
-            exit(0)
+                lda = TruncatedSVD(n_components=c)
+    
+                n_training_data_object = lda.fit_transform(X=training_data_object[:])
+                training_testing_dataset_object.create_dataset(name='new training data', data=n_training_data_object)
+                logger.getLogger('tab.regular.line').info('variance explanation')
+                logger.getLogger('tab.regular.line').info(pca.explained_variance_)
+        
+                new_training_data_object = training_testing_dataset_object['new training data']
+                msg = 'new Training data size:{0}'.format(new_training_data_object.shape)
+                logger.getLogger('line.tab.regular').info(msg)
+        
+                n_testing_data_object = lda.transform(X=testing_data_object[:])
+                training_testing_dataset_object.create_dataset(name='new testing data', data=n_testing_data_object)
+                new_testing_data_object = training_testing_dataset_object['new testing data']
+    
+                msg = 'New training data size:{0}'.format(new_training_data_object.shape)
+                logger.getLogger('line.tab.regular').info(msg)
+                msg = 'New testing data size:{0}'.format(training_data_object.shape)
+                logger.getLogger('line.tab.regular').info(msg)
+                try:
+                    if algorithm == 'GHMM' or algorithm == 'GMMHMM':
+                        hmm_algo(trainingdataset=new_training_data_object, traininglabels=training_label_object,
+                                 quickrun=quickrun, testingdataset=new_testing_data_object, testinglabels=testing_label_object,
+                                 lengths=training_dataset_lengths, algorithm=algorithm, batched_setting=batched_setting,
+                                 user=user, activity=activity, program_path=program_path, logger=logger, kmeans=kmeans)
+        
+                    elif algorithm == 'Logistic Regression':
+                        logreg_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
+                                    quickrun=quickrun, testingdataset=testing_data_object, logger=logger,
+                                    testinglabels=testing_label_object)
+        
+                    elif algorithm == 'LSTM':
+                        lstm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
+                                  testingdataset=testing_data_object, testinglabels=testing_label_object,
+                                  lengths=training_dataset_lengths, logger=logger)
+        
+                    else:
+                        printout(message='Wrong algorithm provided.', verbose=True)
+        
+                    # closing h5py file
+                    # training_testing_dataset_object.close()
+        
+                    msg = 'Finished analysing {0}'.format(user_info)
+                    logger.getLogger('tab.regular.time.line').info(msg)
+        
+                except ValueError as error_message:
+                    msg = 'Error while analysing {0}'.format(user_info)
+                    logger.getLogger('tab.regular.time').error(msg)
+                    logger.getLogger('tab.regular.time.line').eror(error_message)
+        
+                # removing training dataset h5py file
+                # os.remove(training_file_name)
+        
+                # exit(0)

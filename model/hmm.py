@@ -162,10 +162,10 @@ def hmm_algo(trainingdataset, traininglabels, testingdataset, testinglabels, qui
             root_folder = '/'.join(program_path.split('/')[:-1])
             data_dir = os.path.join(root_folder, 'data')
 
-            n_iterations = [10, 20]
-            components = [8, 10, 15]
+            n_iterations = [10]
+            components = [8]
             tolerance = [0.01]
-            covariance_types = ['spherical', 'diag', 'full', 'tied']
+            covariance_types = [ 'diag']
             for ni in n_iterations:
                 for ct in covariance_types:
                     for nc in components:

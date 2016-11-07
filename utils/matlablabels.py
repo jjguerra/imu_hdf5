@@ -97,7 +97,7 @@ class MatlabLabels(object):
 
         self.segmentUsed = ['Pelvis', 'T8', 'Head', 'RightShoulder', 'RightUpperArm', 'RightForeArm', 'RightHand']
 
-        self.vectorsUsed = ['orientation', 'position', 'velocity', 'acceleration', 'angularVelocity',
+        self.vectorsUsed = ['position', 'velocity', 'acceleration', 'angularVelocity',
                             'angularAcceleration']
 
         # self.segmentUsed = ['Pelvis', 'T8', 'Head', 'RightShoulder', 'RightUpperArm', 'RightForeArm', 'RightHand',
