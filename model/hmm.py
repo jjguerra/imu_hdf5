@@ -51,7 +51,7 @@ def results(train_predictions='', traininglabels='', test_predictions='', testin
 
 
 def hmm_algo(trainingdataset, traininglabels, testingdataset, testinglabels, quickrun, batched_setting, user, activity,
-             program_path, logger, algorithm, kmeans, lengths=''):
+             program_path, logger, algorithm, kmeans, pcalda, lengths=''):
 
     if quickrun:
 
@@ -187,7 +187,7 @@ def hmm_algo(trainingdataset, traininglabels, testingdataset, testinglabels, qui
 
                                 if batched_setting:
                                     first_run = True
-                                    total_batches, batched_lengths = batch(lengths, 60)
+                                    total_batches, batched_lengths = batch(lengths, 40)
 
                                     last_batch_index = 0
                                     end = 0
@@ -200,6 +200,7 @@ def hmm_algo(trainingdataset, traininglabels, testingdataset, testinglabels, qui
                                         end += np.sum(sliced_length).astype(np.int32)
                                         msg = 'size of dataset: {0}'.format(trainingdataset[last_batch_index:end].shape)
                                         logger.getLogger('tab.regular').debug(msg)
+
                                         if first_run:
                                             hmm_model.fit(X=trainingdataset[last_batch_index:end], user=user,
                                                           activity=activity, data_dir='', lengths=sliced_length,
@@ -226,7 +227,7 @@ def hmm_algo(trainingdataset, traininglabels, testingdataset, testinglabels, qui
 
                                 # create a name for a file based on the user, activity and the time
                                 filename = 'hmm_' + user + '_' + activity + '_' + str(nc) + '_' + str(ct) + '_' + \
-                                           str(t) + '_' + str(ni) + '_' + str(datetime.now().strftime('%Y%m%d%H%M%S'))
+                                           str(t) + '_' + str(ni) + '_' + pcalda + '_' +str(datetime.now().strftime('%Y%m%d%H%M%S'))
                                 # calculate the whole path
                                 data_path = os.path.join(data_dir, filename)
                                 logger.getLogger('tab.regular').info('hmm model stored as {0}'.format(filename))

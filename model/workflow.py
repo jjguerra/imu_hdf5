@@ -7,7 +7,7 @@ import numpy as np
 import h5py
 import os
 from datetime import datetime
-from sklearn.decomposition import PCA, TruncatedSVD
+from sklearn.decomposition import IncrementalPCA, TruncatedSVD
 
 
 def imu_algorithm(doc, algorithm='', quickrun='', program_path='', logger='', kmeans='',
@@ -64,6 +64,8 @@ def imu_algorithm(doc, algorithm='', quickrun='', program_path='', logger='', km
             # adding user's flag
             adding = False
 
+            user_added = list()
+            additions = 0
             total_inner_users = len(h5_file_object) - 1
             # fetch training data from the objects without :
             #   1. the testing data i.e. the data of user_index
@@ -97,9 +99,14 @@ def imu_algorithm(doc, algorithm='', quickrun='', program_path='', logger='', km
                     # feeding activity
                     if (type_activity != 'freedly') and (type_activity == inner_type_activity):
                         adding = True
+                  
+                    #if inner_user in user_added or additions > 5:
+                    #    adding = False
 
                 if adding:
 
+                    #additions += 0
+                    #user_added.append(inner_user)
                     # get the size of the dataset because it will be passed as an parameter to the hmm
                     total_inner_row += h5_file_object[user_info_inner].shape[0]
 
@@ -164,121 +171,133 @@ def imu_algorithm(doc, algorithm='', quickrun='', program_path='', logger='', km
             msg = 'Testing data size:{0}'.format(testing_label_object.shape)
             logger.getLogger('tab.regular.line').info(msg)
             
-            components = [350, 400, 450, 500]
+            components = [500, 550]
             for c in components:
 
                 msg = 'n_components:{0}'.format(c)
                 logger.getLogger('tab.regular.line').info(msg)
 
-                logger.getLogger('tab.regular.line').info('pca algo')
-                pca = PCA(n_components=c)
-    
-                n_training_data_object = pca.fit_transform(X=training_data_object[:])
-                training_testing_dataset_object.create_dataset(name='new training data', data=n_training_data_object)
-                logger.getLogger('tab.regular.line').info('variance explanation')
-                logger.getLogger('tab.regular.line').info(pca.explained_variance_)
-        
-                new_training_data_object = training_testing_dataset_object['new training data']
-                msg = 'new Training data size:{0}'.format(new_training_data_object.shape)
-                logger.getLogger('line.tab.regular').info(msg)
-        
-                n_testing_data_object = pca.transform(X=testing_data_object[:])
-                training_testing_dataset_object.create_dataset(name='new testing data', data=n_testing_data_object)
-                new_testing_data_object = training_testing_dataset_object['new testing data']
-    
-                msg = 'New training data size:{0}'.format(new_training_data_object.shape)
-                logger.getLogger('line.tab.regular').info(msg)
-                msg = 'New testing data size:{0}'.format(training_data_object.shape)
-                logger.getLogger('line.tab.regular').info(msg)
                 try:
-                    if algorithm == 'GHMM' or algorithm == 'GMMHMM':
-                        hmm_algo(trainingdataset=new_training_data_object, traininglabels=training_label_object,
-                                 quickrun=quickrun, testingdataset=new_testing_data_object, testinglabels=testing_label_object,
-                                 lengths=training_dataset_lengths, algorithm=algorithm, batched_setting=batched_setting,
-                                 user=user, activity=activity, program_path=program_path, logger=logger, kmeans=kmeans)
-        
-                    elif algorithm == 'Logistic Regression':
-                        logreg_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
-                                    quickrun=quickrun, testingdataset=testing_data_object, logger=logger,
-                                    testinglabels=testing_label_object)
-        
-                    elif algorithm == 'LSTM':
-                        lstm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
-                                  testingdataset=testing_data_object, testinglabels=testing_label_object,
-                                  lengths=training_dataset_lengths, logger=logger)
-        
-                    else:
-                        printout(message='Wrong algorithm provided.', verbose=True)
-        
-                    # closing h5py file
-                    # training_testing_dataset_object.close()
-        
-                    msg = 'Finished analysing {0}'.format(user_info)
-                    logger.getLogger('tab.regular.time.line').info(msg)
-        
-                except ValueError as error_message:
-                    msg = 'Error while analysing {0}'.format(user_info)
-                    logger.getLogger('tab.regular.time').error(msg)
-                    logger.getLogger('tab.regular.time.line').eror(error_message)
-        
-                # removing training dataset h5py file
-                # os.remove(training_file_name)
-        
-                # exit(0)
-
-                logger.getLogger('tab.regular.line').info('lda algo')
-
-                lda = TruncatedSVD(n_components=c)
+                    logger.getLogger('tab.regular.time').info('starting pca algo')
+                    pca = IncrementalPCA(n_components=c)
     
-                n_training_data_object = lda.fit_transform(X=training_data_object[:])
-                training_testing_dataset_object.create_dataset(name='new training data', data=n_training_data_object)
-                logger.getLogger('tab.regular.line').info('variance explanation')
-                logger.getLogger('tab.regular.line').info(pca.explained_variance_)
+                    new_training_data_object = pca.fit_transform(X=training_data_object[:])
+
+                    training_testing_dataset_object.create_dataset(name='new training data', data=new_training_data_object)
+                    new_training_data_object = training_testing_dataset_object['new training data']
         
-                new_training_data_object = training_testing_dataset_object['new training data']
-                msg = 'new Training data size:{0}'.format(new_training_data_object.shape)
-                logger.getLogger('line.tab.regular').info(msg)
-        
-                n_testing_data_object = lda.transform(X=testing_data_object[:])
-                training_testing_dataset_object.create_dataset(name='new testing data', data=n_testing_data_object)
-                new_testing_data_object = training_testing_dataset_object['new testing data']
+                    new_testing_data_object = pca.transform(X=testing_data_object[:])
     
-                msg = 'New training data size:{0}'.format(new_training_data_object.shape)
-                logger.getLogger('line.tab.regular').info(msg)
-                msg = 'New testing data size:{0}'.format(training_data_object.shape)
-                logger.getLogger('line.tab.regular').info(msg)
-                try:
-                    if algorithm == 'GHMM' or algorithm == 'GMMHMM':
-                        hmm_algo(trainingdataset=new_training_data_object, traininglabels=training_label_object,
-                                 quickrun=quickrun, testingdataset=new_testing_data_object, testinglabels=testing_label_object,
-                                 lengths=training_dataset_lengths, algorithm=algorithm, batched_setting=batched_setting,
-                                 user=user, activity=activity, program_path=program_path, logger=logger, kmeans=kmeans)
+                    training_testing_dataset_object.create_dataset(name='new testing data', data=new_testing_data_object)
+                    new_testing_data_object = training_testing_dataset_object['new testing data']
+
+                    logger.getLogger('tab.regular.time.line').info('finished pca algo')
+
+                    msg = 'New training data size:{0}'.format(np.shape(new_training_data_object))
+                    logger.getLogger('line.tab.regular').info(msg)
+                    msg = 'New testing data size:{0}'.format(np.shape(new_testing_data_object))
+                    logger.getLogger('tab.regular').info(msg)
+                    try:
+                        if algorithm == 'GHMM' or algorithm == 'GMMHMM':
+                            hmm_algo(trainingdataset=new_training_data_object, traininglabels=training_label_object,
+                                     quickrun=quickrun, testingdataset=new_testing_data_object, testinglabels=testing_label_object,
+                                     lengths=training_dataset_lengths, algorithm=algorithm, batched_setting=batched_setting,
+                                     user=user, activity=activity, program_path=program_path, logger=logger, kmeans=kmeans, pcalda='pca')
         
-                    elif algorithm == 'Logistic Regression':
-                        logreg_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
-                                    quickrun=quickrun, testingdataset=testing_data_object, logger=logger,
-                                    testinglabels=testing_label_object)
+                        elif algorithm == 'Logistic Regression':
+                            logreg_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
+                                        quickrun=quickrun, testingdataset=testing_data_object, logger=logger,
+                                        testinglabels=testing_label_object)
         
-                    elif algorithm == 'LSTM':
-                        lstm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
-                                  testingdataset=testing_data_object, testinglabels=testing_label_object,
-                                  lengths=training_dataset_lengths, logger=logger)
+                        elif algorithm == 'LSTM':
+                            lstm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
+                                      testingdataset=testing_data_object, testinglabels=testing_label_object,
+                                      lengths=training_dataset_lengths, logger=logger)
         
-                    else:
-                        printout(message='Wrong algorithm provided.', verbose=True)
+                        else:
+                            printout(message='Wrong algorithm provided.', verbose=True)
         
-                    # closing h5py file
-                    # training_testing_dataset_object.close()
+                        # closing h5py file
+                        training_testing_dataset_object.close()
         
-                    msg = 'Finished analysing {0}'.format(user_info)
-                    logger.getLogger('tab.regular.time.line').info(msg)
+                        msg = 'Finished analysing {0}'.format(user_info)
+                        logger.getLogger('tab.regular.time.line').info(msg)
         
-                except ValueError as error_message:
-                    msg = 'Error while analysing {0}'.format(user_info)
-                    logger.getLogger('tab.regular.time').error(msg)
-                    logger.getLogger('tab.regular.time.line').eror(error_message)
+                    except ValueError as error_message:
+                        msg = 'Error while analysing {0}'.format(user_info)
+                        logger.getLogger('tab.regular.time').error(msg)
+                        logger.getLogger('tab.regular.time.line').eror(error_message)
         
-                # removing training dataset h5py file
-                # os.remove(training_file_name)
-        
-                # exit(0)
+                    try:
+                        del training_testing_dataset_object['new training data']
+                        del training_testing_dataset_object['new testing data']
+                    except:
+                        logger.getLogger('tab.regular').error('New training/testing data files were not deleted')
+                        continue
+                except:
+                    logger.getLogger('tab.regular').error('error while running pca')
+
+#                try:
+#                    logger.getLogger('tab.regular.time').info('starting lda algo')
+#
+#                    lda = TruncatedSVD(n_components=c, algorithm='arpack')
+#    
+#                    new_training_data_object = lda.fit_transform(X=training_data_object[:])
+#                    training_testing_dataset_object.create_dataset(name='new training data', data=new_training_data_object)
+#                    new_training_data_object = training_testing_dataset_object['new training data']
+#
+#                    new_testing_data_object = lda.transform(X=testing_data_object[:])
+#                    training_testing_dataset_object.create_dataset(name='new testing data', data=new_testing_data_object)
+#                    new_testing_data_object = training_testing_dataset_object['new testing data']
+#
+#                    logger.getLogger('tab.regular.time.line').info('finished lda algo')
+#
+#                    msg = 'New training data size:{0}'.format(np.shape(new_training_data_object))
+#                    logger.getLogger('line.tab.regular').info(msg)
+#                    msg = 'New testing data size:{0}'.format(np.shape(new_testing_data_object))
+#                    logger.getLogger('tab.regular').info(msg)
+#                    try:
+#                        if algorithm == 'GHMM' or algorithm == 'GMMHMM':
+#                            hmm_algo(trainingdataset=new_training_data_object, traininglabels=training_label_object,
+#                                     quickrun=quickrun, testingdataset=new_testing_data_object, testinglabels=testing_label_object,
+#                                     lengths=training_dataset_lengths, algorithm=algorithm, batched_setting=batched_setting,
+#                                     user=user, activity=activity, program_path=program_path, logger=logger, kmeans=kmeans, pcalda='lda')
+#        
+#                        elif algorithm == 'Logistic Regression':
+#                            logreg_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
+#                                        quickrun=quickrun, testingdataset=testing_data_object, logger=logger,
+#                                        testinglabels=testing_label_object)
+#        
+#                        elif algorithm == 'LSTM':
+#                            lstm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
+#                                      testingdataset=testing_data_object, testinglabels=testing_label_object,
+#                                      lengths=training_dataset_lengths, logger=logger)
+#        
+#                        else:
+#                            printout(message='Wrong algorithm provided.', verbose=True)
+#         
+#                        msg = 'Finished analysing {0}'.format(user_info)
+#                        logger.getLogger('tab.regular.time.line').info(msg)
+#        
+#                    except ValueError as error_message:
+#                        msg = 'Error while analysing {0}'.format(user_info)
+#                        logger.getLogger('tab.regular.time').error(msg)
+#                        logger.getLogger('tab.regular.time.line').eror(error_message)
+#        
+#                    try:
+#                        del training_testing_dataset_object['new training data']
+#                        del training_testing_dataset_object['new testing data']
+#                    except:
+#                        logger.getLogger('tab.regular').error('New training/testing data files were not deleted')
+#                        continue
+#
+#                except:
+#                    logger.getLogger('tab.regular').error('error while running lda')
+#                    continue
+
+            # closing h5py file
+#            training_testing_dataset_object.close()
+
+            # removing training dataset h5py file
+            os.remove(training_file_name)
+            exit(0)
