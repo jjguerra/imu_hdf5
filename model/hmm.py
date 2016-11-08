@@ -51,7 +51,7 @@ def results(train_predictions='', traininglabels='', test_predictions='', testin
 
 
 def hmm_algo(trainingdataset, traininglabels, testingdataset, testinglabels, quickrun, batched_setting, user, activity,
-             program_path, logger, algorithm, kmeans, pcalda, lengths=''):
+             program_path, logger, algorithm, kmeans, lengths=''):
 
     if quickrun:
 
@@ -227,7 +227,7 @@ def hmm_algo(trainingdataset, traininglabels, testingdataset, testinglabels, qui
 
                                 # create a name for a file based on the user, activity and the time
                                 filename = 'hmm_' + user + '_' + activity + '_' + str(nc) + '_' + str(ct) + '_' + \
-                                           str(t) + '_' + str(ni) + '_' + pcalda + '_' +str(datetime.now().strftime('%Y%m%d%H%M%S'))
+                                           str(t) + '_' + str(ni) + '_' + str(datetime.now().strftime('%Y%m%d%H%M%S'))
                                 # calculate the whole path
                                 data_path = os.path.join(data_dir, filename)
                                 logger.getLogger('tab.regular').info('hmm model stored as {0}'.format(filename))
