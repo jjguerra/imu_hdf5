@@ -84,7 +84,45 @@ def hmm_algo(trainingdataset, traininglabels, testingdataset, testinglabels, qui
             # train model
             if algorithm == 'GHMM':
                 logger.getLogger('tab.regular.time').info('starting training Gaussian Hidden Markov Model.')
-                hmm_model = hmm.GaussianHMM(n_components=8, covariance_type='diag', n_iter=10, verbose=True)
+                hmm_model = hmm.GaussianHMM(n_components=8, covariance_type='full', n_iter=10, verbose=True)
+
+                if batched_setting:
+                    first_run = True
+                    total_batches, batched_lengths = batch(lengths, 50)
+
+                    last_batch_index = 0
+                    end = 0
+                    for index, sliced_length in enumerate(batched_lengths):
+
+                        msg = 'starting training Gaussian Hidden Markov Model on batch {0} out of {1}'. \
+                            format(index, total_batches)
+                        logger.getLogger('tab.regular.time').info(msg)
+
+                        end += np.sum(sliced_length).astype(np.int32)
+                        msg = 'size of dataset: {0}'.format(trainingdataset[last_batch_index:end].shape)
+                        logger.getLogger('tab.regular').debug(msg)
+
+                        if first_run:
+                            hmm_model.fit(X=trainingdataset[last_batch_index:end], user=user,
+                                          activity=activity, data_dir=data_dir, lengths=sliced_length,
+                                          quickrun=quickrun, logger=logger, kmeans_opt=kmeans)
+                            first_run = False
+                        else:
+                            # by setting init_params='', we will be able to cascaded the training
+                            # results from the previous fitting runs
+                            hmm_model.init_params = ''
+                            hmm_model.fit(X=trainingdataset[last_batch_index:end], user=user,
+                                          activity=activity, data_dir=data_dir, lengths=sliced_length,
+                                          quickrun=quickrun, logger=logger, kmeans_opt=kmeans)
+
+                        last_batch_index = end
+                else:
+                    msg = 'starting training Gaussian Hidden Markov Model'
+                    logger.getLogger('tab.regular.time').info(msg)
+
+                    hmm_model.fit(X=trainingdataset, user=user,
+                                  activity=activity, data_dir='', lengths=lengths,
+                                  quickrun=quickrun, logger=logger, kmeans_opt=kmeans)
             else:
                 logger.getLogger('tab.regular.time').info('starting training GMM Hidden Markov Model.')
                 hmm_model = hmm.GMMHMM(n_components=8, n_mix=6)

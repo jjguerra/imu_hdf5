@@ -163,7 +163,6 @@ def imu_algorithm(doc, algorithm='', quickrun='', program_path='', logger='', km
             logger.getLogger('tab.regular').info(msg)
             msg = 'Testing data size:{0}'.format(testing_label_object.shape)
             logger.getLogger('tab.regular.line').info(msg)
-            
 
             try:
                 if algorithm == 'GHMM' or algorithm == 'GMMHMM':
@@ -193,7 +192,7 @@ def imu_algorithm(doc, algorithm='', quickrun='', program_path='', logger='', km
                 logger.getLogger('tab.regular.time').error(msg)
                 logger.getLogger('tab.regular.time.line').eror(error_message)
         
-           # closing h5py file
+            # closing h5py file
             training_testing_dataset_object.close()
 
             # removing training dataset h5py file
