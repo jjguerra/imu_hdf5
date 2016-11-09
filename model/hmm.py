@@ -121,7 +121,7 @@ def hmm_algo(trainingdataset, traininglabels, testingdataset, testinglabels, qui
                     logger.getLogger('tab.regular.time').info(msg)
 
                     hmm_model.fit(X=trainingdataset, user=user,
-                                  activity=activity, data_dir='', lengths=lengths,
+                                  activity=activity, data_dir=data_dir, lengths=lengths,
                                   quickrun=quickrun, logger=logger, kmeans_opt=kmeans)
             else:
                 logger.getLogger('tab.regular.time').info('starting training GMM Hidden Markov Model.')

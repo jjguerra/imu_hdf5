@@ -7,7 +7,6 @@ import numpy as np
 import h5py
 import os
 from datetime import datetime
-from sklearn.decomposition import IncrementalPCA, TruncatedSVD
 
 
 def imu_algorithm(doc, algorithm='', quickrun='', program_path='', logger='', kmeans='',
@@ -30,7 +29,7 @@ def imu_algorithm(doc, algorithm='', quickrun='', program_path='', logger='', km
 
         if 'pilot' in user_info and \
                 ('Q439' in user_info or 'Q568' in user_info or 'Q615' in user_info or 'Q616' in user_info or 'Q617' in
-                    user_info):
+                    user_info) and 'feeding' not in user_info:
             # defining train dataset and labels array
             c_filename = 'training_testing_file_' + str(user_info) + '_' + datetime.now().strftime('%Y%m%d%H%M%S')\
                          + '.hdf5'
