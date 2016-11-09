@@ -94,7 +94,10 @@ def imu_algorithm(doc, algorithm='', quickrun='', program_path='', logger='', km
                     # and add other users
                     # TO DO: I can add training on the same user but different activities to see if that improves the
                     # feeding activity
-                    if (type_activity != 'freedly') and (type_activity == inner_type_activity):
+                    # if (type_activity != 'freedly') and (type_activity == inner_type_activity):
+                    #     adding = True
+
+                    if (type_activity != 'freedly') and (activity == inner_activity):
                         adding = True
                   
                 if adding:
