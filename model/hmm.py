@@ -63,6 +63,9 @@ def show_results(hmm_result_list, logger):
             score = hmm_model.test_score
             hmm_index = highest_index
 
+    msg = 'Highest likelihood for {0} model'.format(hmm_result_list[hmm_index].orientation)
+    logger.getLogger('tab.regular.line').info(msg)
+
     logger.getLogger('line.tab.regular').info('training classification report')
     logger.getLogger('tab.regular.line').info(classification_report(hmm_model[hmm_index].log_train_predictions,
                                                                     hmm_model[hmm_index].logreg_train_labels,
@@ -82,10 +85,13 @@ def hmm_algo(base_object, batched_setting, logger, algorithm, kmeans, quickrun='
     hmm_result = list()
 
     for vertical_horizontal in possible_direction:
+
         # defining models
         hmm_models[vertical_horizontal] = hmm.GaussianHMM(n_components=8, covariance_type='full', n_iter=10,
                                                           verbose=True)
-        # training models
+
+        msg = 'training {0} GaussianHMM'.format(vertical_horizontal)
+        logger.getLogger('tab.regular.time').info(msg)
         hmm_models[vertical_horizontal].fit(
             X=base_object.training_testing_dataset_object[base_object.training_data_name[vertical_horizontal]],
             lengths=base_object.training_dataset_lengths[vertical_horizontal], quickrun=quickrun, logger=logger,
@@ -109,6 +115,8 @@ def hmm_algo(base_object, batched_setting, logger, algorithm, kmeans, quickrun='
 
         hmm_result.append(hmm_object)
 
+    msg = 'comparing results'.format(vertical_horizontal)
+    logger.getLogger('tab.regular.time').info(msg)
     show_results(hmm_result, logger)
 
     # if quickrun:

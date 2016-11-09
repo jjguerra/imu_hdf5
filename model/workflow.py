@@ -113,7 +113,7 @@ def imu_algorithm(doc, algorithm='', quickrun='', logger='', kmeans='',
             try:
                 if algorithm == 'GHMM' or algorithm == 'GMMHMM':
                     hmm_algo(base_object=base_object, algorithm=algorithm, batched_setting=batched_setting,
-                             logger=logger, kmeans=kmeans)
+                             logger=logger, kmeans=kmeans, quickrun=quickrun)
  
                 # elif algorithm == 'Logistic Regression':
                 #     logreg_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
