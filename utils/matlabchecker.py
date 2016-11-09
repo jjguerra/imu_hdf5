@@ -1,6 +1,5 @@
 from utils.matlabfunctions import extract_mat_information, data_collection
 from utils.logfileproperties import Document
-from utils.output import printout
 
 
 def matlab_labels_data(action, leftright_arm, program_path, matlab_directory, logger, pareticnonparetic='',

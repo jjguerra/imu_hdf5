@@ -40,6 +40,6 @@ def feature_extraction(h5_directory, action, logger, program_path, algorithm='',
         featurize(file_properties=file_info, logger=logger, window_step_size=window_step_size)
 
     elif action == 'imu':
-        imu_algorithm(doc=file_info, algorithm=algorithm, quickrun=quickrun, program_path=program_path, logger=logger,
-                      kmeans=kmeans, batched_setting=batched_setting)
+        imu_algorithm(doc=file_info, algorithm=algorithm, quickrun=quickrun, logger=logger, kmeans=kmeans,
+                      batched_setting=batched_setting)
 

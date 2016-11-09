@@ -3,13 +3,11 @@ from model.hmm import hmm_algo
 from model.logistic_regression import logreg_algo
 from model.lstm import lstm_algo
 from utils.matlablabels import MatlabLabels
-import numpy as np
 import h5py
-import os
-from datetime import datetime
+from model import base
 
 
-def imu_algorithm(doc, algorithm='', quickrun='', program_path='', logger='', kmeans='',
+def imu_algorithm(doc, algorithm='', quickrun='', logger='', kmeans='',
                   batched_setting=False):
     # type: (object, str, boolean, str, object, str, bool) -> object
 
@@ -30,40 +28,24 @@ def imu_algorithm(doc, algorithm='', quickrun='', program_path='', logger='', km
         if 'pilot' in user_info and \
                 ('Q439' in user_info or 'Q568' in user_info or 'Q615' in user_info or 'Q616' in user_info or 'Q617' in
                     user_info) and 'feeding' not in user_info:
-            # defining train dataset and labels array
-            c_filename = 'training_testing_file_' + str(user_info) + '_' + datetime.now().strftime('%Y%m%d%H%M%S')\
-                         + '.hdf5'
-            training_file_name = os.path.join(doc.input_path, c_filename)
-            training_testing_dataset_object = h5py.File(training_file_name, 'w')
 
             user = h5_file_object[user_info].attrs['user']
             activity = h5_file_object[user_info].attrs['activity']
-            n_row, n_col = np.shape(h5_file_object[user_info][:, :-1])
-            training_testing_dataset_object.create_dataset(name='testing data', shape=(n_row, n_col))
-            training_testing_dataset_object['testing data'][:, :] = h5_file_object[user_info].value[:, :-1]
-            training_testing_dataset_object.create_dataset(name='testing labels', shape=(n_row, 1))
-            training_testing_dataset_object['testing labels'][:, 0] = h5_file_object[user_info].value[:, -1]
+
+            base_object = base.Base(input_path=doc.input_path, filename=user_info, user=user, activity=activity,
+                                    dataset=h5_file_object[user_info])
 
             msg = 'Starting analysing {0}'.format(user_info)
             logger.getLogger('regular.time').info(msg)
 
             msg = 'Calculating training and testing dataset'
             logger.getLogger('regular.time').info(msg)
-            # fetch testing data from the objects
-
-            # length of each dataset
-            training_dataset_lengths = list()
-
-            # flag used to create a dataset for the first file
-            first_file = True
-
-            # keep track of the total number of rows
-            total_inner_row = 0
 
             # adding user's flag
             adding = False
 
             total_inner_users = len(h5_file_object) - 1
+
             # fetch training data from the objects without :
             #   1. the testing data i.e. the data of user_index
             #   2. other dataset with the same user and activity but different repetition
@@ -73,115 +55,75 @@ def imu_algorithm(doc, algorithm='', quickrun='', program_path='', logger='', km
                 inner_user = h5_file_object[user_info_inner].attrs['user']
                 inner_activity = h5_file_object[user_info_inner].attrs['activity']
 
-                # shape of the current dataset
-                n_inner_row, n_inner_column = h5_file_object[user_info_inner].shape
+                # get whether vertical activity (shelf) or horizontal (radial)
+                type_activity = ''
 
-                # removing label columns
-                n_inner_column -= 1
-
-                if inner_user != user and 'paretic' not in user_info_inner:
+                # add the activities for the other control users
+                if (inner_user != user) and ('paretic' not in user_info_inner):
                     # get type of activity i.e. horizontal, vertical or freedly
-                    type_activity = label_object.check_type_activity(str(activity))
-                    inner_type_activity = label_object.check_type_activity(str(inner_activity))
+                    type_activity = label_object.check_type_activity(str(inner_activity))
 
-                    # if testing on the feeding activity or 'freedly' activities, always add other training activities
-                    # TO DO: I can add training on the same user but different activities to see if that improves the
-                    # feeding activity
-                    if (type_activity == 'freedly') and (user != inner_user):
-                        adding = False
-
-                    # removing all the users with the freedly activities, check if they have the same type of activity
-                    # and add other users
-                    # TO DO: I can add training on the same user but different activities to see if that improves the
-                    # feeding activity
-                    # if (type_activity != 'freedly') and (type_activity == inner_type_activity):
-                    #     adding = True
-
-                    if (type_activity != 'freedly') and (activity == inner_activity):
+                    # add all the non eating activities
+                    if type_activity != 'freedly':
                         adding = True
-                  
+
+                # string to print for logging information
+                print_str = '{0} (user index {1} of {2})'.format(user_info_inner, u_index, total_inner_users)
+
                 if adding:
 
-                    # get the size of the dataset because it will be passed as an parameter to the hmm
-                    total_inner_row += h5_file_object[user_info_inner].shape[0]
+                    base_object.add_dataset(dataset=h5_file_object[user_info_inner], activity_type=type_activity)
 
-                    if first_file:
-                        training_testing_dataset_object.create_dataset(name='training data',
-                                                                       shape=(total_inner_row, n_inner_column),
-                                                                       maxshape=(None, n_inner_column), chunks=True)
-
-                        training_testing_dataset_object.create_dataset(name='training labels',
-                                                                       shape=(total_inner_row, 1),
-                                                                       maxshape=(None, 1), chunks=True)
-
-                        training_testing_dataset_object['training data'][:, :] = \
-                            h5_file_object[user_info_inner].value[:, :-1]
-                        training_testing_dataset_object['training labels'][:, 0] = \
-                            h5_file_object[user_info_inner].value[:, -1]
-                        first_file = False
-
-                    else:
-                        # resize the dataset to accommodate the new data
-                        training_testing_dataset_object['training data'].resize(total_inner_row, axis=0)
-                        training_testing_dataset_object['training data'][index_start_appending:] = \
-                            h5_file_object[user_info_inner].value[:, :-1]
-
-                        training_testing_dataset_object['training labels'].resize(total_inner_row, axis=0)
-                        training_testing_dataset_object['training labels'][index_start_appending:, 0] = \
-                            h5_file_object[user_info_inner].value[:, -1]
-
-                    index_start_appending = total_inner_row
-
-                    training_dataset_lengths.append(n_inner_row)
-                    msg = 'Including {0} (user index {1} of {2} length:{3})'.format(user_info_inner, u_index,
-                                                                                    total_inner_users, n_inner_row)
+                    msg = 'Including {0}'.format(print_str)
                     logger.getLogger('tab.regular').info(msg)
 
                     # reset adding
                     adding = False
 
                 elif not adding:
-                    msg = 'Skipping {0} (user index {1} of {2})'.format(user_info_inner, u_index, total_inner_users)
+                    msg = 'Skipping {0}'.format(print_str)
                     logger.getLogger('tab.regular').info(msg)
 
                 else:
-                    msg = 'problem while processing {0} (user index {1} of {2})'.format(user_info_inner, u_index,
-                                                                                        total_inner_users)
+                    msg = 'Error while processing {0}. User was not added'.format(print_str)
                     logger.getLogger('tab.regular').error(msg)
-                    logger.getLogger('tab.regular').error('user was not added')
-                    exit(1)
+                    raise ValueError(msg)
 
-            training_dataset_lengths = np.array(training_dataset_lengths)
-            training_data_object = training_testing_dataset_object['training data']
-            training_label_object = training_testing_dataset_object['training labels']
-            testing_data_object = training_testing_dataset_object['testing data']
-            testing_label_object = training_testing_dataset_object['testing labels']
-
-            msg = 'Training data size:{0}'.format(training_data_object.shape)
+            data_size, label_size = base_object.get_shape('vertical')
+            msg = 'Vertical training data size:{0}'.format(data_size)
             logger.getLogger('line.tab.regular').info(msg)
-            msg = 'Training labels size:{0}'.format(training_label_object.shape)
+
+            msg = 'Vertical Training labels size:{0}'.format(label_size)
             logger.getLogger('tab.regular').info(msg)
-            msg = 'Testing data size:{0}'.format(testing_data_object.shape)
+
+            data_size, label_size = base_object.get_shape('horizontal')
+            msg = 'Horizontal training data size:{0}'.format(data_size)
+            logger.getLogger('line.tab.regular').info(msg)
+
+            msg = 'Horizontal Training labels size:{0}'.format(label_size)
             logger.getLogger('tab.regular').info(msg)
-            msg = 'Testing data size:{0}'.format(testing_label_object.shape)
-            logger.getLogger('tab.regular.line').info(msg)
+
+            data_size, label_size = base_object.get_shape('test')
+            msg = 'Testing data size:{0}'.format(data_size)
+            logger.getLogger('line.tab.regular').info(msg)
+
+            msg = 'Testing labels size:{0}'.format(label_size)
+            logger.getLogger('tab.regular').info(msg)
 
             try:
                 if algorithm == 'GHMM' or algorithm == 'GMMHMM':
-                    hmm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
-                             quickrun=quickrun, testingdataset=testing_data_object, testinglabels=testing_label_object,
-                             lengths=training_dataset_lengths, algorithm=algorithm, batched_setting=batched_setting,
-                             user=user, activity=activity, program_path=program_path, logger=logger, kmeans=kmeans)
+                    hmm_algo(base_object=base_object, algorithm=algorithm, batched_setting=batched_setting,
+                             logger=logger, kmeans=kmeans)
  
-                elif algorithm == 'Logistic Regression':
-                    logreg_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
-                                quickrun=quickrun, testingdataset=testing_data_object, logger=logger,
-                                testinglabels=testing_label_object)
- 
-                elif algorithm == 'LSTM':
-                    lstm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
-                              testingdataset=testing_data_object, testinglabels=testing_label_object,
-                              lengths=training_dataset_lengths, logger=logger)
+                # elif algorithm == 'Logistic Regression':
+                #     logreg_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
+                #                 quickrun=quickrun, testingdataset=testing_data_object, logger=logger,
+                #                 testinglabels=testing_label_object)
+                #
+                # elif algorithm == 'LSTM':
+                #     lstm_algo(trainingdataset=training_data_object, traininglabels=training_label_object,
+                #               testingdataset=testing_data_object, testinglabels=testing_label_object,
+                #               lengths=training_dataset_lengths, logger=logger)
  
                 else:
                     printout(message='Wrong algorithm provided.', verbose=True)
@@ -194,8 +136,5 @@ def imu_algorithm(doc, algorithm='', quickrun='', program_path='', logger='', km
                 logger.getLogger('tab.regular.time').error(msg)
                 logger.getLogger('tab.regular.time.line').eror(error_message)
         
-            # closing h5py file
-            training_testing_dataset_object.close()
-
-            # removing training dataset h5py file
-            os.remove(training_file_name)
+            # closing and deleting h5py file
+            base_object.close_and_delete()
