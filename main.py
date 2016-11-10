@@ -405,7 +405,7 @@ if __name__ == '__main__':
 
             if selected_option == 1:
                 ml_algorithm('GHMM')
-            if selected_option == 2:
+            elif selected_option == 2:
                 ml_algorithm('GMMHMM')
             elif selected_option == 3:
                 check_matlab()

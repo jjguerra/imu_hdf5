@@ -21,6 +21,8 @@ class ResultClass:
         self.target_names = list()
         self.log_train_predictions = ''
         self.log_test_predictions = ''
+        self.logreg_train_labels = ''
+        self.logreg_test_labels = ''
 
     def classification(self, train_predictions, traininglabels, test_predictions, testinglabels, vertical_horizontal,
                        logger=''):
@@ -28,26 +30,26 @@ class ResultClass:
         self.orientation = vertical_horizontal
 
         logger.getLogger('tab.regular.time').info('processing results for logistic regression algorithm')
-        logreg_train_data, logreg_train_labels = preprocessing_logistic_regression(predictions=train_predictions,
-                                                                                   labels=traininglabels)
-        logreg_test_data, logreg_test_labels = preprocessing_logistic_regression(predictions=test_predictions,
-                                                                                 labels=testinglabels)
+        logreg_train_data, self.logreg_train_labels = preprocessing_logistic_regression(predictions=train_predictions,
+                                                                                        labels=traininglabels)
+        logreg_test_data, self.logreg_test_labels = preprocessing_logistic_regression(predictions=test_predictions,
+                                                                                      labels=testinglabels)
         logger.getLogger('tab.regular.time').info('finished processing results for logistic regression algorithm')
 
         # mapping hmm labels to true labels
         logistic_regression_model = LogisticRegression(n_jobs=-1)
 
         logger.getLogger('tab.regular.time').info('starting training logistic regression mapper')
-        logistic_regression_model.fit(logreg_train_data, logreg_train_labels)
+        logistic_regression_model.fit(logreg_train_data, self.logreg_train_labels)
         logger.getLogger('tab.regular.time').info('finished training logistic regression mapper')
-        train_score = logistic_regression_model.score(logreg_train_data, logreg_train_labels)
-        test_score = logistic_regression_model.score(logreg_test_data, logreg_test_labels)
+        self.train_score = logistic_regression_model.score(logreg_train_data, self.logreg_train_labels)
+        self.test_score = logistic_regression_model.score(logreg_test_data, self.logreg_test_labels)
 
         self.log_train_predictions = logistic_regression_model.predict(logreg_train_data)
         self.log_test_predictions = logistic_regression_model.predict(logreg_test_data)
 
-        logger.getLogger('tab.regular').info('final training data prediction score: {0}'.format(train_score))
-        logger.getLogger('tab.regular.line').info('final testing data prediction score: {0}'.format(test_score))
+        logger.getLogger('tab.regular').info('final training data prediction score: {0}'.format(self.train_score))
+        logger.getLogger('tab.regular.line').info('final testing data prediction score: {0}'.format(self.test_score))
 
         # label class
         label_class = MatlabLabels()
@@ -67,21 +69,20 @@ def show_results(hmm_result_list, logger):
     logger.getLogger('tab.regular.line').info(msg)
 
     logger.getLogger('line.tab.regular').info('training classification report')
-    logger.getLogger('tab.regular.line').info(classification_report(hmm_model[hmm_index].log_train_predictions,
-                                                                    hmm_model[hmm_index].logreg_train_labels,
-                                                                    target_names=hmm_model[hmm_index].target_names))
+    logger.getLogger('tab.regular.line').info(classification_report(hmm_result_list[hmm_index].log_train_predictions,
+                                                                    hmm_result_list[hmm_index].logreg_train_labels,
+                                                                    target_names=hmm_result_list[hmm_index].target_names))
 
     logger.getLogger('line.tab.regular').info('testing classification report')
-    logger.getLogger('tab.regular.line').info(classification_report(hmm_model[hmm_index].log_test_predictions,
-                                                                    hmm_model[hmm_index].logreg_test_labels,
-                                                                    target_names=hmm_model[hmm_index].target_names))
+    logger.getLogger('tab.regular.line').info(classification_report(hmm_result_list[hmm_index].log_test_predictions,
+                                                                    hmm_result_list[hmm_index].logreg_test_labels,
+                                                                    target_names=hmm_result_list[hmm_index].target_names))
 
 
 def hmm_algo(base_object, batched_setting, logger, algorithm, kmeans, quickrun=''):
 
     possible_direction = 'vertical', 'horizontal'
     hmm_models = dict()
-    hmm_object = ResultClass()
     hmm_result = list()
 
     for vertical_horizontal in possible_direction:
@@ -105,6 +106,7 @@ def hmm_algo(base_object, batched_setting, logger, algorithm, kmeans, quickrun='
         test_predictions = hmm_models[vertical_horizontal].predict_proba(
             base_object.training_testing_dataset_object['testing data'])
 
+        hmm_object = ResultClass()
         # using the model, run algorithms
         hmm_object.classification(train_predictions=train_predictions,
                                   traininglabels=base_object.training_testing_dataset_object[

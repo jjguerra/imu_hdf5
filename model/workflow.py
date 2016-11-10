@@ -20,14 +20,15 @@ def imu_algorithm(doc, algorithm='', quickrun='', logger='', kmeans='',
 
     for user_index, user_info in enumerate(h5_file_object.iterkeys()):
 
+        if ('pilot' in user_info) and ('feeding' not in user_info):
         # run test on control users only
         # if 'pilot' in user_info and \
         #        ('HS00' in user_info or 'N537' in user_info or 'Q130' in user_info or 'Q430' in user_info or 'Q435' in
         #            user_info):
 
-        if 'pilot' in user_info and \
-                ('Q439' in user_info or 'Q568' in user_info or 'Q615' in user_info or 'Q616' in user_info or 'Q617' in
-                    user_info) and 'feeding' not in user_info:
+        # if 'pilot' in user_info and \
+        #         ('Q439' in user_info or 'Q568' in user_info or 'Q615' in user_info or 'Q616' in user_info or 'Q617' in
+        #             user_info) and 'feeding' not in user_info:
 
             user = h5_file_object[user_info].attrs['user']
             activity = h5_file_object[user_info].attrs['activity']
