@@ -116,21 +116,62 @@ def hmm_algo(base_object, batched_setting, logger, algorithm, kmeans, quickrun='
             # check if flag is on
             if not loaded_model:
 
+                nc = 8
+                cov_type = 'full'
+                iterations = 10
+                logger.getLogger('tab.regular.time').info('defining Gaussian Hidden Markov Model.')
+                logger.getLogger('tab.regular').info('\tmodel parameters')
+                msg = '\t\tnumber of states:{0}'.format(nc)
+                logger.getLogger('tab.regular').info(msg)
+                msg = '\t\tnumber of iterations:{0}'.format(iterations)
+                logger.getLogger('tab.regular').info(msg)
+                msg = '\t\tcovariance type:{0}'.format(cov_type)
+                logger.getLogger('tab.regular').info(msg)
                 # defining models
-                hmm_models[vertical_horizontal] = hmm.GaussianHMM(n_components=8, covariance_type='full', n_iter=10,
-                                                                  verbose=True)
+                hmm_models[vertical_horizontal] = hmm.GaussianHMM(n_components=nc, covariance_type=cov_type,
+                                                                  n_iter=iterations, verbose=True)
 
-                msg = 'training {0} GaussianHMM'.format(vertical_horizontal)
-                logger.getLogger('tab.regular.time').info(msg)
-                hmm_models[vertical_horizontal].fit(
-                    X=base_object.training_testing_dataset_object[base_object.training_data_name[vertical_horizontal]],
-                    lengths=base_object.training_dataset_lengths[vertical_horizontal], logger=logger,
-                    kmeans_opt=kmeans)
+                if batched_setting:
+                    first_run = True
+                    total_batches, batched_lengths = batch(base_object.training_dataset_lengths[vertical_horizontal],
+                                                           50)
+
+                    last_batch_index = 0
+                    end = 0
+                    for index, sliced_length in enumerate(batched_lengths):
+
+                        msg = 'starting training {0} Gaussian Hidden Markov Model on batch {1} out of {2}'. \
+                            format(vertical_horizontal, index, total_batches)
+                        logger.getLogger('tab.regular.time').info(msg)
+
+                        end += np.sum(sliced_length).astype(np.int32)
+                        msg = 'size of dataset: {0}'.format(base_object.training_testing_dataset_object[
+                                      base_object.training_data_name[vertical_horizontal]][last_batch_index:end].shape)
+                        logger.getLogger('tab.regular').debug(msg)
+
+                        if first_run:
+                            hmm_models[vertical_horizontal].fit(
+                                X=base_object.training_testing_dataset_object[
+                                      base_object.training_data_name[vertical_horizontal]][last_batch_index:end],
+                                lengths=sliced_length, logger=logger,
+                                kmeans_opt=kmeans)
+                            first_run = False
+                        else:
+                            # by setting init_params='', we will be able to cascaded the training
+                            # results from the previous fitting runs
+                            hmm_models[vertical_horizontal].init_params = ''
+                            hmm_models[vertical_horizontal].fit(
+                                X=base_object.training_testing_dataset_object[
+                                      base_object.training_data_name[vertical_horizontal]][last_batch_index:end],
+                                lengths=sliced_length, logger=logger, kmeans_opt=kmeans)
+
+                        last_batch_index = end
 
                 logger.getLogger('tab.regular.time').info('finished training Hidden Markov Model.')
 
                 # create a name for a file based on the user, activity and the time
-                filename = 'hmm_' + base_object.test_user + '_' + base_object.test_activity + '_' + vertical_horizontal + '_' + str(datetime.now().strftime('%Y%m%d%H%M%S'))
+                filename = 'hmm_' + base_object.test_user + '_' + base_object.test_activity + '_' + \
+                           vertical_horizontal + '_' + str(datetime.now().strftime('%Y%m%d%H%M%S'))
                 # calculate the whole path
                 hmm_path_filename = os.path.join(base_object.data_dir, filename)
                 logger.getLogger('tab.regular').debug('hmm model stored as {0}'.format(filename))
