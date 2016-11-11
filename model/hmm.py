@@ -87,35 +87,81 @@ def hmm_algo(base_object, batched_setting, logger, algorithm, kmeans, quickrun='
 
     for vertical_horizontal in possible_direction:
 
-        # defining models
-        hmm_models[vertical_horizontal] = hmm.GaussianHMM(n_components=8, covariance_type='full', n_iter=10,
-                                                          verbose=True)
+        if quickrun:
 
-        msg = 'training {0} GaussianHMM'.format(vertical_horizontal)
-        logger.getLogger('tab.regular.time').info(msg)
-        hmm_models[vertical_horizontal].fit(
-            X=base_object.training_testing_dataset_object[base_object.training_data_name[vertical_horizontal]],
-            lengths=base_object.training_dataset_lengths[vertical_horizontal], quickrun=quickrun, logger=logger,
-            kmeans_opt=kmeans, user=base_object.test_user, activity=base_object.test_activity,
-            data_dir=base_object.data_dir)
+            files_in_data = ''
+            # check if the data folder exists and if it does, get all the files
+            if os.path.exists(base_object.data_dir):
+                files_in_data = os.listdir(base_object.data_dir)
 
-        logger.getLogger('tab.regular.time').info('calculating predictions')
-        train_predictions = hmm_models[vertical_horizontal].predict_proba(
-            base_object.training_testing_dataset_object[base_object.training_data_name[vertical_horizontal]],
-            lengths=base_object.training_dataset_lengths[vertical_horizontal])
-        test_predictions = hmm_models[vertical_horizontal].predict_proba(
-            base_object.training_testing_dataset_object['testing data'])
+            # initialize the loaded model flag
+            loaded_model = False
 
-        hmm_object = ResultClass()
-        # using the model, run algorithms
-        hmm_object.classification(train_predictions=train_predictions,
-                                  traininglabels=base_object.training_testing_dataset_object[
-                                      base_object.training_label_name[vertical_horizontal]],
-                                  test_predictions=test_predictions,
-                                  testinglabels=base_object.training_testing_dataset_object['testing labels'],
-                                  logger=logger, vertical_horizontal=vertical_horizontal)
+            # check all the files in the folder and look for the model file
+            for sfile in files_in_data:
+                # check if user, activity and hmm keyword are part of the file
+                if (base_object.test_user in sfile) and (base_object.test_activity in sfile) and \
+                        ('hmm' in sfile) and ('.npy' not in sfile) and (vertical_horizontal in sfile):
+                    logger.getLogger('line.tab.regular').info('hmm model found')
+                    logger.getLogger('tab.regular.line').info('using hmm model {0}'.format(sfile))
+                    # calculate the whole path
+                    data_path = os.path.join(base_object.data_dir, sfile)
+                    # load the model
+                    hmm_model = joblib.load(data_path)
+                    # turn on flag so the code does not re-train the model
+                    loaded_model = True
+                    logger.getLogger('tab.regular.time').info('hmm model loaded')
+                    break
 
-        hmm_result.append(hmm_object)
+            # check if flag is on
+            if not loaded_model:
+
+                # defining models
+                hmm_models[vertical_horizontal] = hmm.GaussianHMM(n_components=8, covariance_type='full', n_iter=10,
+                                                                  verbose=True)
+
+                msg = 'training {0} GaussianHMM'.format(vertical_horizontal)
+                logger.getLogger('tab.regular.time').info(msg)
+                hmm_models[vertical_horizontal].fit(
+                    X=base_object.training_testing_dataset_object[base_object.training_data_name[vertical_horizontal]],
+                    lengths=base_object.training_dataset_lengths[vertical_horizontal], quickrun=quickrun, logger=logger,
+                    kmeans_opt=kmeans, user=base_object.test_user, activity=base_object.test_activity,
+                    data_dir=base_object.data_dir)
+
+                logger.getLogger('tab.regular.time').info('finished training Hidden Markov Model.')
+
+                # create a name for a file based on the user, activity and the time
+                filename = 'hmm_' + base_object.test_user + '_' + base_object.test_activity + '_' + vertical_horizontal
+                + '_' + str(datetime.now().strftime('%Y%m%d%H%M%S'))
+                # calculate the whole path
+                hmm_path_filename = os.path.join(base_object.data_dir, filename)
+                logger.getLogger('tab.regular').debug('hmm model stored as {0}'.format(filename))
+                logger.getLogger('tab.regular').debug('location {0}'.format(base_object.data_dir))
+
+                # if data folder does not exists, make it
+                if not os.path.exists(base_object.data_dir):
+                    os.mkdir(base_object.data_dir)
+
+                    # store the model so its not needed to re-train it
+                joblib.dump(hmm_model[vertical_horizontal], hmm_path_filename)
+
+                logger.getLogger('tab.regular.time').info('calculating predictions')
+                train_predictions = hmm_models[vertical_horizontal].predict_proba(
+                    base_object.training_testing_dataset_object[base_object.training_data_name[vertical_horizontal]],
+                    lengths=base_object.training_dataset_lengths[vertical_horizontal])
+                test_predictions = hmm_models[vertical_horizontal].predict_proba(
+                    base_object.training_testing_dataset_object['testing data'])
+
+                hmm_object = ResultClass()
+                # using the model, run algorithms
+                hmm_object.classification(train_predictions=train_predictions,
+                                          traininglabels=base_object.training_testing_dataset_object[
+                                              base_object.training_label_name[vertical_horizontal]],
+                                          test_predictions=test_predictions,
+                                          testinglabels=base_object.training_testing_dataset_object['testing labels'],
+                                          logger=logger, vertical_horizontal=vertical_horizontal)
+
+                hmm_result.append(hmm_object)
 
     msg = 'comparing results'.format(vertical_horizontal)
     logger.getLogger('tab.regular.time').info(msg)
