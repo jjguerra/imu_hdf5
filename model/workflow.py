@@ -32,9 +32,9 @@ def imu_algorithm(doc, algorithm='', quickrun='', logger='', kmeans='',
 
             user = h5_file_object[user_info].attrs['user']
             activity = h5_file_object[user_info].attrs['activity']
-            type_activity = label_object.check_type_activity(str(activity))
+            activity_type = label_object.check_type_activity(str(activity))
             base_object = base.Base(input_path=doc.input_path, filename=user_info, user=user, activity=activity,
-                                    type_activity=type_activity, dataset=h5_file_object[user_info])
+                                    activity_type=activity_type, dataset=h5_file_object[user_info])
 
             msg = 'Starting analysing {0}'.format(user_info)
             logger.getLogger('regular.time').info(msg)

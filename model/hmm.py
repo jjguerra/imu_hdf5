@@ -81,9 +81,9 @@ def show_results(hmm_result_list, logger):
 
 def hmm_algo(base_object, batched_setting, logger, algorithm, kmeans, quickrun=''):
 
-    if base_object.type_activity == 'vertical':
+    if base_object.test_activity_type == 'vertical':
         possible_direction = ['vertical']
-    elif base_object.type_activity == 'horizontal':
+    elif base_object.test_activity_type == 'horizontal':
         possible_direction = ['horizontal']
 
     hmm_models = dict()
@@ -138,7 +138,7 @@ def hmm_algo(base_object, batched_setting, logger, algorithm, kmeans, quickrun='
                 if batched_setting:
                     first_run = True
                     total_batches, batched_lengths = batch(base_object.training_dataset_lengths[vertical_horizontal],
-                                                           50)
+                                                           30)
 
                     last_batch_index = 0
                     end = 0

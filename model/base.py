@@ -5,13 +5,13 @@ import numpy as np
 
 
 class Base:
-    def __init__(self, input_path, filename, user, activity, type_activity, dataset):
+    def __init__(self, input_path, filename, user, activity, activity_type, dataset):
         self.input_path = input_path
         self.data_dir = ''
         self.filename = filename
         self.test_user = user
         self.test_activity = activity
-        self.test_activity_type = type_activity
+        self.test_activity_type = activity_type
         self.vertical_h5py = ''
         self.horizontal_h5py = ''
         self.last_index = {'vertical': 0, 'horizontal': 0}
