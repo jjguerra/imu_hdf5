@@ -247,6 +247,15 @@ def ml_algorithm(algorithm=''):
     # get dataset directory
     dataset_location, quickrun, kmeans, batched_setting = select_dataset_quickrun(algorithm)
 
+    msg = 'dataset= {0}'.format(dataset_location.split('/')[-1])
+    logging.getLogger('regular.time.line').info(msg)
+    msg = 'quickrun= {0}'.format(quickrun)
+    logging.getLogger('regular.time.line').info(msg)
+    msg = 'kmeans = {0}'.format(kmeans)
+    logging.getLogger('regular.time.line').info(msg)
+    msg = 'batch= {0}'.format(batched_setting)
+    logging.getLogger('regular.time.line').info(msg)
+    
     logging.getLogger('regular.time.line').info('Running {0} Model'.format(algorithm))
 
     feature_extraction(h5_directory=dataset_location, algorithm=algorithm, quickrun=quickrun, action='imu',
@@ -401,8 +410,8 @@ if __name__ == '__main__':
         print ''
 
         try:
-            selected_option = int(raw_input('Select an option: '))
-
+            selected_option = int(raw_input(logging.getLogger('regular').info('Select an option: ')))
+            logging.getLogger('regular').info(selected_option)
             if selected_option == 1:
                 ml_algorithm('GHMM')
             elif selected_option == 2:
