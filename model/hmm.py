@@ -81,7 +81,11 @@ def show_results(hmm_result_list, logger):
 
 def hmm_algo(base_object, batched_setting, logger, algorithm, kmeans, quickrun=''):
 
-    possible_direction = ['vertical', 'horizontal']
+    if base_object.type_activity == 'vertical':
+        possible_direction = ['vertical']
+    elif base_object.type_activity == 'horizontal':
+        possible_direction = ['horizontal']
+
     hmm_models = dict()
     hmm_result = list()
 
