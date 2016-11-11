@@ -65,7 +65,7 @@ def show_results(hmm_result_list, logger):
             score = hmm_model.test_score
             hmm_index = highest_index
 
-    msg = 'Highest likelihood for {0} model'.format(hmm_result_list[hmm_index].orientation)
+    msg = 'highest likelihood mode: {0} '.format(hmm_result_list[hmm_index].orientation)
     logger.getLogger('tab.regular.line').info(msg)
 
     logger.getLogger('line.tab.regular').info('training classification report')
@@ -81,7 +81,7 @@ def show_results(hmm_result_list, logger):
 
 def hmm_algo(base_object, batched_setting, logger, algorithm, kmeans, quickrun=''):
 
-    possible_direction = 'vertical', 'horizontal'
+    possible_direction = ['vertical', 'horizontal']
     hmm_models = dict()
     hmm_result = list()
 
@@ -89,16 +89,16 @@ def hmm_algo(base_object, batched_setting, logger, algorithm, kmeans, quickrun='
 
         if quickrun:
 
-            files_in_data = ''
+            files_in_data_folder = ''
             # check if the data folder exists and if it does, get all the files
             if os.path.exists(base_object.data_dir):
-                files_in_data = os.listdir(base_object.data_dir)
+                files_in_data_folder = os.listdir(base_object.data_dir)
 
             # initialize the loaded model flag
             loaded_model = False
 
             # check all the files in the folder and look for the model file
-            for sfile in files_in_data:
+            for sfile in files_in_data_folder:
                 # check if user, activity and hmm keyword are part of the file
                 if (base_object.test_user in sfile) and (base_object.test_activity in sfile) and \
                         ('hmm' in sfile) and ('.npy' not in sfile) and (vertical_horizontal in sfile):
@@ -107,7 +107,7 @@ def hmm_algo(base_object, batched_setting, logger, algorithm, kmeans, quickrun='
                     # calculate the whole path
                     data_path = os.path.join(base_object.data_dir, sfile)
                     # load the model
-                    hmm_model = joblib.load(data_path)
+                    hmm_models[vertical_horizontal] = joblib.load(data_path)
                     # turn on flag so the code does not re-train the model
                     loaded_model = True
                     logger.getLogger('tab.regular.time').info('hmm model loaded')
@@ -124,15 +124,13 @@ def hmm_algo(base_object, batched_setting, logger, algorithm, kmeans, quickrun='
                 logger.getLogger('tab.regular.time').info(msg)
                 hmm_models[vertical_horizontal].fit(
                     X=base_object.training_testing_dataset_object[base_object.training_data_name[vertical_horizontal]],
-                    lengths=base_object.training_dataset_lengths[vertical_horizontal], quickrun=quickrun, logger=logger,
-                    kmeans_opt=kmeans, user=base_object.test_user, activity=base_object.test_activity,
-                    data_dir=base_object.data_dir)
+                    lengths=base_object.training_dataset_lengths[vertical_horizontal], logger=logger,
+                    kmeans_opt=kmeans)
 
                 logger.getLogger('tab.regular.time').info('finished training Hidden Markov Model.')
 
                 # create a name for a file based on the user, activity and the time
-                filename = 'hmm_' + base_object.test_user + '_' + base_object.test_activity + '_' + vertical_horizontal
-                + '_' + str(datetime.now().strftime('%Y%m%d%H%M%S'))
+                filename = 'hmm_' + base_object.test_user + '_' + base_object.test_activity + '_' + vertical_horizontal + '_' + str(datetime.now().strftime('%Y%m%d%H%M%S'))
                 # calculate the whole path
                 hmm_path_filename = os.path.join(base_object.data_dir, filename)
                 logger.getLogger('tab.regular').debug('hmm model stored as {0}'.format(filename))
@@ -143,25 +141,25 @@ def hmm_algo(base_object, batched_setting, logger, algorithm, kmeans, quickrun='
                     os.mkdir(base_object.data_dir)
 
                     # store the model so its not needed to re-train it
-                joblib.dump(hmm_model[vertical_horizontal], hmm_path_filename)
+                joblib.dump(hmm_models[vertical_horizontal], hmm_path_filename)
 
-                logger.getLogger('tab.regular.time').info('calculating predictions')
-                train_predictions = hmm_models[vertical_horizontal].predict_proba(
-                    base_object.training_testing_dataset_object[base_object.training_data_name[vertical_horizontal]],
-                    lengths=base_object.training_dataset_lengths[vertical_horizontal])
-                test_predictions = hmm_models[vertical_horizontal].predict_proba(
-                    base_object.training_testing_dataset_object['testing data'])
+            logger.getLogger('tab.regular.time').info('calculating predictions')
+            train_predictions = hmm_models[vertical_horizontal].predict_proba(
+                base_object.training_testing_dataset_object[base_object.training_data_name[vertical_horizontal]],
+                lengths=base_object.training_dataset_lengths[vertical_horizontal])
+            test_predictions = hmm_models[vertical_horizontal].predict_proba(
+                base_object.training_testing_dataset_object['testing data'])
 
-                hmm_object = ResultClass()
-                # using the model, run algorithms
-                hmm_object.classification(train_predictions=train_predictions,
-                                          traininglabels=base_object.training_testing_dataset_object[
-                                              base_object.training_label_name[vertical_horizontal]],
-                                          test_predictions=test_predictions,
-                                          testinglabels=base_object.training_testing_dataset_object['testing labels'],
-                                          logger=logger, vertical_horizontal=vertical_horizontal)
+            hmm_object = ResultClass()
+            # using the model, run algorithms
+            hmm_object.classification(train_predictions=train_predictions,
+                                      traininglabels=base_object.training_testing_dataset_object[
+                                          base_object.training_label_name[vertical_horizontal]],
+                                      test_predictions=test_predictions,
+                                      testinglabels=base_object.training_testing_dataset_object['testing labels'],
+                                      logger=logger, vertical_horizontal=vertical_horizontal)
 
-                hmm_result.append(hmm_object)
+            hmm_result.append(hmm_object)
 
     msg = 'comparing results'.format(vertical_horizontal)
     logger.getLogger('tab.regular.time').info(msg)
@@ -172,14 +170,14 @@ def hmm_algo(base_object, batched_setting, logger, algorithm, kmeans, quickrun='
     #     root_folder = '/'.join(program_path.split('/')[:-1])
     #     data_dir = os.path.join(root_folder, 'data')
     #
-    #     files_in_data = ''
+    #     files_in_data_folder = ''
     #     if os.path.exists(data_dir):
-    #         files_in_data = os.listdir(data_dir)
+    #         files_in_data_folder = os.listdir(data_dir)
     #
     #     loaded_model = False
     #
     #     # check all the files in the folder and look for the model file
-    #     for sfile in files_in_data:
+    #     for sfile in files_in_data_folder:
     #         # check if user, activity and hmm keyword are part of the file
     #         if (user in sfile) and (activity in sfile) and ('hmm' in sfile) and ('.npy' not in sfile):
     #             logger.getLogger('line.tab.regular').info('hmm model found')
