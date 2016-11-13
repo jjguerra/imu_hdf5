@@ -20,21 +20,24 @@ def imu_algorithm(doc, algorithm='', quickrun='', logger='', kmeans='',
 
     for user_index, user_info in enumerate(h5_file_object.iterkeys()):
 
-        if ('pilot' in user_info) and ('feeding' not in user_info):
+        # only consider control users that are not performing feeding activity
+        # if ('pilot' in user_info) and ('feeding' not in user_info):
         # run test on control users only
         # if 'pilot' in user_info and \
         #        ('HS00' in user_info or 'N537' in user_info or 'Q130' in user_info or 'Q430' in user_info or 'Q435' in
         #            user_info):
 
-        # if 'pilot' in user_info and \
-        #         ('Q439' in user_info or 'Q568' in user_info or 'Q615' in user_info or 'Q616' in user_info or 'Q617' in
-        #             user_info) and 'feeding' not in user_info:
+        if 'pilot' in user_info and \
+                ('Q439' in user_info or 'Q568' in user_info or 'Q615' in user_info or 'Q616' in user_info or 'Q617' in
+                    user_info) and ('feeding' not in user_info):
 
+            # get user, activity and activity type
             user = h5_file_object[user_info].attrs['user']
             activity = h5_file_object[user_info].attrs['activity']
-            activity_type = label_object.check_type_activity(str(activity))
+
+            # initialize user object
             base_object = base.Base(input_path=doc.input_path, filename=user_info, user=user, activity=activity,
-                                    activity_type=activity_type, dataset=h5_file_object[user_info])
+                                    dataset=h5_file_object[user_info])
 
             msg = 'Starting analysing {0}'.format(user_info)
             logger.getLogger('regular.time').info(msg)
@@ -42,47 +45,42 @@ def imu_algorithm(doc, algorithm='', quickrun='', logger='', kmeans='',
             msg = 'Calculating training and testing dataset'
             logger.getLogger('regular.time').info(msg)
 
-            # adding user's flag
+            # flag used to include or exclude user to/from training dataset
             adding = False
 
+            # total number of users being considered
             total_inner_users = len(h5_file_object) - 1
 
             # fetch training data from the objects without :
-            #   1. the testing data i.e. the data of user_index
-            #   2. other dataset with the same user and activity but different repetition
+            #   1. the testing user dataset
+            #   2. other dataset with the same user and activity
             for u_index, user_info_inner in enumerate(h5_file_object.iterkeys()):
 
                 # get the attributes of the training example
                 inner_user = h5_file_object[user_info_inner].attrs['user']
                 inner_activity = h5_file_object[user_info_inner].attrs['activity']
 
-                # get whether vertical activity (shelf) or horizontal (radial)
-                type_activity = ''
-
-                # add the activities for the other control users
-                if (inner_user != user) and ('paretic' not in user_info_inner):
-                    # get type of activity i.e. horizontal, vertical or freedly
-                    type_activity = label_object.check_type_activity(str(inner_activity))
-
-                    # add all the non eating activities
-                    if type_activity != 'freedly':
-                        adding = True
+                # add the activities for the other control users that are not performing the feeding activity
+                if (inner_user != user) and ('paretic' not in user_info_inner) and ('feeding' not in user_info_inner)\
+                        and (activity == inner_activity):
+                    adding = True
 
                 # string to print for logging information
                 print_str = '{0} (user index {1} of {2})'.format(user_info_inner, u_index, total_inner_users)
 
                 if adding:
 
-                    base_object.add_dataset(dataset=h5_file_object[user_info_inner], activity_type=type_activity)
+                    # add user data to the vertical or horizontal dataset
+                    base_object.add_dataset(dataset=h5_file_object[user_info_inner])
 
                     msg = 'Including {0}'.format(print_str)
                     logger.getLogger('tab.regular').info(msg)
 
-                    # reset adding
+                    # reset flag
                     adding = False
 
                 elif not adding:
-                    msg = 'Skipping {0}'.format(print_str)
+                    msg = 'Excluding {0}'.format(print_str)
                     logger.getLogger('tab.regular').info(msg)
 
                 else:
@@ -90,27 +88,16 @@ def imu_algorithm(doc, algorithm='', quickrun='', logger='', kmeans='',
                     logger.getLogger('tab.regular').error(msg)
                     raise ValueError(msg)
 
-            data_size, label_size = base_object.get_shape('vertical')
-            msg = 'Vertical training data size:{0}'.format(data_size)
-            logger.getLogger('line.tab.regular').info(msg)
+            # logging information
+            for dataset_type in ['Training', 'Testing']:
+                data_size, label_size = base_object.get_shape(dataset_type)
+                msg = '{0} data size:{1}'.format(dataset_type, data_size)
+                logger.getLogger('line.tab.regular').info(msg)
 
-            msg = 'Vertical Training labels size:{0}'.format(label_size)
-            logger.getLogger('tab.regular').info(msg)
+                msg = '{0} labels size:{0}'.format(dataset_type, label_size)
+                logger.getLogger('tab.regular').info(msg)
 
-            data_size, label_size = base_object.get_shape('horizontal')
-            msg = 'Horizontal training data size:{0}'.format(data_size)
-            logger.getLogger('line.tab.regular').info(msg)
-
-            msg = 'Horizontal Training labels size:{0}'.format(label_size)
-            logger.getLogger('tab.regular').info(msg)
-
-            data_size, label_size = base_object.get_shape('test')
-            msg = 'Testing data size:{0}'.format(data_size)
-            logger.getLogger('line.tab.regular').info(msg)
-
-            msg = 'Testing labels size:{0}'.format(label_size)
-            logger.getLogger('tab.regular').info(msg)
-
+            logger.getLogger('tab.regular').info('')
             try:
                 if algorithm == 'GHMM' or algorithm == 'GMMHMM':
                     hmm_algo(base_object=base_object, algorithm=algorithm, batched_setting=batched_setting,
