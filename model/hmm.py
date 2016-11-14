@@ -5,10 +5,10 @@ from sklearn.externals import joblib
 import numpy as np
 import os
 from datetime import datetime
-from sklearn.metrics import classification_report
+from sklearn import metrics
 from utils.matlablabels import MatlabLabels
-from utils.misc import batch
-import math
+from utils.misc import batch, process_confusion_matrix
+from sklearn.metrics import confusion_matrix
 
 np.random.seed(0)
 
@@ -52,17 +52,52 @@ class ResultClass:
     def show_results(self, logger):
 
         logger.getLogger('line.tab.regular').info('training classification report')
-        logger.getLogger('tab.regular.line').info(classification_report(self.log_train_predictions,
-                                                                        self.logreg_train_labels,
-                                                                        target_names=self.target_names))
+        logger.getLogger('tab.regular.line').info(metrics.classification_report(y_true=self.log_train_predictions,
+                                                                                y_pred=self.logreg_train_labels,
+                                                                                target_names=self.target_names))
 
         logger.getLogger('line.tab.regular').info('testing classification report')
-        logger.getLogger('tab.regular.line').info(classification_report(self.log_test_predictions,
-                                                                        self.logreg_test_labels,
-                                                                        target_names=self.target_names))
+        classification_report_string = metrics.classification_report(y_true=self.log_test_predictions,
+                                                                     y_pred=self.logreg_test_labels,
+                                                                     target_names=self.target_names)
+        logger.getLogger('tab.regular.line').info(classification_report_string)
+
+        confusion_matrix_results = confusion_matrix(y_true=self.logreg_test_labels, y_pred=self.log_test_predictions)
+
+        # # normalizing results. Normalization can be interesting in case of class imbalance to have a more visual
+        # # interpretation of which class is being misclassified.
+        # row_sums = confusion_matrix_results.sum(axis=1)[:, np.newaxis]
+        # confusion_matrix_results = confusion_matrix_results.astype('float') / row_sums
+
+        # logger.getLogger('line.tab.regular').info('testing confusion matrix results')
+        # logger.getLogger('regular.line').info(confusion_matrix_results)
+
+        # true_positive = confusion_matrix_results.diagonal()
+
+        number_classes = np.shape(confusion_matrix_results)[0]
+
+        for row_index in range(0, number_classes):
+            msg = 'motion={0}'.format(self.target_names[row_index])
+            logger.getLogger('line.tab.regular').info(msg)
+            true_positive, false_positive, true_negative, false_negative = \
+                process_confusion_matrix(confusion_matrix=confusion_matrix_results, row_index=row_index)
+
+            sensitivity = true_positive / (true_positive + false_negative)
+            specificity = true_negative / (true_negative + false_positive)
+            ppv = true_positive / (true_positive + false_positive)
+            npv = true_negative / (true_negative + false_negative)
+
+            msg = 'sensitivity={0}'.format(sensitivity)
+            logger.getLogger('tab.regular').info(msg)
+            msg = 'specificity={0}'.format(specificity)
+            logger.getLogger('tab.regular').info(msg)
+            msg = 'positive predicted value={0}'.format(ppv)
+            logger.getLogger('tab.regular').info(msg)
+            msg = 'negative predictive value={0}'.format(npv)
+            logger.getLogger('tab.regular.line').info(msg)
 
 
-def hmm_algo(base_object, batched_setting, logger, algorithm, kmeans, quickrun=''):
+def hmm_algo(base_object, batched_setting, logger, algorithm, kmeans, n_states, quickrun=''):
 
     # initialize the loaded model flag
     loaded_model = False
@@ -74,10 +109,19 @@ def hmm_algo(base_object, batched_setting, logger, algorithm, kmeans, quickrun='
         if os.path.exists(base_object.saved_model_dir):
             files_in_data_folder = os.listdir(base_object.saved_model_dir)
 
+        if 'low' in base_object.test_activity:
+            tmp = base_object.test_activity.split('_')
+            activity = tmp[0] + '_l'
+        elif 'high' in base_object.test_activity:
+            tmp = base_object.test_activity.split('_')
+            activity = tmp[0] + '_h'
+        else:
+            activity = base_object.test_activity
+
         # check all the files in the folder and look for the model file
         for sfile in files_in_data_folder:
             # check if user, activity and hmm keyword are part of the file
-            if (base_object.test_user in sfile) and (base_object.test_activity in sfile) and \
+            if (base_object.test_user in sfile) and (activity in sfile) and \
                     ('hmm' in sfile) and ('.npy' not in sfile):
                 logger.getLogger('line.tab.regular').info('hmm model found')
                 logger.getLogger('tab.regular.line').info('using hmm model {0}'.format(sfile))
@@ -93,8 +137,8 @@ def hmm_algo(base_object, batched_setting, logger, algorithm, kmeans, quickrun='
     # check if flag is on
     if not loaded_model:
 
-        nc = 8
-        cov_type = 'diag'
+        nc = n_states
+        cov_type = 'full'
         iterations = 10
         logger.getLogger('tab.regular.time').info('defining Gaussian Hidden Markov Model.')
         logger.getLogger('tab.regular').info('\tmodel parameters')

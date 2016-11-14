@@ -29,7 +29,7 @@ def extract_h5_information(doc, h5_directory, program_path, action='', window_st
 
 
 def feature_extraction(h5_directory, action, logger, program_path, algorithm='', kmeans='', window_step_size='',
-                       quickrun=True, batched_setting=False):
+                       n_states=8, quickrun=True, batched_setting=False):
 
     file_info = Document()
 
@@ -41,5 +41,5 @@ def feature_extraction(h5_directory, action, logger, program_path, algorithm='',
 
     elif action == 'imu':
         imu_algorithm(doc=file_info, algorithm=algorithm, quickrun=quickrun, logger=logger, kmeans=kmeans,
-                      batched_setting=batched_setting)
+                      batched_setting=batched_setting, window_size=window_step_size[0], n_states=n_states)
 

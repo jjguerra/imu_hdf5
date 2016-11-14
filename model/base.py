@@ -5,7 +5,7 @@ import numpy as np
 
 
 class Base:
-    def __init__(self, input_path, filename, user, activity, dataset):
+    def __init__(self, input_path, filename, user, activity, dataset, window_size, n_states):
         self.input_path = input_path
         self.input_filename = filename
         self.test_user = user
@@ -21,7 +21,8 @@ class Base:
 
         # location where all the models will be saved
         root_folder = '/'.join(self.input_path.split('/')[:-1])
-        self.saved_model_dir = os.path.join(root_folder, 'data')
+        folder = 'data_' + str(window_size) + '_' + str(n_states)
+        self.saved_model_dir = os.path.join(root_folder, folder)
 
         # defining train dataset and labels file
         self.training_testing_filename = 'training_testing_file_' + self.input_filename + '_' + \

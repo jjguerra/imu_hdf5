@@ -18,12 +18,7 @@ from utils.output import printout
 program_path = '/'.join(os.path.realpath(__file__).split('/')[:-1])
 
 
-def window_step_properties():
-    """
-    get the window and step size for the featurization step
-    :return: (list) window, step size
-    """
-
+def window_property():
     window_size_errors = True
 
     while window_size_errors:
@@ -42,6 +37,17 @@ def window_step_properties():
                 printout('Wrong number of window size. Options:30,60 or 120')
         except ValueError as err_message:
             printout(message=err_message)
+
+    return window_size
+
+
+def window_step_properties():
+    """
+    get the window and step size for the featurization step
+    :return: (list) window, step size
+    """
+
+    window_size = window_property()
 
     step_size_errors = True
     while step_size_errors:
@@ -228,7 +234,16 @@ def select_dataset_quickrun(algorithm=''):
         else:
             batch = True
 
-        return file_path, quickrun, kmeans, batch
+        window_size = window_property()
+
+        n_states = int(raw_input('Number of HMM states: '))
+
+        if n_states == '':
+            n_states = 8
+        elif (n_states != 8) and (n_states != 10) and (n_states != 20):
+            raise ValueError('Wrong state number')
+
+        return file_path, quickrun, kmeans, batch, window_size, n_states
 
     else:
         return file_path, quickrun
@@ -245,12 +260,13 @@ def ml_algorithm(algorithm=''):
     """
 
     # get dataset directory
-    dataset_location, quickrun, kmeans, batched_setting = select_dataset_quickrun(algorithm)
+    dataset_location, quickrun, kmeans, batched_setting, window, n_states = select_dataset_quickrun(algorithm)
 
     logging.getLogger('regular.time.line').info('Running {0} Model'.format(algorithm))
 
     feature_extraction(h5_directory=dataset_location, algorithm=algorithm, quickrun=quickrun, action='imu',
-                       program_path=program_path, logger=logging, kmeans=kmeans, batched_setting=batched_setting)
+                       program_path=program_path, logger=logging, kmeans=kmeans, batched_setting=batched_setting,
+                       window_step_size=[window], n_states=n_states)
 
 
 def check_matlab():
